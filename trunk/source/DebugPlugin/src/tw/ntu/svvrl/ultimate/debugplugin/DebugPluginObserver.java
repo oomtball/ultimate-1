@@ -121,11 +121,11 @@ public class DebugPluginObserver implements IUnmanagedObserver {
 //			}
 //		}
 		
-//		for(int i = 0; i < 7000; i++) {
-//			edges = mModelCheckerAssistant.getProgramEnabledTrans(b);
-//			edge = edges.get(0);
-//			b = mModelCheckerAssistant.doProgramTransition(b, edge);
-//		}
+		for(int i = 0; i < 7000; i++) {
+			edges = mModelCheckerAssistant.getProgramEnabledTrans(b);
+			edge = edges.get(0);
+			b = mModelCheckerAssistant.doProgramTransition(b, edge);
+		}
 		
 		edges = mModelCheckerAssistant.getProgramEnabledTrans(b);
 		edge = edges.get(0);

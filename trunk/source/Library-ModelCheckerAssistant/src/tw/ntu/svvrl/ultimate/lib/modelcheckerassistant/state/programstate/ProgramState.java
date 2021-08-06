@@ -21,7 +21,7 @@ import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.programstate.thread
  * The <code> mValuation </code> only keeps global valuation.
  * All {@link ThreadState}s' (in <code> mThreadStates </code>) global valuations 
  * are references to this valuation. 
- * So if one thread changes the global variable, the valuation here also
+ * So if one thread modifies the global variable, the valuation here also
  * changes.
  */
 public class ProgramState extends ValuationState<ProgramState> {
