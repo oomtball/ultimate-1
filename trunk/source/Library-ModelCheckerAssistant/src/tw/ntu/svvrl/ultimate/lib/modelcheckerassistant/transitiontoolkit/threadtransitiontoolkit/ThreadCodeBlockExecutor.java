@@ -537,7 +537,7 @@ public class ThreadCodeBlockExecutor extends CodeBlockExecutor<ThreadState> {
 			final ThreadStatementsChecker statementsChecker = new ThreadStatementsChecker(stmts, mCurrentState, mProgramStateExplorer);
 			return statementsChecker.checkCallAccessOnlyLocalVar();
 		} else if(mCodeBlock instanceof Summary) {
-			return true;
+			return false;
 		} else if(mCodeBlock instanceof Return) {
 			final List<Statement> stmts = new ArrayList<>();
 			final CallStatement callStmt = ((Return) mCodeBlock).getCorrespondingCall().getCallStatement();
