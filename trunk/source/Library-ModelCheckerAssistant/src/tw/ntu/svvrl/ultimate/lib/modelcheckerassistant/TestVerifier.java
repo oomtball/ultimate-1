@@ -101,9 +101,6 @@ public class TestVerifier {
 				 */
 			}
 		}
-		if(mTrace.isEmpty()) {
-			return;
-		}
 		mTrace.pop();
 	}
 	
@@ -145,9 +142,6 @@ public class TestVerifier {
 //			if(notInStack && atLeastOneSuccessor) {
 //				break;
 //			}
-		}
-		if(mTrace.isEmpty()) {
-			return;
 		}
 		mTrace.pop();
 	}
