@@ -108,9 +108,6 @@ public class TestVerifier {
 	 * System move
 	 */
 	private void dfs(int N) {
-		if(mTrace.isEmpty()) {
-			return;
-		}
 		
 		final Pair<ProgramState, NeverState> s = mTrace.peek();
 		List<Long> order = mAssistant.getProgramSafestOrder(getProgramState(s));
