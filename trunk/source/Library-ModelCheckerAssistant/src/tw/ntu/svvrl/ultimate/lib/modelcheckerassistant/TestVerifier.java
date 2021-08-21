@@ -108,9 +108,11 @@ public class TestVerifier {
 	 * System move
 	 */
 	private void dfs(int N) {
-		
+//		mLogger.info("dfs");
 		final Pair<ProgramState, NeverState> s = mTrace.peek();
 		List<Long> order = mAssistant.getProgramSafestOrder(getProgramState(s));
+		
+//		mLogger.info(s.toString());
 		
 		for(Long i : order) {
 			boolean notInStack = true;
@@ -131,6 +133,9 @@ public class TestVerifier {
 					//mStateSpace.add(succN);
 					mTrace.push(succ);
 					Dfs(N);
+					if(s.toString().equals("[[Thread0@L20, Thread2@L12], NeverState@accept_S2]")) {
+						mLogger.info("here");
+					}
 				} else if(inTrace(succ)) {
 					notInStack = false;
 				}
@@ -166,7 +171,7 @@ public class TestVerifier {
 		final Pair<ProgramState, NeverState> s0 = mTrace.get(0);
 		mLogger.info("Initialize global variables and reach " + getProgramState(s0).getThreadStates().toString());
 		boolean inCycle = false;
-		for(int i = 0; i < mTrace.size(); i++)
+		for(int i = 0; i < mTrace.size() - 1; i++)
 		{
 			Pair<ProgramState, NeverState> s = mTrace.get(i);
 			if(isEqual(s, mSeed) && !inCycle) {
