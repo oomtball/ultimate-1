@@ -72,7 +72,7 @@ public class TestVerifier {
 			= mAssistant.getNeverEnabledTrans(getNeverState(s), getProgramState(s));
 		
 		for(final OutgoingInternalTransition<CodeBlock, NeverState> t : nxt) {
-			final NeverState nxtNs = mAssistant.doNeverTransition(getNeverState(s), t, getProgramState(s));
+			final NeverState nxtNs = mAssistant.doNeverTransition(getNeverState(s), t);
 			final Pair<ProgramState, NeverState> succ = new Pair<>(getProgramState(s), nxtNs);
 			if(N == 2 && isEqual(succ, mSeed)) {
 				mFound = true;

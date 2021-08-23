@@ -121,9 +121,8 @@ public class ModelCheckerAssistant {
 		return mProgramStateExplorer.doTransition(p, trans);
 	}
 	
-	public NeverState doNeverTransition(final NeverState n, final OutgoingInternalTransition<CodeBlock, NeverState> edge
-			, final ProgramState correspondingProgramState) {
-		return mNeverClaimAutExplorer.doTransition(n, edge, correspondingProgramState);
+	public NeverState doNeverTransition(final NeverState n, final OutgoingInternalTransition<CodeBlock, NeverState> edge) {
+		return mNeverClaimAutExplorer.doTransition(n, edge);
 	}
 	
 	public String getCStatement(final ProgramStateTransition t) {

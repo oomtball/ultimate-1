@@ -49,10 +49,9 @@ public class NeverClaimAutExplorer {
 	}
 	
 
-	public NeverState doTransition(final NeverState n, final OutgoingInternalTransition<CodeBlock, NeverState> edge
-			, final ProgramState correspondingProgramState) {
+	public NeverState doTransition(final NeverState n, final OutgoingInternalTransition<CodeBlock, NeverState> edge) {
 		final NeverTransitionToolkit transitionToolkit 
-			= new NeverTransitionToolkit(edge, n, correspondingProgramState);
+			= new NeverTransitionToolkit(edge, n, null);
 		return (NeverState) transitionToolkit.doTransition();
 	}
 }
