@@ -22,6 +22,7 @@ public class TestVerifier {
 	final Stack<Pair<ProgramState, NeverState>> mTrace = new Stack<>();
 	final Set<Pair<Pair<ProgramState, NeverState>, Integer>> mStateSpace = new HashSet<>();
 	boolean mFound = false;
+	boolean mError = false;
 	boolean mFisrtMove = false;
 	
 	public TestVerifier(final ILogger logger, final ModelCheckerAssistant mca) {
@@ -57,7 +58,7 @@ public class TestVerifier {
 			}
 		}
 		
-		if(!mFound) {
+		if(!mFound && !mError) {
 			mLogger.info("All specifications hold");
 		}
 	}
@@ -108,11 +109,15 @@ public class TestVerifier {
 	 * System move
 	 */
 	private void dfs(int N) {
-//		mLogger.info("dfs");
 		final Pair<ProgramState, NeverState> s = mTrace.peek();
+		if(getProgramState(s).isErrorState()) {
+			mLogger.info("Reach Error State");
+			mError = true;
+			return;
+		}
+		
 		List<Long> order = mAssistant.getProgramSafestOrder(getProgramState(s));
 		
-//		mLogger.info(s.toString());
 		
 		for(Long i : order) {
 			boolean notInStack = true;
