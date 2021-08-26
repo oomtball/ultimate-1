@@ -1,4 +1,4 @@
-# A Supporting Library for Explicit Model Checker of SVVRL
+# A Supporting Library for Explicit Model Checkers of SVVRL
 
 This project aims to create a library facilitating the implementation of explicit model
 checkers for multithreaded programs. Our implementation is integrated into a Java project, called `Library-ModelCheckerAssistant`. It provides
@@ -101,7 +101,7 @@ int main(){
 
 In `TestVerifier.java`, I have implemented a model checker that follows the pseudo code in https://link.springer.com/chapter/10.1007/978-0-387-34878-0_13?fbclid=IwAR08ivdXplRAOpVRvdGTxI0GmhGNCs0MUIgEYn11L3ZMWCtE92pyA-zFxEg (a little bit different, see comments in the source file). However, lines involving partial order reduction causes the incorrect verification results. I'm not sure the problem is in our implmentation or the pseudo code. So those lines are currently commented.
 
-### 5. The atomicity of statements
+### 5. The Atomicity of Statements
 
 For modeling an atomic execution of a sequence of statements in a multithreaded program, those statements can be placed between `__VERIFIER_atomic_begin()` and `__VERIFIER_atomic_end()`. (See SVcomp's rules page for more details https://sv-comp.sosy-lab.org/2021/rules.php)
 
