@@ -84,24 +84,12 @@ To solve this problem, again, modify the compiler(translator from C to Boogie) a
 
 One situation that havoc statements are needed is the call of `__VERIFIER_nondet_X()`, which is a convention defined by SVcomp. See https://sv-comp.sosy-lab.org/2021/rules.php for more details.
 
-### 3. The property automaton is stuck until all global variables in the system automaton are initialized
 
-If the global variable is not yet initialized, the enableness check in the property automaton may access a null value, which causes a run time error. So the transitions of the property automaton are not checked and the states stuck in the initial state until all global variables are initialized. This fact causes the exploration of property automaton will stays in the wrong state. For example, in the following C code, our model checker will go wrong if there's an outgoing transition labeled `a == 1`.
-
-``` C
-int a;
-a++;
-int b = 10;
-int main(){
-    //...
-}
-```
-
-### 4. The Correctness of Nested Depth-First Search Algorithm with Partial Order Reduction Techiniques
+### 3. The Correctness of Nested Depth-First Search Algorithm with Partial Order Reduction Techiniques
 
 In `TestVerifier.java`, I have implemented a model checker that follows the pseudo code in https://link.springer.com/chapter/10.1007/978-0-387-34878-0_13?fbclid=IwAR08ivdXplRAOpVRvdGTxI0GmhGNCs0MUIgEYn11L3ZMWCtE92pyA-zFxEg (a little bit different, see comments in the source file). However, lines involving partial order reduction causes the incorrect verification results. I'm not sure the problem is in our implmentation or the pseudo code. So those lines are currently commented.
 
-### 5. The Atomicity of Statements
+### 4. The Atomicity of Statements
 
 For modeling an atomic execution of a sequence of statements in a multithreaded program, those statements can be placed between `__VERIFIER_atomic_begin()` and `__VERIFIER_atomic_end()`. (See SVcomp's rules page for more details https://sv-comp.sosy-lab.org/2021/rules.php)
 
