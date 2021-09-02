@@ -26,15 +26,15 @@ public class ProgramStateFactory {
 	}
 
 
-	public ProgramState createInitialState(final BoogieIcfgLocation loc) {
+	public ProgramState createStartState(final BoogieIcfgLocation loc) {
 		Valuation globalValuation = new Valuation();
 		mVarAdder.addGlobalVars2Valuation(globalValuation);
 		mVarAdder.addOldGlobalVars2Valuation(globalValuation);
 		mVarAdder.addPthreadsForks(globalValuation);
 		
-		final ThreadState initialThreadState = mThreadStateFactory.createInitialState(loc, globalValuation);
+		final ThreadState startThreadState = mThreadStateFactory.createStartState(loc, globalValuation);
 		
-		return new ProgramState(initialThreadState, globalValuation);
+		return new ProgramState(startThreadState, globalValuation);
 	}
 	
 }

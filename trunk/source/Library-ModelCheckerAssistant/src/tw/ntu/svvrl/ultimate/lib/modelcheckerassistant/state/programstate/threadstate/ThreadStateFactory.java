@@ -25,7 +25,7 @@ public class ThreadStateFactory {
 		mProgramStateExplorer = pe;
 	}
 
-	public ThreadState createInitialState(final BoogieIcfgLocation loc
+	public ThreadState createStartState(final BoogieIcfgLocation loc
 										, final Valuation globalValuation) {
 		Valuation newValuation = globalValuation.clone();
 		mVarAdder.addLocalVars2Valuation(newValuation);

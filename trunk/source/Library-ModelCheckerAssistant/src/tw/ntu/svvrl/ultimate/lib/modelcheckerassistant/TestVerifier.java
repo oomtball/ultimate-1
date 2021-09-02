@@ -34,20 +34,8 @@ public class TestVerifier {
 	public void run() {
 		final Set<ProgramState> pInitials = mAssistant.getProgramInitialStates();
 		final Set<NeverState> nInitials = mAssistant.getNeverInitialStates();
-		final Set<ProgramState> pInitialsChecked = new HashSet<>();
 		
-		for(ProgramState p : pInitials) {
-			while(!mAssistant.globalVarsInitialized(p)) {
-				List<ProgramStateTransition> trans = mAssistant.getProgramEnabledTrans(p);
-				assert trans.size() <= 1;
-				for(ProgramStateTransition t : trans) {
-					p = mAssistant.doProgramTransition(p, t);
-				}
-			}
-			pInitialsChecked.add(p);
-		}
-		
-		for(final ProgramState p : pInitialsChecked) {
+		for(final ProgramState p : pInitials) {
 			for(final NeverState n : nInitials)
 			{
 				final Pair<ProgramState, NeverState> s0 = new Pair<>(p, n);
@@ -138,9 +126,6 @@ public class TestVerifier {
 					//mStateSpace.add(succN);
 					mTrace.push(succ);
 					Dfs(N);
-					if(s.toString().equals("[[Thread0@L20, Thread2@L12], NeverState@accept_S2]")) {
-						mLogger.info("here");
-					}
 				} else if(inTrace(succ)) {
 					notInStack = false;
 				}

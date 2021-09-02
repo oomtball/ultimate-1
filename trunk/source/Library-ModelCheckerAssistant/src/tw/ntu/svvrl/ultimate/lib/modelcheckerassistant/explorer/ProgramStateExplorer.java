@@ -104,18 +104,54 @@ public class ProgramStateExplorer {
 
 
 	/**
-	 * Based on the given rcfg, extend the initial {@link BoogieIcfgLocation}s with
-	 * value tables so that they become automaton initial states.
-	 * @return	A set containing all initial states.
+	 * Based on the given rcfg, extend the RCFG location "ULTIMATE.StartENTRY" with
+	 * value tables so that they become start states.
+	 * A start state is an entry state that all global variables have not been initialized.
+	 * A initial state is a state in which all global variables are just initialized.
+	 * We generate initial states from start states via doing several transitions that
+	 * are responsible for the initialization of global variables.
+	 * @return	A start state.
 	 */
-	public Set<ProgramState> getInitialStates() {
-		Set<ProgramState> initialProgramStates = new HashSet<>();
+	private Set<ProgramState> getStartStates() {
+		final Set<ProgramState> startProgramStates = new HashSet<>();
 		
-		for(BoogieIcfgLocation initialLoc: mInitialNodes) {
-			initialProgramStates.add(mProgramStateFactory.createInitialState(initialLoc));
+		for(BoogieIcfgLocation startLoc: mInitialNodes) {
+			startProgramStates.add(mProgramStateFactory.createStartState(startLoc));
 		}
 		
-		return initialProgramStates;
+		return startProgramStates;
+	}
+	
+	/**
+	 * @return A set of states in which all global variables are just initialized.
+	 */
+	public Set<ProgramState> getInitialStates() {
+		final Set<ProgramState> pInitials = new HashSet<>();
+
+		for(ProgramState p : getStartStates()) {
+			while(!globalVarsInitialized(p)) {
+				final List<ProgramStateTransition> trans = getEnabledTrans(p);
+				assert trans.size() <= 1;
+				for(ProgramStateTransition t : trans) {
+					p = doTransition(p, t);
+				}
+			}
+			pInitials.add(p);
+		}
+		
+		return pInitials;
+	}
+	
+	private boolean globalVarsInitialized(final ProgramState p) {
+		/**
+		 * All NonOld global variables must be initialized, or some errors
+		 * will occur during expression evaluation.
+		 * @return If some global variables are not initialized yet, return false.
+		 */
+		if(p.allNonOldNonAuxGlobalInitialized()) {
+			return true;
+		}
+		return false;
 	}
 	
 
@@ -281,16 +317,18 @@ public class ProgramStateExplorer {
 	/**
 	 * Only for debugging
 	 */
+	/*
 	public ProgramState getLocStateById(String id) {
 		for(Map<DebugIdentifier, BoogieIcfgLocation> m : mLocNodes.values()) {
 			for(BoogieIcfgLocation l : m.values()) {
 				if(l.toString().equals(id)) {
-					return mProgramStateFactory.createInitialState(l);
+					return mProgramStateFactory.createStartState(l);
 				}
 			}
 		}
 		return null;
 	}
+	*/
 	
 	private Map<String, List<String>> createProc2Prams(Boogie2SmtSymbolTable boogie2SmtSymbolTable
 			, String inOrOut) {
