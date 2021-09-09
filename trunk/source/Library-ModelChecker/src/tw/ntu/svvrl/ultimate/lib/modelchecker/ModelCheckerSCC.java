@@ -138,7 +138,7 @@ public class ModelCheckerSCC {
 				for (int j = 0;j < neverEdges.size();j++) {
 					if(match) {return;}
 					OutgoingInternalTransition<CodeBlock, NeverState> neverEdge = neverEdges.get(j);
-					NeverState nextState = assistant.doNeverTransition(RemoveElement.getSecond(), neverEdge, nextNode);
+					NeverState nextState = assistant.doNeverTransition(RemoveElement.getSecond(), neverEdge);
 					
 					Pair p = new Pair(nextNode, nextState);
 					remove(p);
@@ -194,7 +194,7 @@ public class ModelCheckerSCC {
 				for (int j = 0;j < neverEdges.size();j++) {
 					if(match) {return;}
 					OutgoingInternalTransition<CodeBlock, NeverState> neverEdge = neverEdges.get(j);
-					NeverState nextState = assistant.doNeverTransition(init, neverEdge, nextNode);
+					NeverState nextState = assistant.doNeverTransition(init, neverEdge);
 					
 					// if(!dfsnum.containsKey(nextNode))
 					if(!compare(Roots, nextNode, nextState))

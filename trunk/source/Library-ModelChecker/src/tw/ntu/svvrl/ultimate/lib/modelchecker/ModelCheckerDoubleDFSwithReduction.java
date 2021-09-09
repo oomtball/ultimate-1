@@ -230,7 +230,7 @@ public class ModelCheckerDoubleDFSwithReduction{
 			
 			if(match) {return;}
 			OutgoingInternalTransition<CodeBlock, NeverState> neverEdge = neverEdges.get(j);
-			NeverState nextState = assistant.doNeverTransition(state, neverEdge, node);
+			NeverState nextState = assistant.doNeverTransition(state, neverEdge);
 			
 			Pair p = new Pair(node, nextState);
 			Pair s = new Pair(p, b);

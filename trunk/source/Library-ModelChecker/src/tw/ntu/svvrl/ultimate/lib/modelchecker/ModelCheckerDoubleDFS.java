@@ -115,7 +115,7 @@ public class ModelCheckerDoubleDFS{
 			
 			for (int j = 0;j < neverEdges.size();j++) {
 				OutgoingInternalTransition<CodeBlock, NeverState> neverEdge = neverEdges.get(j);
-				NeverState nextState = assistant.doNeverTransition(state, neverEdge, nextNode);
+				NeverState nextState = assistant.doNeverTransition(state, neverEdge);
 				
 				if(!compare(redpath, nextNode, nextState))
 				{
@@ -178,7 +178,7 @@ public class ModelCheckerDoubleDFS{
 			for (int j = 0;j < neverEdges.size();j++) {
 				if(match) {return;}
 				OutgoingInternalTransition<CodeBlock, NeverState> neverEdge = neverEdges.get(j);
-				NeverState nextState = assistant.doNeverTransition(init, neverEdge, nextNode);
+				NeverState nextState = assistant.doNeverTransition(init, neverEdge);
 				
 				if(!compare(bluepath, nextNode, nextState))
 				{

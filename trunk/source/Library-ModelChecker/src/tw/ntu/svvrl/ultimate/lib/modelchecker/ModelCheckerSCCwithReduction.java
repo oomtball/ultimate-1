@@ -236,7 +236,7 @@ public class ModelCheckerSCCwithReduction {
 		for (int j = 0;j < neverEdges.size();j++) {
 			if(match) {return;}
 			OutgoingInternalTransition<CodeBlock, NeverState> neverEdge = neverEdges.get(j);
-			NeverState nextState = assistant.doNeverTransition(state, neverEdge, node);
+			NeverState nextState = assistant.doNeverTransition(state, neverEdge);
 			
 			if(j==0)
 			{
