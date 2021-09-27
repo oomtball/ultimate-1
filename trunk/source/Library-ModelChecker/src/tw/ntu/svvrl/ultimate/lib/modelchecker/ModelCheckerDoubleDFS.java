@@ -166,13 +166,6 @@ public class ModelCheckerDoubleDFS{
 			if(match) {return;}
 			ProgramState nextNode = levelNodes.get(i);
 			
-			if(!assistant.globalVarsInitialized(nextNode))
-			{
-				Pair p = new Pair(node, init);
-				bluepath.push(p);
-				dfsBlue(nextNode, init);
-				continue;
-			}
 			
 			List<OutgoingInternalTransition<CodeBlock, NeverState>> neverEdges = assistant.getNeverEnabledTrans(init, nextNode);
 			for (int j = 0;j < neverEdges.size();j++) {

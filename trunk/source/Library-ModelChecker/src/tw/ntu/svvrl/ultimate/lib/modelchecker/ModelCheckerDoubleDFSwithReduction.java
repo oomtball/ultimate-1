@@ -170,15 +170,6 @@ public class ModelCheckerDoubleDFSwithReduction{
 				if(match) {return;}
 				ProgramState nextNode = levelNodes.get(i);
 				
-				if(!assistant.globalVarsInitialized(nextNode))
-				{
-					Pair p = new Pair(nextNode, state);
-					Pair s = new Pair(p, a);
-					StateSpace.push(s);
-					CompoundStack.push(p);
-					dfs(a);
-					continue;
-				}
 				
 				Pair p = new Pair(nextNode, state);
 				Pair s = new Pair(p, a);

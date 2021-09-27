@@ -184,15 +184,6 @@ public class ModelCheckerSCCwithReduction {
 				if(match) {return;}
 				ProgramState nextNode = levelNodes.get(i);
 				
-				if(!assistant.globalVarsInitialized(nextNode))
-				{
-					Pair p = new Pair(nextNode, state);
-					dfsnum.push(new Pair(p, count));
-					Roots.push(p);
-					StateSpace.push(p);
-					dfs();
-					continue;
-				}
 				
 				Pair p = new Pair(nextNode, state);
 

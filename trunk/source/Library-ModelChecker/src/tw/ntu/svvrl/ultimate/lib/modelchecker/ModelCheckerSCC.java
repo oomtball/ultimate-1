@@ -126,12 +126,6 @@ public class ModelCheckerSCC {
 				if(match) {return;}
 				ProgramState nextNode = levelNodes.get(i);
 				
-				if(!assistant.globalVarsInitialized(nextNode))
-				{					
-					Pair p = new Pair(nextNode, RemoveElement.getSecond());
-					remove(p);
-					continue;
-				}
 				
 				List<OutgoingInternalTransition<CodeBlock, NeverState>> neverEdges = assistant.getNeverEnabledTrans(RemoveElement.getSecond(), nextNode);
 				
@@ -178,16 +172,6 @@ public class ModelCheckerSCC {
 				if(match) {return;}
 				ProgramState nextNode = levelNodes.get(i);
 				
-				if(!assistant.globalVarsInitialized(nextNode))
-				{
-					Pair p = new Pair(node, init);					
-					dfsnum.push(new Pair(p, count));
-					Roots.push(p);
-					current.push(new Pair(p, true));
-					
-					startSCC(nextNode, init);
-					continue;
-				}
 				
 				List<OutgoingInternalTransition<CodeBlock, NeverState>> neverEdges = assistant.getNeverEnabledTrans(init, nextNode);
 				
