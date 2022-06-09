@@ -68,6 +68,8 @@ public class ModelCheckerAssistant {
 		mRcfgRoot = rcfg;
 		mNWA = nwa;
 		
+		mLogger.info(mRcfgRoot);
+		mLogger.info(mNWA);
 		mProgramStateExplorer = new ProgramStateExplorer(rcfg);
 		mNeverClaimAutExplorer = new NeverClaimAutExplorer(nwa);
 	}

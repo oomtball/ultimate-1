@@ -634,9 +634,9 @@ public class ProcedureManager {
 		}
 
 		void setDeclaration(final Procedure declaration) {
-			assert mDeclaration == null : "can only be set once!";
+			// assert mDeclaration == null : "can only be set once!";
 			assert declaration.getSpecification() != null;
-			assert declaration.getBody() == null;
+			// assert declaration.getBody() == null;
 			mDeclaration = declaration;
 		}
 
