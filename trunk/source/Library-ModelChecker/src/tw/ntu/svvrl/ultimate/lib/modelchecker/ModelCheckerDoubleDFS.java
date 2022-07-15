@@ -1,7 +1,5 @@
 package tw.ntu.svvrl.ultimate.lib.modelchecker;
 
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.*;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.neverstate.NeverState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -9,13 +7,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.programstate.ProgramState;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.programstate.ProgramStateTransition;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.programstate.threadstate.ThreadStateTransition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.neverstate.NeverStateFactory;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.ModelCheckerAssistant;
-
+import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.*;
+import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.neverstate.NeverState;
+import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.neverstate.NeverStateFactory;
+import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.ProgramState;
+import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.ProgramStateTransition;
+import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.threadstate.ThreadStateTransition;
 
 import java.util.ArrayList;
 import java.util.Collection;

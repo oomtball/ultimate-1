@@ -105,6 +105,7 @@ public final class AbstractInterpreter {
 		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				domFac.createParams(timer, transProvider, loopDetector);
 		final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
+//		mLogger.info(root);
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes(), script);
 
 		

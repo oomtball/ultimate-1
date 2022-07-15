@@ -1,39 +1,21 @@
 package tw.ntu.svvrl.ultimate.lib.scantufixpointapproach.algorithm;
 
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
-public class FixpointEngine <STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC> 
-	implements IFixpointEngine<STATE, ACTION, VARDECL, LOC>{
+public class FixpointEngine{
 	
 	private boolean acceptProperty;
-	public FixpointEngine() {
+	public FixpointEngine(final ILogger logger, final IUltimateServiceProvider services) {
+		
 		acceptProperty = false;
 	}
 	
-	public boolean run(final IIcfg<? extends IcfgLocation> rcfg, final ILogger logger) {
+	public boolean run(final BoogieIcfgContainer rcfg, final ILogger logger) {
+		logger.info("Starting buchi fixpoint engine");
 		logger.info(rcfg);
-		calculateFixpoint(rcfg);
+
 		return acceptProperty;
 	}
-	
-	private void calculateFixpoint(final IIcfg<? extends IcfgLocation> rcfg) {
-		acceptProperty = true;
-	}
-	
-	private DisjunctiveAbstractState<STATE> calculateAbstractPost() {
-		DisjunctiveAbstractState<STATE> postState = new DisjunctiveAbstractState();
-		return postState;
-	}
-	
 }

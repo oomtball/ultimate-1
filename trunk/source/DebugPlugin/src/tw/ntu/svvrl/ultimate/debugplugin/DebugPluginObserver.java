@@ -28,15 +28,6 @@
 package tw.ntu.svvrl.ultimate.debugplugin;
 
 import java.util.ArrayList;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.*;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.explorer.NeverClaimAutExplorer;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.explorer.ProgramStateExplorer;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.neverstate.NeverState;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.programstate.ProgramState;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.programstate.ProgramStateTransition;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.programstate.threadstate.ThreadStateTransition;
-import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.programstate.ProgramState;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgSizeBenchmark;
+import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.*;
+import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.*;
 
 /**
  *
@@ -69,6 +62,7 @@ public class DebugPluginObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
 	
 	private ModelCheckerAssistant mModelCheckerAssistant;
+	private FixpointModelChecker mFixpointModelChecker;
 
 	public DebugPluginObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
@@ -96,9 +90,11 @@ public class DebugPluginObserver implements IUnmanagedObserver {
 		mLogger.info("Do something with these two models...");
 		// new crawler here. 
 		mModelCheckerAssistant = new ModelCheckerAssistant(mNeverClaimNWAContainer.getValue(), mRcfg, mLogger, mServices);
-		//mModelCheckerAssistant = new ModelCheckerAssistant(mRcfg, mLogger, mServices);
+//		mModelCheckerAssistant = new ModelCheckerAssistant(mRcfg, mLogger, mServices);
+//		mFixpointModelChecker = new FixpointModelChecker(mNeverClaimNWAContainer.getValue(), mRcfg, mLogger, mServices);
 		
 		TestVerifier v = new TestVerifier(mLogger, mModelCheckerAssistant);
+//		FixpointVerifier v = new FixpointVerifier(mLogger, mFixpointModelChecker);
 		v.run();
 		
 		/*-----------debugging-----------*/

@@ -121,17 +121,20 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		start.stream().flatMap(a -> mTransitionProvider.getSuccessorActions(a).stream())
 				.filter(a -> !mTransitionProvider.isSummaryWithImplementation(a)).map(this::createInitialWorklistItem)
 				.forEach(worklist::add);
-
+		
 		while (!worklist.isEmpty()) {
 			checkTimeout();
 
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem = worklist.removeFirst();
+			mLogger.info(currentItem.getCurrentStorage());
+			mLogger.info(currentItem.getAction());
 			mResult.getBenchmark().addIteration(currentItem.getAction());
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}
 			
 //			mLogger.info(getLogMessageCurrentTransition(currentItem));
+//			mLogger.info(postOp);
 			final DisjunctiveAbstractState<STATE> postState = calculateAbstractPost(currentItem, postOp);
 
 			if (isUnnecessaryPostState(currentItem, postState)) {
@@ -246,17 +249,14 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			} else {
 				postState = preStateWithFreshVariables.apply(postOp, preState, currentAction);
 			}
-//			mLogger.info(preState);
-//			mLogger.info(postState);
 			isHierachicalPostResultBottom(postState, currentItem);
 
 		} else {
 			preStateWithFreshVariables = preState;
 			postState = preState.apply(postOp, currentAction);
-//			mLogger.info(preState);
-//			mLogger.info(postState);
-//			mLogger.info(postState);
 		}
+//		mLogger.info(preState);
+//		mLogger.info(postState);
 		mResult.getBenchmark().countPostApplication();
 
 		assert postState != null;
@@ -473,14 +473,14 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		final ACTION action = currentItem.getAction();
 		if (mTransitionProvider.isEnteringScope(action)) {
 			currentItem.addScope(action, postState);
-			mLogger.info(getLogMessageEnterScope(currentItem));
+//			mLogger.info(getLogMessageEnterScope(currentItem));
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageEnterScope(currentItem));
 			}
 			return postState;
 		} else if (isLeavingScope(currentItem)) {
 			final ACTION oldScope = currentItem.removeCurrentScope(currentItem.getState());
-			mLogger.info(getLogMessageLeaveScope(oldScope, currentItem));
+//			mLogger.info(getLogMessageLeaveScope(oldScope, currentItem));
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageLeaveScope(oldScope, currentItem));
 			}
@@ -556,7 +556,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	private boolean isFixpoint(final DisjunctiveAbstractState<STATE> oldState,
 			final DisjunctiveAbstractState<STATE> newState) {
 		if (oldState.isEqualTo(newState)) {
-			mLogger.info(oldState.getStates());
+//			mLogger.info(oldState.getVariables().toArray()[0]);
 			mLogger.info(getLogMessageFixpointFound(oldState, newState));
 //			mLogger.info(newState.getVariables().toArray()[0]);
 			if (mLogger.isDebugEnabled()) {
@@ -575,7 +575,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		assert oldPostState == null || Objects.equals(pendingPostState.getVariables(),
 				oldPostState.getVariables()) : "States in the same scope have different variables";
 		if (pendingPostState == oldPostState || pendingPostState.isSubsetOf(oldPostState) != SubsetResult.NONE) {
-			mLogger.info(getLogMessagePostIsSubsumed(pendingPostState, oldPostState));
+//			mLogger.info(getLogMessagePostIsSubsumed(pendingPostState, oldPostState));
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessagePostIsSubsumed(pendingPostState, oldPostState));
 			}

@@ -144,7 +144,6 @@ public class PluginConnector {
 	private void runTool(final List<IObserver> observers, final ModelType currentModel, final int currentModelIndex,
 			final int numberOfModels) throws Throwable {
 		final IElement entryNode = getEntryPoint(currentModel);
-
 		if (mTool instanceof IGenerator) {
 			final IGenerator tool = (IGenerator) mTool;
 			for (final IObserver observer : observers) {
