@@ -231,25 +231,6 @@ public class ThreadStatementsExecutor extends StatementsExecutor<ThreadState> {
 
 	private void executeHavocStatement(final HavocStatement stmt) {
 		assert mCurrentState instanceof ThreadState;
-		/**
-		 * Skip the havoc statement because this statement has no effect on 
-		 * a program that has no nondeterministic choice.
-		 * However, the execution of havoc statements should be implemented if the input C program
-		 * has nondeterministic values, i.e., non-initialized local variables or
-		 * the value decided by the SVcomp convention: __VERIFIER_nondet_X().
-		 * see https://sv-comp.sosy-lab.org/2021/rules.php
-		 * 
-		 * All states with different possible values should be generated (in an on-the-fly way) 
-		 * and be sent back to the caller.
-		 * For example, making the transition that labeled with the statement "havoc x" (x is an int)
-		 * returns 2^32 states. (from x is INT_MIN to INT_MAX). However, memory must be unaffordable if the
-		 * 2^32 states are not generated on-the-fly.
-		 * The interaction way between the doProgramTransition() API and the model checker(caller) should be
-		 * designed. 
-		 * 
-		 * The following implementation is incorrect. (It tries only one possibility randomly.)
-		 */
-		
 		VariableLHS[] lhs = stmt.getIdentifiers();
 		for(int i = 0; i < lhs.length; i++) {
 			final String procName = lhs[i].getDeclarationInformation().getProcedure();
@@ -284,7 +265,6 @@ public class ThreadStatementsExecutor extends StatementsExecutor<ThreadState> {
 						+ "BoogieType:" + bt.toString() + " in havoc statement");
 			}
 		}
-		
 	}
 
 	private void executeIfStatement(final IfStatement stmt) {

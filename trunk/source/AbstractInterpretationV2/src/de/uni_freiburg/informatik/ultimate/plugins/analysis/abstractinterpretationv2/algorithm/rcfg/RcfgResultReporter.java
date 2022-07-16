@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  *
@@ -69,14 +68,12 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE>, ACTION exte
 	private final IIcfg<LOC> mIcfg;
 	private final Set<LOC> mUnsafeLocs;
 	private boolean mIsFinished;
-	private final ILogger mLogger;
 
 	public RcfgResultReporter(final IIcfg<LOC> icfg, final IUltimateServiceProvider services) {
 		mServices = services;
 		mIcfg = icfg;
 		mUnsafeLocs = new HashSet<>();
 		mIsFinished = false;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -120,7 +117,6 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE>, ACTION exte
 		mIsFinished = true;
 
 		final Set<LOC> errorLocs = IcfgUtils.getErrorLocations(mIcfg);
-//		mLogger.info(errorLocs);
 		if (mUnsafeLocs.isEmpty()) {
 			final AllSpecificationsHoldResult result = AllSpecificationsHoldResult
 					.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, errorLocs.size());

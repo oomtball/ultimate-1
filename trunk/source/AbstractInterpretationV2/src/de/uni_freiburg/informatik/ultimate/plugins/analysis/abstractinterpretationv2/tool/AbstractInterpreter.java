@@ -72,13 +72,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineFutureParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+
 /**
  * Should be used by other tools to run abstract interpretation on various parts of the RCFG.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public final class AbstractInterpreter {
+
 	private AbstractInterpreter() {
 		// do not instantiate AbstractInterpreter; its a facade
 	}
@@ -90,7 +91,6 @@ public final class AbstractInterpreter {
 	public static <STATE extends IAbstractState<STATE>> IAbstractInterpretationResult<STATE, IcfgEdge, IcfgLocation>
 			run(final IIcfg<? extends IcfgLocation> root, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services) {
-		final ILogger mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);;
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
@@ -104,11 +104,10 @@ public final class AbstractInterpreter {
 
 		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				domFac.createParams(timer, transProvider, loopDetector);
+
 		final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
-//		mLogger.info(root);
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes(), script);
 
-		
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		return postProcessResult(services, logger, false, result, root);
 	}
@@ -268,7 +267,6 @@ public final class AbstractInterpreter {
 		}
 
 		final IResultReporter<STATE, ACTION, LOC> reporter = getReporter(services, isSilent, (IIcfg<LOC>) icfg);
-//		logger.info(icfg);
 		result.getCounterexamples().forEach(reporter::reportPossibleError);
 		reporter.reportFinished();
 		logger.info(result.getBenchmark());

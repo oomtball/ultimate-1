@@ -1,5 +1,7 @@
 package tw.ntu.svvrl.ultimate.lib.modelchecker;
 
+import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.*;
+import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.neverstate.NeverState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -8,13 +10,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
+import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.programstate.ProgramState;
+import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.programstate.ProgramStateTransition;
+import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.programstate.threadstate.ThreadStateTransition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.*;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.neverstate.NeverState;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.neverstate.NeverStateFactory;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.ProgramState;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.ProgramStateTransition;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.threadstate.ThreadStateTransition;
+import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.state.neverstate.NeverStateFactory;
+import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.ModelCheckerAssistant;
 
 import java.util.Map.Entry;
 import java.util.*;
@@ -38,14 +39,16 @@ public class ModelCheckerDoubleDFSwithReduction{
 	{	
 		mLogger = logger;
 		assistant = mca;
-		
+	}
+	
+	public void run() {
 		// set of initial cfg locations
 		levelNodes.addAll(assistant.getProgramInitialStates());
-		
+				
 		// set of initial states of automaton
 		Set<NeverState> initStates = new HashSet<>();
 		initStates = assistant.getNeverInitialStates();
-		
+				
 		for (int i = 0;i < levelNodes.size();i++) {
 			for(int j = 0;j < initStates.size();j++)
 			{
@@ -61,7 +64,6 @@ public class ModelCheckerDoubleDFSwithReduction{
 			mLogger.info("All specifications hold");
 			return;
 		}
-		
 	}
 	
 	public boolean compare(Stack<Pair<Pair<ProgramState, NeverState>, Integer>> path, ProgramState node, NeverState state, int ab)

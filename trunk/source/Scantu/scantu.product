@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="Scantu" uid="Scantu" id="tw.ntu.svvrl.ultimate.scantu.product" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" useFeatures="true" includeLaunchers="true">
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <programArgs>-nosplash -consoleLog
+      </programArgs>
+      <vmArgs>-Xmx4G -Xms4M
+      </vmArgs>
+      <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts
+      </vmArgsMac>
+   </launcherArgs>
+
+   <launcher name="Scantu Launcher">
+      <win useIco="false">
+         <bmp/>
+      </win>
+   </launcher>
+
+   <vm>
+   </vm>
+
+   <plugins>
+   </plugins>
+
+   <features>
+      <feature id="BA_FeatureDependenciesCommon" installMode="root"/>
+      <feature id="BA_FeatureDependenciesDebugE4" installMode="root"/>
+      <feature id="BA_FeatureUltimateCommon" installMode="root"/>
+      <feature id="ScantuFeature" installMode="root"/>
+   </features>
+
+
+</product>

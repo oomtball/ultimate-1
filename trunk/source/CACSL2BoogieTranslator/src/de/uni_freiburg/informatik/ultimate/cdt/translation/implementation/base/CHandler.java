@@ -639,8 +639,6 @@ public class CHandler {
 			mDeclarations.addAll(mProcedureManager.computeFinalProcedureDeclarations(mMemoryHandler));
 		}
 
-		// TODO mDeclarations.addAll(mMemoryHandler...);
-
 		// TODO Need to get a CLocation from somewhere
 		final IASTTranslationUnit hook = units.get(0).getSourceTranslationUnit();
 

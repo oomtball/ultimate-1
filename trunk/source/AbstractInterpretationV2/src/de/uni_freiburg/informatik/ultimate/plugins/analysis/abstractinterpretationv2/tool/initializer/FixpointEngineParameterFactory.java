@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+
 /**
  * Sets-up the fixpoint engine for abstract interpretation.
  *
@@ -84,7 +84,6 @@ public class FixpointEngineParameterFactory {
 	private final IIcfg<?> mRoot;
 	private final BoogieIcfgContainer mBoogieIcfg;
 	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
 	private final LiteralCollectorFactory mLiteralCollector;
 	private final IBoogieSymbolTableVariableProvider mVariableProvider;
 
@@ -93,11 +92,7 @@ public class FixpointEngineParameterFactory {
 		mRoot = root;
 		mBoogieIcfg = AbsIntUtil.getBoogieIcfgContainer(mRoot);
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		
-//		mLogger.info(mRoot);
-//		mLogger.info(mBoogieIcfg.graphStructureToTgf());
-		
+
 		final PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(root);
 		if (pa == null || pa.getSymbolTable() == null) {
 			throw new IllegalArgumentException("Could not get BoogieSymbolTable");

@@ -75,16 +75,14 @@ The memory model is illustrated as follows (my imagination, maybe incorrect):
 
 A correct model checking for havoc statements should check all possibilities. For example, 
 ```
-var x : int;
-havoc x;
+var a : int;
+havoc a;
 ```
-all possible states of x with different values(from -2147483648 to 2147483647) should be exhaustively explored during the verification. However, there are too many havoc statements in the resulting Boogie. For efficiency considerations, the execution of havoc statements is implemented by randomly assigning a value, although this way is incorrect.
+all possible values of a (from -2147483648 to 2147483647) should be exhaustively explored during the verification. However, there are too many havoc statements in the resulting Boogie. For efficiency considerations, the execution of havoc statements is implemented by randomly assigning a value, although this way is incorrect.
 
 To solve this problem, again, modify the compiler(translator from C to Boogie) and remove useless (for explicit-state model checkers) havocs.
 
-Two situation that havoc statements are needed:
-1. Non-initialized local variable
-2. The call of `__VERIFIER_nondet_X()` (this function's implementation can be seen as case 1), which is a convention defined by SVcomp. See https://sv-comp.sosy-lab.org/2021/rules.php for more details.
+One situation that havoc statements are needed is the call of `__VERIFIER_nondet_X()`, which is a convention defined by SVcomp. See https://sv-comp.sosy-lab.org/2021/rules.php for more details.
 
 
 ### 3. The Correctness of Nested Depth-First Search Algorithm with Partial Order Reduction Techiniques

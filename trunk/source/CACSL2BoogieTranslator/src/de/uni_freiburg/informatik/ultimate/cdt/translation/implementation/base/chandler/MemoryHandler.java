@@ -318,6 +318,8 @@ public class MemoryHandler {
 	 */
 	private static final String ADDR = "~addr";
 
+	private String testProcName = "";
+
 	/**
 	 * Add also implementations of malloc, free, write and read functions. TODO: details
 	 */
@@ -2027,41 +2029,31 @@ public class MemoryHandler {
 		 */
 		if(mSettings.addSimpleImplementationToMemoryProcedure()) {
 			//mProcedureManager.constructBody(...);
-
-			// NEW_START:
-
-			// final AssignmentStatement as = MemoryHandler.constructOneDimensionalArrayUpdate(loc,
-			// 	indices.get(0), heapDataArray.getVariableLHS(), values.get(0));
-
-			// final Body impBody = mProcedureManager.constructBody(loc,
-			// new VariableDeclaration[] {new VariableDeclaration(loc, new Attribute[0], new VarList[0])}, new AssignmentStatement[] { as }, procName);
-
-			// final Procedure impProc = new Procedure(loc, new Attribute[0], procName, new String[0], inWrite, new VarList[0],
-			// 	new Specification[0], impBody);
-
-			// mProcedureManager.beginCustomProcedure(main, loc, procName, impProc);
-
-			// NEW_END:
-
 		}
 
-		mProcedureManager.addSpecificationsToCurrentProcedure(swrite);
-		mProcedureManager.endCustomProcedure(main, procName);
-	
+		/*SVVRL*/
 		final AssignmentStatement as = MemoryHandler.constructOneDimensionalArrayUpdate(loc,
-		indices.get(0), heapDataArray.getVariableLHS(), values.get(0));
+				indices.get(0), heapDataArray.getVariableLHS(), values.get(0));
 
-		final Body impBody = mProcedureManager.constructBody(loc,
-		new VariableDeclaration[] {new VariableDeclaration(loc, new Attribute[0], new VarList[0])}, new AssignmentStatement[] { as }, procName);
+		final Body impBody = mProcedureManager.constructBody(loc,new VariableDeclaration[] {new VariableDeclaration(loc, 
+				new Attribute[0], new VarList[0])}, new AssignmentStatement[] { as }, procName);
 
-		System.out.println(impBody);
-
-		final Procedure impProc = new Procedure(loc, new Attribute[0], procName, new String[0], inWrite, new VarList[0],
-		new Specification[0], impBody);
-	
-		//System.out.print(impProc.getBody().toString());
-		mProcedureManager.beginCustomProcedure(main, loc, procName, impProc);
+		mProcedureManager.addSpecificationsAndBodyToCurrentProcedure(swrite, impBody);
+		/*
+		System.out.println("procName");
+		System.out.println(procName);
+		testProcName = procName;
+		mProcedureManager.testUse(procName);*/
+		// mProcedureManager.addSpecificationsToCurrentProcedure(swrite);
 		mProcedureManager.endCustomProcedure(main, procName);
+	}
+
+	public ProcedureManager returnProcedureManager(){
+		return mProcedureManager;
+	}
+
+	public String returnProcName(){
+		return testProcName;
 	}
 
 	private static List<Expression> constructConjunctsForWriteEnsuresSpecification(final ILocation loc,

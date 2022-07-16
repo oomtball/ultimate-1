@@ -645,8 +645,6 @@ public class BoogieOutput {
 	 */
 	public void printProcedure(final Procedure decl) {
 		final StringBuilder sb = new StringBuilder();
-		System.out.print(decl.getIdentifier());
-		System.out.print(decl.getBody() == null);
 		appendProcedure(sb, decl);
 		mWriter.print(sb.toString());
 	}

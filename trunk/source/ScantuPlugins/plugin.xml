@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.generator">
+      <impl
+            class="tw.ntu.svvrl.ultimate.scantu.plugins.debugplugin.DebugPlugin">
+      </impl>
+   </extension>
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.generator">
+      <impl
+            class="tw.ntu.svvrl.ultimate.scantu.plugins.doubledfsreduction.DoubleDFSReduction">
+      </impl>
+   </extension>
+
+</plugin>

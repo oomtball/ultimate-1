@@ -400,7 +400,6 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE>, ACTION,
 	private boolean isFixpoint(final DisjunctiveAbstractState<STATE> oldState,
 			final DisjunctiveAbstractState<STATE> newState) {
 		if (oldState.isEqualTo(newState)) {
-			mLogger.info(getLogMessageFixpointFound(oldState, newState));
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageFixpointFound(oldState, newState));
 			}

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.controller">
+      <impl
+            class="tw.ntu.svvrl.ultimate.scantu.ScantuController"
+            isGraphical="true"
+            preference="80">
+      </impl>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            class="tw.ntu.svvrl.ultimate.scantu.Perspective"
+            name="Scantu Perspective"
+            id="tw.ntu.svvrl.ultimate.scantu.perspective">
+      </perspective>
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            class="tw.ntu.svvrl.ultimate.scantu.views.FolderView"
+            id="tw.ntu.svvrl.ultimate.scantu.views.FolderView"
+            name="Folder"
+            restorable="true">
+      </view>
+      <view
+            class="tw.ntu.svvrl.ultimate.scantu.views.OperationView"
+            id="tw.ntu.svvrl.ultimate.scantu.views.OperationView"
+            name="Operation"
+            restorable="true">
+      </view>
+      <view
+            class="tw.ntu.svvrl.ultimate.scantu.views.ProgramView"
+            id="tw.ntu.svvrl.ultimate.scantu.views.ProgramView"
+            name="Program"
+            restorable="true">
+      </view>
+      <view
+            class="de.uni_freiburg.informatik.ultimate.gui.views.LoggingView"
+            id="de.uni_freiburg.informatik.ultimate.gui.views.LoggingView"
+            name="System Log"
+            restorable="true">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="*">
+      </perspectiveExtension>
+   </extension>
+   <extension
+         id="product"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="de.uni_freiburg.informatik.ultimate.core.CoreRCP"
+            name="Scantu">
+         <property
+               name="appName"
+               value="Scantu">
+         </property>
+      </product>
+   </extension>
+
+</plugin>
