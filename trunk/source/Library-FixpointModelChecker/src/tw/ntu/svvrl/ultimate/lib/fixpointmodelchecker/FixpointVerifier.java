@@ -15,12 +15,14 @@ import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.Program
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.NilSelfLoop;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.ProgramStateTransition;
 
+import jdd.bdd.BDD;
 
 public class FixpointVerifier {
 	private final FixpointModelChecker mFMC;
 	private final ILogger mLogger;
 	Set<Pair<ProgramState, NeverState>> fixpointState = new HashSet<>();
 	Set<Pair<ProgramState, NeverState>> tempState = new HashSet<>();
+	final BDD bdd;
 	
 	boolean isFixpoint;
 	boolean neverPropertyHolds;
@@ -30,15 +32,15 @@ public class FixpointVerifier {
 		mLogger = logger;
 		isFixpoint = false;
 		neverPropertyHolds = false;
+		bdd = new BDD(1000,100);
 	}
 	
 	public void run() {
 		final Set<ProgramState> pInitials = mFMC.getProgramInitialStates();
 		final Set<NeverState> nInitials = mFMC.getNeverInitialStates();
-		final Collection<String> nFinals = mFMC.getNeverFinalStates();
 		
 		// debug part
-//		int shutdown = 0;
+		int shutdown = 0;
 		
 		for(final ProgramState p : pInitials) {
 			for(final NeverState n : nInitials)
@@ -48,7 +50,7 @@ public class FixpointVerifier {
 				while (!isFixpoint) {
 					calculateNext(tempState);
 					// debug part 
-//					shutdown = shutdown + 1;
+					shutdown = shutdown + 1;
 //					mLogger.info(tempState);
 				}
 			}
@@ -82,19 +84,22 @@ public class FixpointVerifier {
 			for(final OutgoingInternalTransition<CodeBlock, NeverState> t : nxt) { // for each edge
 				final NeverState nxtNs = mFMC.doNeverTransition(getNeverState(p), t); // next step for property edge
 				final Pair<ProgramState, NeverState> succ = new Pair<>(getProgramState(p), nxtNs);
-//				mLogger.info(succ);
+//				tempPostState.add(succ);
 				
-				List<Long> order = mFMC.getProgramSafestOrder(getProgramState(p)); 
+				List<Long> order = mFMC.getProgramSafestOrder(getProgramState(succ)); 
 				for(Long i : order) { // for each thread 
 					final List<ProgramStateTransition> nxt2 
-					= mFMC.getProgramEnabledTransByThreadID(getProgramState(p), i);
+					= mFMC.getProgramEnabledTransByThreadID(getProgramState(succ), i);
+					
+					NilSelfLoop nilSelfLoop = mFMC.checkNeedOfSelfLoop(getProgramState(succ));
+					if(nilSelfLoop != null) {
+						nxt2.add(nilSelfLoop);
+					}
+					
 					for(final ProgramStateTransition t2 : nxt2) { // next step for every thread
-//						mLogger.info(t2);
-//						mLogger.info(getProgramState(p));
-						final ProgramState nxtPs = mFMC.doProgramTransition(getProgramState(p), t2); 
-						final Pair<ProgramState, NeverState> succ2 = new Pair<>(nxtPs, getNeverState(p));
+						final ProgramState nxtPs = mFMC.doProgramTransition(getProgramState(succ), t2); 
+						final Pair<ProgramState, NeverState> succ2 = new Pair<>(nxtPs, getNeverState(succ));
 						tempPostState.add(succ2);
-//						mLogger.info(succ2);
 					}
 				}
 			}
@@ -102,19 +107,19 @@ public class FixpointVerifier {
 		
 		// debug part
 		mLogger.info(tempPostState);
-//		mLogger.info(lastPostState);
+		mLogger.info("");
 		
 //		 check if there exist a fixpoint and record it
 		if (tempPostState.equals(lastPostState)) {
 			isFixpoint = true;
 			fixpointState = tempPostState;
+			mLogger.info("Fixpoint of (System X (complement of property))" + fixpointState + " is found.");
 			return;
 		}
 		else {
 			tempState = tempPostState;
 			return;
 		}
-		
 	}
 	private ProgramState getProgramState(final Pair<ProgramState, NeverState> sPair) {
 //		mLogger.info(setOfPair.iterator().next().getFirst());

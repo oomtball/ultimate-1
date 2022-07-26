@@ -14,6 +14,7 @@ import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.explorer.ProgramStateExplo
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.neverstate.NeverState;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.ProgramState;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.ProgramStateTransition;
+import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.NilSelfLoop;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.explorer.NeverClaimAutExplorer;
 
 public class FixpointModelChecker {
@@ -57,6 +58,10 @@ public class FixpointModelChecker {
 	
 	public Set<ProgramState> getProgramInitialStates() {
 		return mProgramStateExplorer.getInitialStates();
+	}
+	
+	public NilSelfLoop checkNeedOfSelfLoop(final ProgramState p) {
+		return mProgramStateExplorer.checkNeedOfSelfLoop(p);
 	}
 	
 	public Set<NeverState> getNeverInitialStates() {
