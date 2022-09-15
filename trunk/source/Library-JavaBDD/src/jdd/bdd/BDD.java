@@ -160,6 +160,7 @@ public class BDD extends NodeTable {
 		work_stack_tos--;
 		numvars++;
 
+		
 		saturate(var);
 		saturate(nvar);
 

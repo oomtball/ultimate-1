@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class CongruenceDomainEvaluator extends NonrelationalEvaluator<CongruenceDomainState, CongruenceDomainValue> {
 
-	protected CongruenceDomainEvaluator(final ILogger logger, final BoogieSymbolTable symbolTable,
+	public CongruenceDomainEvaluator(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates,
 			final int maxRecursionDepth) {
 		super(logger, symbolTable, bpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth);

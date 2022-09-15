@@ -367,7 +367,6 @@ public class NodeTable {
 
 		int hash = compute_hash(v,l,h);
 		int curr = getPrev(hash);
-
 		// look it up in the cache
 		stat_lookup_count++;
 		while(curr != 0) {
@@ -377,9 +376,8 @@ public class NodeTable {
 			}
 			curr = getNext(curr);
 			ht_chain++;
-
 		}
-
+		
 
 		// see if we have room for it!
 		if(free_nodes_count < 2 ) { // dont change "2" to "0" !

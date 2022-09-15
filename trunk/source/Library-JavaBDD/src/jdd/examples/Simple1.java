@@ -132,7 +132,7 @@ public class Simple1 {
 		//
 		// If you don't like PNG images, you can make JDD to give you others types of
 		// images, but that is a bit advanced and wont be discussed here.
-		bdd.printDot("f1", f1);
+		//bdd.printDot("f1", f1);
 
 
 

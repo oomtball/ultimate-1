@@ -72,6 +72,7 @@ public class DebugPluginObserver implements IUnmanagedObserver {
 	
 	private ModelCheckerAssistant mModelCheckerAssistant;
 	private FixpointModelChecker mFMC;
+	private FixpointModelCheckerForBDD mFMCBDD;
 
 	public DebugPluginObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
@@ -101,11 +102,13 @@ public class DebugPluginObserver implements IUnmanagedObserver {
 //		mModelCheckerAssistant = new ModelCheckerAssistant(mNeverClaimNWAContainer.getValue(), mRcfg, mLogger, mServices);
 		//mModelCheckerAssistant = new ModelCheckerAssistant(mRcfg, mLogger, mServices);
 		mFMC = new FixpointModelChecker(mNeverClaimNWAContainer.getValue(), mRcfg, mLogger, mServices);
+		mFMCBDD = new FixpointModelCheckerForBDD(mNeverClaimNWAContainer.getValue(), mRcfg, mLogger, mServices);
 		
 //		TestVerifier v = new TestVerifier(mLogger, mModelCheckerAssistant);
 		FixpointVerifier v = new FixpointVerifier(mLogger, mFMC);
-		v.run();
-		
+		FixpointVerifierForBDD v2 = new FixpointVerifierForBDD(mLogger, mFMCBDD);
+//		v.run();
+		v2.run();
 		/*-----------debugging-----------*/
 //		Set<ProgramState> pInitialStates = new HashSet<>();
 //		pInitialStates = mModelCheckerAssistant.getProgramInitialStates();

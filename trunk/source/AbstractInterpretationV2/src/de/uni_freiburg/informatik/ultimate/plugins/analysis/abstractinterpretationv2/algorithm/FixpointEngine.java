@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -126,7 +127,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem = worklist.removeFirst();
 			mResult.getBenchmark().addIteration(currentItem.getAction());
-
+			for (IProgramVarOrConst pp : currentItem.getState().getVariables()) {
+				mLogger.info(pp);
+			}
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}

@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class ExplicitValueEvaluator extends NonrelationalEvaluator<ExplicitValueState, BaseExplicitValueValue> {
 
-	protected ExplicitValueEvaluator(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
+	public ExplicitValueEvaluator(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
 			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates,
 			final int maxRecursionDepth) {
 		super(logger, boogieSymbolTable, bpl2SmtSymbolTable, maxParallelStates, maxRecursionDepth);

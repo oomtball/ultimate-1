@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class SignDomainEvaluator extends NonrelationalEvaluator<SignDomainState, SignDomainValue> {
 
-	protected SignDomainEvaluator(final ILogger logger, final BoogieSymbolTable symbolTable,
+	public SignDomainEvaluator(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final IBoogieSymbolTableVariableProvider mIcfgSymbolTable, final int maxParallelStates,
 			final int maxRecursionDepth) {
 		super(logger, symbolTable, mIcfgSymbolTable, maxParallelStates, maxRecursionDepth);

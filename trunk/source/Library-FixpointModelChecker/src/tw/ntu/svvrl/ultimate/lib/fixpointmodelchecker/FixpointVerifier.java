@@ -20,9 +20,8 @@ import jdd.bdd.BDD;
 public class FixpointVerifier {
 	private final FixpointModelChecker mFMC;
 	private final ILogger mLogger;
-	Set<Pair<ProgramState, NeverState>> fixpointState = new HashSet<>();
-	Set<Pair<ProgramState, NeverState>> tempState = new HashSet<>();
-	final BDD bdd;
+	Set<Pair<ProgramState, NeverState>> fixpointState = new HashSet<Pair<ProgramState, NeverState>>();
+	Set<Pair<ProgramState, NeverState>> tempState = new HashSet<Pair<ProgramState, NeverState>>();
 	
 	boolean isFixpoint;
 	boolean neverPropertyHolds;
@@ -32,7 +31,6 @@ public class FixpointVerifier {
 		mLogger = logger;
 		isFixpoint = false;
 		neverPropertyHolds = false;
-		bdd = new BDD(1000,100);
 	}
 	
 	public void run() {
@@ -73,9 +71,8 @@ public class FixpointVerifier {
 	
 	private void calculateNext(Set<Pair<ProgramState, NeverState>> s) {
 		final Set<Pair<ProgramState, NeverState>> tempPostState = new HashSet<>(); //store the next post state computed in this loop
-		final Set<Pair<ProgramState, NeverState>> lastPostState = s; //store the next post state computed in this loop
 		
-		for (final Pair<ProgramState, NeverState> p : s) {
+		for (Pair<ProgramState, NeverState> p : s) {
 			final List<OutgoingInternalTransition<CodeBlock, NeverState>> nxt 
 			= mFMC.getNeverEnabledTrans(getNeverState(p), getProgramState(p));
 			
@@ -110,7 +107,7 @@ public class FixpointVerifier {
 		mLogger.info("");
 		
 //		 check if there exist a fixpoint and record it
-		if (tempPostState.equals(lastPostState)) {
+		if (tempPostState.equals(s)) {
 			isFixpoint = true;
 			fixpointState = tempPostState;
 			mLogger.info("Fixpoint of (System X (complement of property))" + fixpointState + " is found.");
