@@ -8,11 +8,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLoopDetector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.explorer.ProgramStateExplorerForBDD;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.neverstate.NeverState;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.ProgramState;
+import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm.TransitionBuilder;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.explorer.NeverClaimAutExplorerForBDD;
 
 public class FixpointModelCheckerForBDD {
@@ -21,9 +30,8 @@ public class FixpointModelCheckerForBDD {
 	private final BoogieIcfgContainer mRcfgRoot;
 	private final INestedWordAutomaton<CodeBlock, String> mNWA;
 	
-	private final ProgramStateExplorerForBDD mProgramStateExplorerForBDD;
 	private final NeverClaimAutExplorerForBDD mNeverClaimAutExplorerForBDD;
-	
+	private final TransitionBuilder mTransitionBuilder;
 	
 	public FixpointModelCheckerForBDD(final BoogieIcfgContainer rcfg,
 			final ILogger logger, final IUltimateServiceProvider services) {
@@ -35,8 +43,8 @@ public class FixpointModelCheckerForBDD {
 		mNWA = null;
 		
 //		mLogger.info(rcfg);
-		
-		mProgramStateExplorerForBDD = new ProgramStateExplorerForBDD(rcfg, mLogger, mServices);
+
+		mTransitionBuilder = new TransitionBuilder(rcfg, mLogger, mServices);
 		mNeverClaimAutExplorerForBDD = null;
 	}
 	
@@ -50,7 +58,8 @@ public class FixpointModelCheckerForBDD {
 		mNWA = nwa;
 //		mLogger.info(rcfg);
 		
-		mProgramStateExplorerForBDD = new ProgramStateExplorerForBDD(rcfg, mLogger, mServices);
+
+		mTransitionBuilder = new TransitionBuilder(rcfg, mLogger, mServices);
 		mNeverClaimAutExplorerForBDD = new NeverClaimAutExplorerForBDD(nwa);
 	}
 	public Set<NeverState> getNeverInitialStates() {

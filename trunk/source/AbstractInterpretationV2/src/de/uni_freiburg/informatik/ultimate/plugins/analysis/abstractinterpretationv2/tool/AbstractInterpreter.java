@@ -270,6 +270,15 @@ public final class AbstractInterpreter {
 		result.getCounterexamples().forEach(reporter::reportPossibleError);
 		reporter.reportFinished();
 		logger.info(result.getBenchmark());
+//		for (LOC loc : result.getLoc2States().keySet()) {
+//			for (STATE s : result.getLoc2States().get(loc)) {
+//				for (IProgramVarOrConst ip : s.getVariables()) {
+//					logger.info(ip.getClass());
+//				}
+//				break;
+//			}
+//			break;
+//		}
 		return result;
 	}
 

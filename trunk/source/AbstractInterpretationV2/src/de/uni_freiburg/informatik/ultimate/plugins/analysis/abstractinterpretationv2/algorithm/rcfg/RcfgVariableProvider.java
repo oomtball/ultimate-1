@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
@@ -250,7 +251,6 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE>> implement
 
 	private Set<IProgramVarOrConst> getPreVariables(final IcfgEdge current) {
 		final Set<IProgramVarOrConst> vars = getGlobalScopeVarAndConsts();
-
 		// add locals if applicable, thereby overriding globals
 		final String procedure = current.getPrecedingProcedure();
 		if (procedure != null) {

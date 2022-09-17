@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -124,16 +125,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
-
+			
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem = worklist.removeFirst();
 			mResult.getBenchmark().addIteration(currentItem.getAction());
-			for (IProgramVarOrConst pp : currentItem.getState().getVariables()) {
-				mLogger.info(pp);
-			}
+//			mLogger.info(currentItem.getAction());
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}
 
+			mLogger.info(Arrays.toString(currentItem.getState().getVariables().toArray()));
 			final DisjunctiveAbstractState<STATE> postState = calculateAbstractPost(currentItem, postOp);
 
 			if (isUnnecessaryPostState(currentItem, postState)) {
@@ -377,6 +377,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem) {
 		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createTopState());
+		
 		assert preState != null;
 		final DisjunctiveAbstractState<STATE> preMultiState =
 				new DisjunctiveAbstractState<>(mMaxParallelStates, preState);

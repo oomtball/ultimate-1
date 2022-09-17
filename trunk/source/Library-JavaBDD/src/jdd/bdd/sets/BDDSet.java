@@ -13,7 +13,7 @@ public class BDDSet implements Set {
 	private final boolean [] internal_minterm;
 	/* package */ int bdd;
 
-	/* package */ BDDSet(BDDUniverse u, int bdd) {
+	/* package */ public BDDSet(BDDUniverse u, int bdd) {
 		universe = u;
 		this.bdd = universe.ref(bdd);
 		internal_minterm = new boolean[ universe.numberOfBits() ];
