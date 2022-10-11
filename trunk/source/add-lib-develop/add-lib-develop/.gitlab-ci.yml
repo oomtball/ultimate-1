@@ -1,0 +1,74 @@
+build-test:
+  image: docker:20.10.6
+  services:
+    - docker:20.10.6-dind
+  variables:
+    DOCKER_DRIVER: "overlay"
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    # install packages
+    - apk add openjdk8 maven git graphviz g++ python3 nodejs
+    - apk add -X https://dl-cdn.alpinelinux.org/alpine/v3.16/main -u alpine-keys
+    - apk add mono --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+    - apk add gcompat # since alpine doesn't ship glibc out of the box
+    # configure paths
+    - ln -s /usr/bin/python3 /usr/bin/python
+    - export JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
+    - export PATH="$JAVA_HOME/bin:${PATH}"
+    # pull docker containers
+    - docker pull $CI_REGISTRY_IMAGE/crossbuild-git:8c126bd || true # allow failure, if cache-miss
+    - docker pull $CI_REGISTRY_IMAGE/crosscompile-linux:$CI_COMMIT_REF_NAME || true # allow failure, if cache-miss
+    - docker pull $CI_REGISTRY_IMAGE/crosscompile-windows:$CI_COMMIT_REF_NAME || true # allow failure, if cache-miss
+    - docker pull $CI_REGISTRY_IMAGE/crosscompile-macos:$CI_COMMIT_REF_NAME || true # allow failure, if cache-miss
+    # debug
+    - docker images
+  script:
+    - mvn -B -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository install -Pdocker -Pprofiling -Pcode-analysis
+  after_script:
+    # debug
+    - docker images
+    # push docker containers
+    - docker login --username $CI_REGISTRY_USER --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE/crossbuild-git:8c126bd
+    - docker push $CI_REGISTRY_IMAGE/crosscompile-linux:$CI_COMMIT_REF_NAME
+    - docker push $CI_REGISTRY_IMAGE/crosscompile-windows:$CI_COMMIT_REF_NAME
+    - docker push $CI_REGISTRY_IMAGE/crosscompile-macos:$CI_COMMIT_REF_NAME
+  cache:
+    paths:
+      - .m2/repository
+    key: maven
+
+deploy-snapshot:
+  needs: ["build-test"]
+  image: docker:20.10.6
+  services:
+    - docker:20.10.6-dind
+  variables:
+    DOCKER_DRIVER: "overlay"
+    DOCKER_TLS_CERTDIR: "/certs"
+    MVN_SETTINGS_PATH: .ci/settings.xml
+  before_script:
+    # install packages
+    - apk add openjdk8 maven git graphviz g++ python3 nodejs gnupg
+    - apk add -X https://dl-cdn.alpinelinux.org/alpine/v3.16/main -u alpine-keys
+    - apk add mono --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+    - apk add gcompat # since alpine doesn't ship glibc out of the box
+    # configure paths
+    - ln -s /usr/bin/python3 /usr/bin/python
+    - export JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
+    - export PATH="$JAVA_HOME/bin:${PATH}"
+    # pull docker containers
+    - docker pull $CI_REGISTRY_IMAGE/crossbuild-git:8c126bd || true # allow failure, if cache-miss
+    - docker pull $CI_REGISTRY_IMAGE/crosscompile-linux:$CI_COMMIT_REF_NAME || true # allow failure, if cache-miss
+    - docker pull $CI_REGISTRY_IMAGE/crosscompile-windows:$CI_COMMIT_REF_NAME || true # allow failure, if cache-miss
+    - docker pull $CI_REGISTRY_IMAGE/crosscompile-macos:$CI_COMMIT_REF_NAME || true # allow failure, if cache-miss
+    # debug
+    - docker images
+  script:
+    - mvn -B -s $MVN_SETTINGS_PATH -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository deploy -Pdocker -DskipTests
+  cache:
+    paths:
+      - .m2/repository
+    key: maven
+  only:
+    - develop

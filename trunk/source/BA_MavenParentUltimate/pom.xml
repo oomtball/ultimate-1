@@ -15,6 +15,14 @@
 		<url>https://github.com/ultimate-pa/ultimate/tree/dev</url>
 	</scm>
 
+	<dependencies>
+		<dependency>
+			<groupId>info.scce</groupId>
+			<artifactId>addlib</artifactId>
+			<version>2.0.19-BETA</version>
+		</dependency>
+	</dependencies>
+
 	<properties>
 		<ultimate-version>0.2.1</ultimate-version>
 
@@ -503,6 +511,7 @@
 		<module>../Library-CHC</module>
 		<module>../Library-CZT</module>
 		<module>../Library-Disruptor</module>
+		<module>../Library-FixpointModelChecker</module>
 		<module>../Library-IcfgTransformer</module>
 		<module>../Library-JavaBDD</module>
 		<module>../Library-Jung</module>
@@ -625,7 +634,7 @@
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>true</trimStackTrace>
 							<redirectTestOutputToFile>true</redirectTestOutputToFile>
-							
+
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
 
@@ -635,7 +644,7 @@
 
 							<!-- Use this for global timeouts per class -->
 							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
-							
+
 							<includes>
 								<include>**/*.java</include>
 							</includes>

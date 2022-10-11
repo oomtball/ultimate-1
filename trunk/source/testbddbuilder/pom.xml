@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>cn.org.thinkcloud</groupId>
+        <artifactId>think-cloud-build</artifactId>
+        <version>2.0.0.RELEASE</version>
+    </parent>
+    <groupId>tw.ntu.svvrl.ultimate.lib</groupId>
+    <artifactId>testbddbuilder</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <properties>
+        <rversion>2.0.0.RELEASE</rversion>
+    </properties>
+    <!--OWN Dependencies -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>testbddbuilder-domain</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>testbddbuilder-repo-api</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>testbddbuilder-biz-api</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>testbddbuilder-manager-api</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>testbddbuilder-commons</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+  <modules>
+    <module>testbddbuilder-domain</module>
+    <module>testbddbuilder-commons</module>
+    <module>testbddbuilder-repo-api</module>
+    <module>testbddbuilder-biz-api</module>
+    <module>testbddbuilder-manager-api</module>
+    <module>testbddbuilder-biz-provider</module>
+    <module>testbddbuilder-repo-provider</module>
+    <module>testbddbuilder-manager-provider</module>
+    <module>testbddbuilder-ctl</module>
+  </modules>
+</project>

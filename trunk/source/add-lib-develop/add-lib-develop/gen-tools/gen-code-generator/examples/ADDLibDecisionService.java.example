@@ -1,0 +1,34 @@
+/* This file was generated with the ADD-Lib
+ * http://add-lib.scce.info/ */
+@opt-param("package")'''
+
+package @param("package")'''info.scce.addlib''';
+'''
+@opt-param("import")'''
+
+import @param("import")'''info.scce.addlib.B''';
+'''
+
+public class @param("class-name")'''ADDLibDecisionService''' {
+@root-dd'''
+
+    public @enabled-param("static-methods")'''static '''@injectable("return-type")'''String''' @attr(label)'''sumOfPredicatesABC'''(@param("param-type")'''Predicates''' predicates) {
+        return eval@attr(dd, ptr)'''0'''(predicates);
+    }
+'''
+@internal-dd'''
+
+    private @enabled-param("static-methods")'''static '''@injectable("return-type")'''String''' eval@attr(ptr)'''0'''(@param("param-type")'''Predicates''' predicates) {
+        if (@injectable("var-condition")'''predicates.@attr(read-name)'''predA'''()''')
+            return eval@attr(t, ptr)'''1'''(predicates);
+        else
+            return eval@attr(e, ptr)'''2'''(predicates);
+    }
+'''
+@constant-dd'''
+
+    private @enabled-param("static-methods")'''static '''@injectable("return-type")'''String''' eval@attr(ptr)'''1'''(@param("param-type")'''Predicates''' predicates) {
+        return @injectable("result-instatiation")'''"@attr(to-string)'''2.0'''"''';
+    }
+'''
+}

@@ -1,6 +1,7 @@
 package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker;
 
 import java.util.List;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -21,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.neverstate.NeverState;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm.TransitionBuilder;
+import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm.RcfgTransitionBuilder;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.explorer.NeverClaimAutExplorerForBDD;
 
 public class FixpointModelCheckerForBDD {
@@ -31,7 +32,7 @@ public class FixpointModelCheckerForBDD {
 	private final INestedWordAutomaton<CodeBlock, String> mNWA;
 	
 	private final NeverClaimAutExplorerForBDD mNeverClaimAutExplorerForBDD;
-	private final TransitionBuilder mTransitionBuilder;
+	private final RcfgTransitionBuilder mTransitionBuilder;
 	
 	public FixpointModelCheckerForBDD(final BoogieIcfgContainer rcfg,
 			final ILogger logger, final IUltimateServiceProvider services) {
@@ -44,7 +45,7 @@ public class FixpointModelCheckerForBDD {
 		
 //		mLogger.info(rcfg);
 
-		mTransitionBuilder = new TransitionBuilder(rcfg, mLogger, mServices);
+		mTransitionBuilder = new RcfgTransitionBuilder(rcfg, mLogger, mServices);
 		mNeverClaimAutExplorerForBDD = null;
 	}
 	
@@ -59,7 +60,8 @@ public class FixpointModelCheckerForBDD {
 //		mLogger.info(rcfg);
 		
 
-		mTransitionBuilder = new TransitionBuilder(rcfg, mLogger, mServices);
+		mTransitionBuilder = new RcfgTransitionBuilder(rcfg, mLogger, mServices);
+		mLogger.info(Arrays.toString(mTransitionBuilder.getRcfgTrans().toArray()));
 		mNeverClaimAutExplorerForBDD = new NeverClaimAutExplorerForBDD(nwa);
 	}
 	public Set<NeverState> getNeverInitialStates() {

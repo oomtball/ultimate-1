@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <Match>
+        <Or>
+            <Class name="~info\.scce\.addlib\.parser\.ADDLanguage.*"/>
+            <Class name="~info\.scce\.addlib\.parser\.BDDLanguage.*"/>
+            <Class name="~info\.scce\.addlib\.parser\.XDDLanguage.*"/>
+            <Class name="~info\.scce\.addlib\.parser\.ZDDLanguage.*"/>
+            <Class name="~info\.scce\.addlib\.profiling\.jmh.*jmh_generated.*"/>
+        </Or>
+    </Match>
+    <!-- Specific suppressions -->
+    <Match>
+        <Or>
+            <And>
+                <Bug code="DCN"/>
+                <Class name="~info\.scce\.addlib\.nativelib\.NativeLibraryLoader.*"/>
+            </And>
+            <And>
+                <Bug code="DMI"/>
+                <Class name="~info\.scce\.addlib\.dd\.xdd\.grouplikedd\.example\.CountVectorTest.*"/>
+            </And>
+            <And>
+                <Bug code="EI"/>
+                <Class name="~info\.scce\.addlib\.profiling\.jmh.*"/>
+            </And>
+            <And>
+                <Bug code="DMI"/>
+                <Class name="~info\.scce\.addlib\.profiling\.jmh\.add\.states\.ADDBenchmarkState.*"/>
+            </And>
+        </Or>
+    </Match>
+</FindBugsFilter>

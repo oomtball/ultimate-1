@@ -1,0 +1,24 @@
+/* This file was generated with the ADD-Lib
+ * http://add-lib.scce.info/ */
+
+digraph "@param("graph-name")'''ADDLibDecisionService'''" {
+
+    bgcolor = transparent
+    node [@injectable("node-style")'''style = filled, fontsize = 14, fontname = Arial''']
+    edge [@injectable("edge-style")'''arrowhead = none''']
+@root-dd'''
+
+    "f@attr(dd, ptr)'''0'''" [@injectable("dd-function-style")'''fillcolor = lightgray, shape = rectangle''', label = "@attr(label)'''sumOfPredicatesABC'''"]
+    "f@attr(dd, ptr)'''0'''" -> "n@attr(dd, ptr)'''0'''" [@injectable("dd-function-then-style")'''style = solid''']
+'''
+@internal-dd'''
+
+    "n@attr(ptr)'''0'''" [@injectable("internal-dd-style")'''fillcolor = white, shape = ellipse''', label = "@injectable("internal-dd-label")'''@attr(read-name)'''predA''''''"]
+    "n@attr(ptr)'''0'''" -> "n@attr(e, ptr)'''2'''" [@injectable("internal-dd-else-style")'''style = dashed''']
+    "n@attr(ptr)'''0'''" -> "n@attr(t, ptr)'''1'''" [@injectable("internal-dd-then-style")'''style = solid''']
+'''
+@constant-dd'''
+
+    "n@attr(ptr)'''1'''" [@injectable("constant-dd-style")'''fillcolor = white, shape = rect''', label = "@injectable("constant-dd-label")'''@attr(to-string)'''2.0''''''"]
+'''
+}

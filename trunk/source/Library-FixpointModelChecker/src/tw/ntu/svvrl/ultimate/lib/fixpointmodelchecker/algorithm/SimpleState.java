@@ -1,6 +1,7 @@
 package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -8,42 +9,23 @@ import java.util.Set;
 
 public class SimpleState {
 	
-	Set<String> mVars = new HashSet<>();;
-	List<Integer> mValues = new ArrayList<>();
-	String procedure;
-	int pc;
+	private Set<String> mVars;
+	private List<Integer> mValues;
+	
 	public SimpleState(){
+	
 	}
 	
-	public SimpleState(Set vars, List values){
+	public SimpleState(final Set<String> vars, final List<Integer> values){
 		mVars = vars;
 		mValues = values;
 	}
 	
-	public Set getVars() {
+	public Set<String> getVars(){
 		return mVars;
 	}
 	
-	public List getValues() {
+	public List<Integer> getValues(){
 		return mValues;
-	}
-	
-	public String getProcedure() {
-		return procedure;
-	}
-	
-	public int getPc() {
-		return pc;
-	}
-	
-	public int getValueByVar(String target) {
-		assert mVars.contains(target);
-		int index = -10000;
-		for (var i = 0; i < mVars.toArray().length; i++) {
-			if (mVars.toArray()[i].equals(target)) {
-				index = i;
-			}
-		}
-		return mValues.indexOf(index);
 	}
 }

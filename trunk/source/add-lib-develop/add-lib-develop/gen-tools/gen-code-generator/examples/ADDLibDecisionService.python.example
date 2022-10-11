@@ -1,0 +1,24 @@
+# This file was generated with the ADD-Lib
+# http://add-lib.scce.info/
+
+class @param("class-name")'''ADDLibDecisionService''':
+@root-dd'''
+
+    def @attr(label)(self,@injectable("param-list")'''predicates'''):
+        return self.__eval@attr(dd, ptr)(predicates)
+    
+'''
+@internal-dd'''
+
+
+    def __eval@attr(ptr)(self,@injectable("param-list")'''predicates'''):
+        if (@injectable("var-condition")'''predicates.@attr(read-name)()'''):
+            return self.__eval@attr(t, ptr)(predicates)
+        else:
+            return self.__eval@attr(e, ptr)(predicates)
+'''
+@constant-dd'''
+
+    def __eval@attr(ptr)(self,@injectable("param-list")'''predicates'''):
+        return @injectable("result-instatiation")'''"@attr(to-string)'''2.0'''"'''
+'''

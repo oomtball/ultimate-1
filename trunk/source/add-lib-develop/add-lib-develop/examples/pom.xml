@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>info.scce</groupId>
+        <artifactId>addlib-build-parent</artifactId>
+        <version>2.0.20-BETA-SNAPSHOT</version>
+        <relativePath>../build-parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>addlib-examples</artifactId>
+
+    <name>ADDLib :: Examples</name>
+
+    <dependencies>
+        <!-- internal -->
+        <dependency>
+            <groupId>info.scce</groupId>
+            <artifactId>addlib-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>info.scce</groupId>
+            <artifactId>addlib-cudd</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>info.scce</groupId>
+            <artifactId>addlib-sylvan</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>info.scce</groupId>
+            <artifactId>addlib-api</artifactId>
+        </dependency>
+
+        <!-- external -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

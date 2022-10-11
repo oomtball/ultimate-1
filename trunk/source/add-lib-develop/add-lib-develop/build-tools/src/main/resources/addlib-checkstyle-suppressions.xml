@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- Special names for C/C++ -->
+    <suppress checks="TypeName|AbstractClassName" files="info[\\/]scce[\\/]addlib[\\/]apply[\\/].*"/>
+    <suppress checks="TypeName|AbstractClassName" files="info[\\/]scce[\\/]addlib[\\/]cudd[\\/].*"/>
+
+    <!-- Native methods from C/C++ -->
+    <suppress checks="MethodName|ParameterName" files="info[\\/]scce[\\/]addlib[\\/]sylvan[\\/]Sylvan.java"/>
+    <suppress checks="MethodName|ParameterName|OverloadMethodsDeclarationOrder"
+              files="info[\\/]scce[\\/]addlib[\\/]cudd[\\/]Cudd.java"/>
+
+    <!-- Do not check for specific pattern in names of abstract classes -->
+    <suppress checks="AbstractClassName" files=".*"/>
+
+    <!-- Allow catching "Exception" for native calls -->
+    <suppress checks="IllegalCatch" files="info[\\/]scce[\\/]addlib[\\/]dd[\\/]add[\\/]ADD.java"/>
+
+    <!-- Zero values and order of overloaded methods make sense for easier understanding -->
+    <suppress checks="ExplicitInitialization" files="info[\\/]scce[\\/]addlib[\\/]layouter[\\/](Simple)?Layouter.java"/>
+    <suppress checks="OverloadMethodsDeclarationOrder" files="info[\\/]scce[\\/]addlib[\\/]layouter[\\/]Layouter.java"/>
+    <suppress checks="MagicNumber" files="info[\\/]scce[\\/]addlib[\\/]layouter[\\/]SimpleLayouter.java"/>
+
+    <!-- Ignore static import checks for several classes -->
+    <suppress checks="AvoidStaticImport" files="info[\\/]scce[\\/]addlib[\\/]dd[\\/]DDReorderingType.java"/>
+    <suppress checks="AvoidStaticImport|AvoidStarImport"
+              files="info[\\/]scce[\\/]addlib[\\/]backend[\\/].*.java"/>
+
+    <!-- Allow magic numbers for serialization purposes -->
+    <suppress checks="MagicNumber" files="info[\\/]scce[\\/]addlib[\\/]serializer[\\/]XDDSerializer.java"/>
+    <suppress checks="MagicNumber" files="info[\\/]scce[\\/]addlib[\\/]codegenerator[\\/]AsciiArtGenerator.java"/>
+
+    <!-- Allow magic numbers for specifying benchmark sizes -->
+    <suppress checks="MagicNumber" files="info[\\/]scce[\\/]addlib[\\/]profiling[\\/].*"/>
+
+    <!-- Do not enforce order of overloaded methods -->
+    <suppress checks="OverloadMethodsDeclarationOrder"
+              files="info[\\/]scce[\\/]addlib[\\/]profiling[\\/]jmh[\\/]add[\\/]states[\\/]ADDBenchmarkState.java"/>
+    <suppress checks="OverloadMethodsDeclarationOrder"
+              files="info[\\/]scce[\\/]addlib[\\/]profiling[\\/]jmh[\\/]bdd[\\/]states[\\/]BDDBenchmarkState.java"/>
+
+
+    <!-- Allow magic numbers for examples -->
+    <suppress checks="MagicNumber" files="info[\\/]scce[\\/]addlib[\\/]examples[\\/].*"/>
+
+    <!-- Test suppressions -->
+    <suppress checks="AvoidStaticImport|LocalVariableName|MagicNumber" files=".*Test.java"/>
+    <suppress checks="AvoidStarImport" files="info[\\/]scce[\\/]addlib[\\/]cudd[\\/]CuddTest.java"/>
+    <suppress checks=".*" files="resources[\\/]info[\\/]scce[\\/]addlib[\\/]codegenerator[\\/].*.java"/>
+</suppressions>

@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2017-2022, TU Dortmund University
+This file is part of ADD-Lib, https://add-lib.scce.info/.
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with the distribution.
+
+Neither the name of the TU Dortmund University nor the names of its contributors may be used to endorse or promote
+products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>info.scce</groupId>
+        <artifactId>addlib-parent</artifactId>
+        <version>2.0.20-BETA-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>addlib-build-parent</artifactId>
+    <packaging>pom</packaging>
+
+    <name>ADD-Lib :: Build Parent</name>
+    <description>
+        A utility artifact, that defines certain plugin executions for the build process. May be used to define
+        dependencies on the "build-tools" artifact without introducing cyclic dependencies with the general parent.
+    </description>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <exclude>info/scce/addlib/parser/ADDLanguage*.class</exclude>
+                            <exclude>info/scce/addlib/parser/BDDLanguage*.class</exclude>
+                            <exclude>info/scce/addlib/parser/XDDLanguage*.class</exclude>
+                            <exclude>info/scce/addlib/parser/ZDDLanguage*.class</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-annotations</artifactId>
+                    <version>${spotbugs-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>code-analysis</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.github.spotbugs</groupId>
+                            <artifactId>spotbugs-maven-plugin</artifactId>
+                            <configuration>
+                                <failOnError>true</failOnError>
+                                <excludeFilterFile>/addlib-spotbugs-exclusions.xml</excludeFilterFile>
+                                <effort>Max</effort>
+                                <includeTests>true</includeTests>
+                            </configuration>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>info.scce</groupId>
+                                    <artifactId>addlib-build-tools</artifactId>
+                                    <version>2.0.20-BETA-SNAPSHOT</version>
+                                </dependency>
+                            </dependencies>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-pmd-plugin</artifactId>
+                            <configuration>
+                                <failOnViolation>true</failOnViolation>
+                                <rulesets>
+                                    <ruleset>/addlib-pmd-ruleset.xml</ruleset>
+                                </rulesets>
+                                <includeTests>true</includeTests>
+                            </configuration>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>info.scce</groupId>
+                                    <artifactId>addlib-build-tools</artifactId>
+                                    <version>2.0.20-BETA-SNAPSHOT</version>
+                                </dependency>
+                            </dependencies>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-checkstyle-plugin</artifactId>
+                            <configuration>
+                                <configLocation>/addlib-checkstyle.xml</configLocation>
+                                <failOnViolation>true</failOnViolation>
+                                <headerLocation>/license-header-java.txt</headerLocation>
+                                <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                                <suppressionsLocation>/addlib-checkstyle-suppressions.xml</suppressionsLocation>
+                                <linkXRef>false</linkXRef>
+                                <sourceDirectories>${project.build.sourceDirectory}</sourceDirectories>
+                            </configuration>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>com.puppycrawl.tools</groupId>
+                                    <artifactId>checkstyle</artifactId>
+                                    <version>${checkstyle.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>info.scce</groupId>
+                                    <artifactId>addlib-build-tools</artifactId>
+                                    <version>2.0.20-BETA-SNAPSHOT</version>
+                                </dependency>
+                            </dependencies>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-pmd-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>pmd</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>cf</id>
+            <dependencies>
+                <!-- utility dependency so that the classloader can correctly resolve annotations -->
+                <dependency>
+                    <groupId>com.google.code.findbugs</groupId>
+                    <artifactId>jsr305</artifactId>
+                    <version>${jsr305.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.google.errorprone</groupId>
+                    <artifactId>javac</artifactId>
+                    <version>${error-prone.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <!-- Apparently, CF has problems loading when a module does not use any annotations.
+                 As a workaround, provide the annotations by default -->
+                <dependency>
+                    <groupId>org.checkerframework</groupId>
+                    <artifactId>checker-qual</artifactId>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>properties</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>cf-compile</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <skipMain>${addlib.java9OrNewer}</skipMain>
+                                    <failOnWarning>true</failOnWarning>
+                                    <fork>true</fork>
+                                    <outputDirectory>${project.build.directory}/checkerframework</outputDirectory>
+                                    <annotationProcessorPaths>
+                                        <path>
+                                            <groupId>org.checkerframework</groupId>
+                                            <artifactId>checker</artifactId>
+                                            <version>${checkerframework.version}</version>
+                                        </path>
+                                    </annotationProcessorPaths>
+                                    <annotationProcessors>
+                                        <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker
+                                        </annotationProcessor>
+                                        <!--<annotationProcessor>org.checkerframework.checker.signedness.SignednessChecker</annotationProcessor>-->
+                                    </annotationProcessors>
+                                    <compilerArgs>
+                                        <arg>-J-Xbootclasspath/p:${com.google.errorprone:javac:jar}</arg>
+                                        <arg>-AskipUses=^com.google.*|\
+                                            ^java.(awt.*|util.Arrays)|\
+                                            ^javax.swing.*|\
+                                        </arg>
+                                        <arg>-AsuppressWarnings=uninitialized</arg>
+                                        <arg>-AassumeAssertionsAreEnabled</arg>
+                                        <arg>-Astubs=jdk8.astub:collection-object-parameters-may-be-null.astub</arg>
+                                    </compilerArgs>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>cf-test-compile</id>
+                                <phase>test-compile</phase>
+                                <goals>
+                                    <goal>testCompile</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${addlib.java9OrNewer}</skip>
+                                    <failOnWarning>true</failOnWarning>
+                                    <fork>true</fork>
+                                    <outputDirectory>${project.build.directory}/checkerframework</outputDirectory>
+                                    <annotationProcessorPaths>
+                                        <path>
+                                            <groupId>org.checkerframework</groupId>
+                                            <artifactId>checker</artifactId>
+                                            <version>${checkerframework.version}</version>
+                                        </path>
+                                    </annotationProcessorPaths>
+                                    <annotationProcessors>
+                                        <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker
+                                        </annotationProcessor>
+                                    </annotationProcessors>
+                                    <compilerArgs>
+                                        <arg>-J-Xbootclasspath/p:${com.google.errorprone:javac:jar}</arg>
+                                        <arg>-AonlyDefs=^info\.scce</arg>
+                                        <arg>-AskipUses=.*</arg>
+                                        <arg>-AsuppressWarnings=uninitialized</arg>
+                                        <arg>-AassumeAssertionsAreEnabled</arg>
+                                    </compilerArgs>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

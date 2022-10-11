@@ -1,0 +1,41 @@
+/* This file was generated with the ADD-Lib
+ * http://add-lib.scce.info/ */
+
+
+Predicates predicates;
+char* returnstr;
+
+@root-dd'''
+@injectable("return-type")'''char*''' @attr(label)'''sumOfPredicatesABC'''(@injectable("param-list")'''@param("param-type")'''Predicates''' pPredicates''');
+'''
+
+
+@root-dd'''
+
+@injectable("return-type")'''char*''' @attr(label)'''sumOfPredicatesABC'''(@injectable("param-list")'''@param("param-type")'''Predicates''' pPredicates''') {
+    predicates = pPredicates;
+    goto eval@attr(dd, ptr);
+    end:
+    return returnstr;
+
+@internal-dd'''
+
+    eval@attr(ptr):
+    
+    if (@injectable("var-condition")'''predicates.@attr(read-name)'''predA'''()'''){
+        goto eval@attr(t, ptr);
+    }else{
+        goto eval@attr(e, ptr);
+    }
+'''
+@constant-dd'''
+
+    eval@attr(ptr):
+
+    returnstr = @injectable("result-instatiation")'''"@attr(to-string)'''2.0'''"''';
+    goto end;
+
+'''
+}
+'''
+

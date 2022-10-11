@@ -1,0 +1,918 @@
+DdNode * 	Cudd_addNewVar (DdManager *dd)
+ 	Returns a new ADD variable. 
+DdNode * 	Cudd_addNewVarAtLevel (DdManager *dd, int level)
+ 	Returns a new ADD variable at a specified level. 
+DdNode * 	Cudd_bddNewVar (DdManager *dd)
+ 	Returns a new BDD variable. 
+DdNode * 	Cudd_bddNewVarAtLevel (DdManager *dd, int level)
+ 	Returns a new BDD variable at a specified level. 
+int 	Cudd_bddIsVar (DdManager *dd, DdNode *f)
+ 	Returns 1 if the given node is a BDD variable; 0 otherwise. 
+DdNode * 	Cudd_addIthVar (DdManager *dd, int i)
+ 	Returns the ADD variable with index i. 
+DdNode * 	Cudd_bddIthVar (DdManager *dd, int i)
+ 	Returns the BDD variable with index i. 
+DdNode * 	Cudd_zddIthVar (DdManager *dd, int i)
+ 	Returns the ZDD variable with index i. 
+int 	Cudd_zddVarsFromBddVars (DdManager *dd, int multiplicity)
+ 	Creates one or more ZDD variables for each BDD variable. 
+unsigned int 	Cudd_ReadMaxIndex (void)
+ 	Returns the maximum possible index for a variable. 
+DdNode * 	Cudd_addConst (DdManager *dd, CUDD_VALUE_TYPE c)
+ 	Returns the ADD for constant c. 
+int 	Cudd_IsConstant (DdNode *node)
+ 	Returns 1 if the node is a constant node. 
+int 	Cudd_IsNonConstant (DdNode *f)
+ 	Returns 1 if a DD node is not constant. 
+DdNode * 	Cudd_T (DdNode *node)
+ 	Returns the then child of an internal node. 
+DdNode * 	Cudd_E (DdNode *node)
+ 	Returns the else child of an internal node. 
+CUDD_VALUE_TYPE 	Cudd_V (DdNode *node)
+ 	Returns the value of a constant node. 
+unsigned long 	Cudd_ReadStartTime (DdManager *unique)
+ 	Returns the start time of the manager. 
+unsigned long 	Cudd_ReadElapsedTime (DdManager *unique)
+ 	Returns the time elapsed since the start time of the manager. 
+void 	Cudd_SetStartTime (DdManager *unique, unsigned long st)
+ 	Sets the start time of the manager. 
+void 	Cudd_ResetStartTime (DdManager *unique)
+ 	Resets the start time of the manager. 
+unsigned long 	Cudd_ReadTimeLimit (DdManager *unique)
+ 	Returns the time limit for the manager. 
+unsigned long 	Cudd_SetTimeLimit (DdManager *unique, unsigned long tl)
+ 	Sets the time limit for the manager. 
+void 	Cudd_UpdateTimeLimit (DdManager *unique)
+ 	Updates the time limit for the manager. 
+void 	Cudd_IncreaseTimeLimit (DdManager *unique, unsigned long increase)
+ 	Increases the time limit for the manager. 
+void 	Cudd_UnsetTimeLimit (DdManager *unique)
+ 	Unsets the time limit for the manager. 
+int 	Cudd_TimeLimited (DdManager *unique)
+ 	Returns true if the time limit for the manager is set. 
+void 	Cudd_RegisterTerminationCallback (DdManager *unique, DD_THFP callback, void *callback_arg)
+ 	Installs a termination callback. 
+void 	Cudd_UnregisterTerminationCallback (DdManager *unique)
+ 	Unregisters a termination callback. 
+DD_OOMFP 	Cudd_RegisterOutOfMemoryCallback (DdManager *unique, DD_OOMFP callback)
+ 	Installs an out-of-memory callback. 
+void 	Cudd_UnregisterOutOfMemoryCallback (DdManager *unique)
+ 	Unregister an out-of-memory callback. 
+void 	Cudd_RegisterTimeoutHandler (DdManager *unique, DD_TOHFP handler, void *arg)
+ 	Register a timeout handler function. 
+DD_TOHFP 	Cudd_ReadTimeoutHandler (DdManager *unique, void **argp)
+ 	Read the current timeout handler function. 
+void 	Cudd_AutodynEnable (DdManager *unique, Cudd_ReorderingType method)
+ 	Enables automatic dynamic reordering of BDDs and ADDs. 
+void 	Cudd_AutodynDisable (DdManager *unique)
+ 	Disables automatic dynamic reordering. 
+int 	Cudd_ReorderingStatus (DdManager *unique, Cudd_ReorderingType *method)
+ 	Reports the status of automatic dynamic reordering of BDDs and ADDs. 
+void 	Cudd_AutodynEnableZdd (DdManager *unique, Cudd_ReorderingType method)
+ 	Enables automatic dynamic reordering of ZDDs. 
+void 	Cudd_AutodynDisableZdd (DdManager *unique)
+ 	Disables automatic dynamic reordering of ZDDs. 
+int 	Cudd_ReorderingStatusZdd (DdManager *unique, Cudd_ReorderingType *method)
+ 	Reports the status of automatic dynamic reordering of ZDDs. 
+int 	Cudd_zddRealignmentEnabled (DdManager *unique)
+ 	Tells whether the realignment of ZDD order to BDD order is enabled. 
+void 	Cudd_zddRealignEnable (DdManager *unique)
+ 	Enables realignment of ZDD order to BDD order. 
+void 	Cudd_zddRealignDisable (DdManager *unique)
+ 	Disables realignment of ZDD order to BDD order. 
+int 	Cudd_bddRealignmentEnabled (DdManager *unique)
+ 	Tells whether the realignment of BDD order to ZDD order is enabled. 
+void 	Cudd_bddRealignEnable (DdManager *unique)
+ 	Enables realignment of BDD order to ZDD order. 
+void 	Cudd_bddRealignDisable (DdManager *unique)
+ 	Disables realignment of ZDD order to BDD order. 
+DdNode * 	Cudd_ReadOne (DdManager *dd)
+ 	Returns the one constant of the manager. 
+DdNode * 	Cudd_ReadZddOne (DdManager *dd, int i)
+ 	Returns the ZDD for the constant 1 function. 
+DdNode * 	Cudd_ReadZero (DdManager *dd)
+ 	Returns the zero constant of the manager. 
+DdNode * 	Cudd_ReadLogicZero (DdManager *dd)
+ 	Returns the logic zero constant of the manager. 
+DdNode * 	Cudd_ReadPlusInfinity (DdManager *dd)
+ 	Reads the plus-infinity constant from the manager. 
+DdNode * 	Cudd_ReadMinusInfinity (DdManager *dd)
+ 	Reads the minus-infinity constant from the manager. 
+DdNode * 	Cudd_ReadBackground (DdManager *dd)
+ 	Reads the background constant of the manager. 
+void 	Cudd_SetBackground (DdManager *dd, DdNode *bck)
+ 	Sets the background constant of the manager. 
+unsigned int 	Cudd_ReadCacheSlots (DdManager *dd)
+ 	Reads the number of slots in the cache. 
+double 	Cudd_ReadCacheUsedSlots (DdManager *dd)
+ 	Reads the fraction of used slots in the cache. 
+double 	Cudd_ReadCacheLookUps (DdManager *dd)
+ 	Returns the number of cache look-ups. 
+double 	Cudd_ReadCacheHits (DdManager *dd)
+ 	Returns the number of cache hits. 
+double 	Cudd_ReadRecursiveCalls (DdManager *dd)
+ 	Returns the number of recursive calls. 
+unsigned int 	Cudd_ReadMinHit (DdManager *dd)
+ 	Reads the hit rate that causes resizinig of the computed table. 
+void 	Cudd_SetMinHit (DdManager *dd, unsigned int hr)
+ 	Sets the hit rate that causes resizinig of the computed table. 
+unsigned int 	Cudd_ReadLooseUpTo (DdManager *dd)
+ 	Reads the looseUpTo parameter of the manager. 
+void 	Cudd_SetLooseUpTo (DdManager *dd, unsigned int lut)
+ 	Sets the looseUpTo parameter of the manager. 
+unsigned int 	Cudd_ReadMaxCache (DdManager *dd)
+ 	Returns the soft limit for the cache size. 
+unsigned int 	Cudd_ReadMaxCacheHard (DdManager *dd)
+ 	Reads the maxCacheHard parameter of the manager. 
+void 	Cudd_SetMaxCacheHard (DdManager *dd, unsigned int mc)
+ 	Sets the maxCacheHard parameter of the manager. 
+int 	Cudd_ReadSize (DdManager *dd)
+ 	Returns the number of BDD variables in existance. 
+int 	Cudd_ReadZddSize (DdManager *dd)
+ 	Returns the number of ZDD variables in existance. 
+unsigned int 	Cudd_ReadSlots (DdManager *dd)
+ 	Returns the total number of slots of the unique table. 
+double 	Cudd_ReadUsedSlots (DdManager *dd)
+ 	Reads the fraction of used slots in the unique table. 
+double 	Cudd_ExpectedUsedSlots (DdManager *dd)
+ 	Computes the expected fraction of used slots in the unique table. 
+unsigned int 	Cudd_ReadKeys (DdManager *dd)
+ 	Returns the number of nodes in the unique table. 
+unsigned int 	Cudd_ReadDead (DdManager *dd)
+ 	Returns the number of dead nodes in the unique table. 
+unsigned int 	Cudd_ReadMinDead (DdManager *dd)
+ 	Reads the minDead parameter of the manager. 
+unsigned int 	Cudd_ReadReorderings (DdManager *dd)
+ 	Returns the number of times reordering has occurred. 
+unsigned int 	Cudd_ReadMaxReorderings (DdManager *dd)
+ 	Returns the maximum number of times reordering may be invoked. 
+void 	Cudd_SetMaxReorderings (DdManager *dd, unsigned int mr)
+ 	Sets the maximum number of times reordering may be invoked. 
+long 	Cudd_ReadReorderingTime (DdManager *dd)
+ 	Returns the time spent in reordering. 
+int 	Cudd_ReadGarbageCollections (DdManager *dd)
+ 	Returns the number of times garbage collection has occurred. 
+long 	Cudd_ReadGarbageCollectionTime (DdManager *dd)
+ 	Returns the time spent in garbage collection. 
+double 	Cudd_ReadNodesFreed (DdManager *dd)
+ 	Returns the number of nodes freed. 
+double 	Cudd_ReadNodesDropped (DdManager *dd)
+ 	Returns the number of nodes dropped. 
+double 	Cudd_ReadUniqueLookUps (DdManager *dd)
+ 	Returns the number of look-ups in the unique table. 
+double 	Cudd_ReadUniqueLinks (DdManager *dd)
+ 	Returns the number of links followed in the unique table. 
+int 	Cudd_ReadSiftMaxVar (DdManager *dd)
+ 	Reads the siftMaxVar parameter of the manager. 
+void 	Cudd_SetSiftMaxVar (DdManager *dd, int smv)
+ 	Sets the siftMaxVar parameter of the manager. 
+int 	Cudd_ReadSiftMaxSwap (DdManager *dd)
+ 	Reads the siftMaxSwap parameter of the manager. 
+void 	Cudd_SetSiftMaxSwap (DdManager *dd, int sms)
+ 	Sets the siftMaxSwap parameter of the manager. 
+double 	Cudd_ReadMaxGrowth (DdManager *dd)
+ 	Reads the maxGrowth parameter of the manager. 
+void 	Cudd_SetMaxGrowth (DdManager *dd, double mg)
+ 	Sets the maxGrowth parameter of the manager. 
+double 	Cudd_ReadMaxGrowthAlternate (DdManager *dd)
+ 	Reads the maxGrowthAlt parameter of the manager. 
+void 	Cudd_SetMaxGrowthAlternate (DdManager *dd, double mg)
+ 	Sets the maxGrowthAlt parameter of the manager. 
+int 	Cudd_ReadReorderingCycle (DdManager *dd)
+ 	Reads the reordCycle parameter of the manager. 
+void 	Cudd_SetReorderingCycle (DdManager *dd, int cycle)
+ 	Sets the reordCycle parameter of the manager. 
+unsigned int 	Cudd_NodeReadIndex (DdNode *node)
+ 	Returns the index of the node. 
+int 	Cudd_ReadPerm (DdManager *dd, int i)
+ 	Returns the current position of the i-th variable in the order. 
+int 	Cudd_ReadPermZdd (DdManager *dd, int i)
+ 	Returns the current position of the i-th ZDD variable in the order. 
+int 	Cudd_ReadInvPerm (DdManager *dd, int i)
+ 	Returns the index of the variable currently in the i-th position of the order. 
+int 	Cudd_ReadInvPermZdd (DdManager *dd, int i)
+ 	Returns the index of the ZDD variable currently in the i-th position of the order. 
+DdNode * 	Cudd_ReadVars (DdManager *dd, int i)
+ 	Returns the i-th element of the vars array. 
+CUDD_VALUE_TYPE 	Cudd_ReadEpsilon (DdManager *dd)
+ 	Reads the epsilon parameter of the manager. 
+void 	Cudd_SetEpsilon (DdManager *dd, CUDD_VALUE_TYPE ep)
+ 	Sets the epsilon parameter of the manager to ep. 
+Cudd_AggregationType 	Cudd_ReadGroupcheck (DdManager *dd)
+ 	Reads the groupcheck parameter of the manager. 
+void 	Cudd_SetGroupcheck (DdManager *dd, Cudd_AggregationType gc)
+ 	Sets the parameter groupcheck of the manager to gc. 
+int 	Cudd_GarbageCollectionEnabled (DdManager *dd)
+ 	Tells whether garbage collection is enabled. 
+void 	Cudd_EnableGarbageCollection (DdManager *dd)
+ 	Enables garbage collection. 
+void 	Cudd_DisableGarbageCollection (DdManager *dd)
+ 	Disables garbage collection. 
+int 	Cudd_DeadAreCounted (DdManager *dd)
+ 	Tells whether dead nodes are counted towards triggering reordering. 
+void 	Cudd_TurnOnCountDead (DdManager *dd)
+ 	Causes the dead nodes to be counted towards triggering reordering. 
+void 	Cudd_TurnOffCountDead (DdManager *dd)
+ 	Causes the dead nodes not to be counted towards triggering reordering. 
+int 	Cudd_ReadRecomb (DdManager *dd)
+ 	Returns the current value of the recombination parameter used in group sifting. 
+void 	Cudd_SetRecomb (DdManager *dd, int recomb)
+ 	Sets the value of the recombination parameter used in group sifting. 
+int 	Cudd_ReadSymmviolation (DdManager *dd)
+ 	Returns the current value of the symmviolation parameter used in group sifting. 
+void 	Cudd_SetSymmviolation (DdManager *dd, int symmviolation)
+ 	Sets the value of the symmviolation parameter used in group sifting. 
+int 	Cudd_ReadArcviolation (DdManager *dd)
+ 	Returns the current value of the arcviolation parameter used in group sifting. 
+void 	Cudd_SetArcviolation (DdManager *dd, int arcviolation)
+ 	Sets the value of the arcviolation parameter used in group sifting. 
+int 	Cudd_ReadPopulationSize (DdManager *dd)
+ 	Reads the current size of the population used by the genetic algorithm for variable reordering. 
+void 	Cudd_SetPopulationSize (DdManager *dd, int populationSize)
+ 	Sets the size of the population used by the genetic algorithm for variable reordering. 
+int 	Cudd_ReadNumberXovers (DdManager *dd)
+ 	Reads the current number of crossovers used by the genetic algorithm for variable reordering. 
+void 	Cudd_SetNumberXovers (DdManager *dd, int numberXovers)
+ 	Sets the number of crossovers used by the genetic algorithm for variable reordering. 
+unsigned int 	Cudd_ReadOrderRandomization (DdManager *dd)
+ 	Returns the order randomization factor. 
+void 	Cudd_SetOrderRandomization (DdManager *dd, unsigned int factor)
+ 	Sets the order randomization factor. 
+size_t 	Cudd_ReadMemoryInUse (DdManager *dd)
+ 	Returns the memory in use by the manager measured in bytes. 
+int 	Cudd_PrintInfo (DdManager *dd, FILE *fp)
+ 	Prints out statistics and settings for a CUDD manager. 
+long 	Cudd_ReadPeakNodeCount (DdManager *dd)
+ 	Reports the peak number of nodes. 
+int 	Cudd_ReadPeakLiveNodeCount (DdManager *dd)
+ 	Reports the peak number of live nodes. 
+long 	Cudd_ReadNodeCount (DdManager *dd)
+ 	Reports the number of nodes in BDDs and ADDs. 
+long 	Cudd_zddReadNodeCount (DdManager *dd)
+ 	Reports the number of nodes in ZDDs. 
+int 	Cudd_AddHook (DdManager *dd, DD_HFP f, Cudd_HookType where)
+ 	Adds a function to a hook. 
+int 	Cudd_RemoveHook (DdManager *dd, DD_HFP f, Cudd_HookType where)
+ 	Removes a function from a hook. 
+int 	Cudd_IsInHook (DdManager *dd, DD_HFP f, Cudd_HookType where)
+ 	Checks whether a function is in a hook. 
+int 	Cudd_StdPreReordHook (DdManager *dd, const char *str, void *data)
+ 	Sample hook function to call before reordering. 
+int 	Cudd_StdPostReordHook (DdManager *dd, const char *str, void *data)
+ 	Sample hook function to call after reordering. 
+int 	Cudd_EnableReorderingReporting (DdManager *dd)
+ 	Enables reporting of reordering stats. 
+int 	Cudd_DisableReorderingReporting (DdManager *dd)
+ 	Disables reporting of reordering stats. 
+int 	Cudd_ReorderingReporting (DdManager *dd)
+ 	Returns 1 if reporting of reordering stats is enabled; 0 otherwise. 
+int 	Cudd_PrintGroupedOrder (DdManager *dd, const char *str, void *data)
+ 	Hook function to print the current variable order. 
+int 	Cudd_EnableOrderingMonitoring (DdManager *dd)
+ 	Enables monitoring of ordering. 
+int 	Cudd_DisableOrderingMonitoring (DdManager *dd)
+ 	Disables monitoring of ordering. 
+int 	Cudd_OrderingMonitoring (DdManager *dd)
+ 	Returns 1 if monitoring of ordering is enabled; 0 otherwise. 
+void 	Cudd_SetApplicationHook (DdManager *dd, void *value)
+ 	Sets the application hook. 
+void * 	Cudd_ReadApplicationHook (DdManager *dd)
+ 	Reads the application hook. 
+Cudd_ErrorType 	Cudd_ReadErrorCode (DdManager *dd)
+ 	Returns the code of the last error. 
+void 	Cudd_ClearErrorCode (DdManager *dd)
+ 	Clear the error code of a manager. 
+DD_OOMFP 	Cudd_InstallOutOfMemoryHandler (DD_OOMFP newHandler)
+ 	Installs a handler for failed memory allocations. 
+FILE * 	Cudd_ReadStdout (DdManager *dd)
+ 	Reads the stdout of a manager. 
+void 	Cudd_SetStdout (DdManager *dd, FILE *fp)
+ 	Sets the stdout of a manager. 
+FILE * 	Cudd_ReadStderr (DdManager *dd)
+ 	Reads the stderr of a manager. 
+void 	Cudd_SetStderr (DdManager *dd, FILE *fp)
+ 	Sets the stderr of a manager. 
+unsigned int 	Cudd_ReadNextReordering (DdManager *dd)
+ 	Returns the threshold for the next dynamic reordering. 
+void 	Cudd_SetNextReordering (DdManager *dd, unsigned int next)
+ 	Sets the threshold for the next dynamic reordering. 
+double 	Cudd_ReadSwapSteps (DdManager *dd)
+ 	Reads the number of elementary reordering steps. 
+unsigned int 	Cudd_ReadMaxLive (DdManager *dd)
+ 	Reads the maximum allowed number of live nodes. 
+void 	Cudd_SetMaxLive (DdManager *dd, unsigned int maxLive)
+ 	Sets the maximum allowed number of live nodes. 
+size_t 	Cudd_ReadMaxMemory (DdManager *dd)
+ 	Reads the maximum allowed memory. 
+size_t 	Cudd_SetMaxMemory (DdManager *dd, size_t maxMemory)
+ 	Sets the maximum allowed memory. 
+int 	Cudd_bddBindVar (DdManager *dd, int index)
+ 	Prevents sifting of a variable. 
+int 	Cudd_bddUnbindVar (DdManager *dd, int index)
+ 	Allows the sifting of a variable. 
+int 	Cudd_bddVarIsBound (DdManager *dd, int index)
+ 	Tells whether a variable can be sifted. 
+DdNode * 	Cudd_addExistAbstract (DdManager *manager, DdNode *f, DdNode *cube)
+ 	Existentially Abstracts all the variables in cube from f. 
+DdNode * 	Cudd_addUnivAbstract (DdManager *manager, DdNode *f, DdNode *cube)
+ 	Universally Abstracts all the variables in cube from f. 
+DdNode * 	Cudd_addOrAbstract (DdManager *manager, DdNode *f, DdNode *cube)
+ 	Disjunctively abstracts all the variables in cube from the 0-1 ADD f. 
+DdNode * 	Cudd_addApply (DdManager *dd, DD_AOP op, DdNode *f, DdNode *g)
+ 	Applies op to the corresponding discriminants of f and g. 
+DdNode * 	Cudd_addPlus (DdManager *dd, DdNode **f, DdNode **g)
+ 	Integer and floating point addition. 
+DdNode * 	Cudd_addTimes (DdManager *dd, DdNode **f, DdNode **g)
+ 	Integer and floating point multiplication. 
+DdNode * 	Cudd_addThreshold (DdManager *dd, DdNode **f, DdNode **g)
+ 	f if fg; 0 if f<g. 
+DdNode * 	Cudd_addSetNZ (DdManager *dd, DdNode **f, DdNode **g)
+ 	This operator sets f to the value of g wherever g != 0. 
+DdNode * 	Cudd_addDivide (DdManager *dd, DdNode **f, DdNode **g)
+ 	Integer and floating point division. 
+DdNode * 	Cudd_addMinus (DdManager *dd, DdNode **f, DdNode **g)
+ 	Integer and floating point subtraction. 
+DdNode * 	Cudd_addMinimum (DdManager *dd, DdNode **f, DdNode **g)
+ 	Integer and floating point min. 
+DdNode * 	Cudd_addMaximum (DdManager *dd, DdNode **f, DdNode **g)
+ 	Integer and floating point max. 
+DdNode * 	Cudd_addOneZeroMaximum (DdManager *dd, DdNode **f, DdNode **g)
+ 	Returns 1 if f > g and 0 otherwise. 
+DdNode * 	Cudd_addDiff (DdManager *dd, DdNode **f, DdNode **g)
+ 	Returns plusinfinity if f=g; returns min(f,g) if f!=g. 
+DdNode * 	Cudd_addAgreement (DdManager *dd, DdNode **f, DdNode **g)
+ 	f if f==g; background if f!=g. 
+DdNode * 	Cudd_addOr (DdManager *dd, DdNode **f, DdNode **g)
+ 	Disjunction of two 0-1 ADDs. 
+DdNode * 	Cudd_addNand (DdManager *dd, DdNode **f, DdNode **g)
+ 	NAND of two 0-1 ADDs. 
+DdNode * 	Cudd_addNor (DdManager *dd, DdNode **f, DdNode **g)
+ 	NOR of two 0-1 ADDs. 
+DdNode * 	Cudd_addXor (DdManager *dd, DdNode **f, DdNode **g)
+ 	XOR of two 0-1 ADDs. 
+DdNode * 	Cudd_addXnor (DdManager *dd, DdNode **f, DdNode **g)
+ 	XNOR of two 0-1 ADDs. 
+DdNode * 	Cudd_addMonadicApply (DdManager *dd, DD_MAOP op, DdNode *f)
+ 	Applies op to the discriminants of f. 
+DdNode * 	Cudd_addLog (DdManager *dd, DdNode *f)
+ 	Natural logarithm of an ADD. 
+DdNode * 	Cudd_addFindMax (DdManager *dd, DdNode *f)
+ 	Finds the maximum discriminant of f. 
+DdNode * 	Cudd_addFindMin (DdManager *dd, DdNode *f)
+ 	Finds the minimum discriminant of f. 
+DdNode * 	Cudd_addIthBit (DdManager *dd, DdNode *f, int bit)
+ 	Extracts the i-th bit from an ADD. 
+DdNode * 	Cudd_addScalarInverse (DdManager *dd, DdNode *f, DdNode *epsilon)
+ 	Computes the scalar inverse of an ADD. 
+DdNode * 	Cudd_addIte (DdManager *dd, DdNode *f, DdNode *g, DdNode *h)
+ 	Implements ITE(f,g,h). 
+DdNode * 	Cudd_addIteConstant (DdManager *dd, DdNode *f, DdNode *g, DdNode *h)
+ 	Implements ITEconstant for ADDs. 
+DdNode * 	Cudd_addEvalConst (DdManager *dd, DdNode *f, DdNode *g)
+ 	Checks whether ADD g is constant whenever ADD f is 1. 
+int 	Cudd_addLeq (DdManager *dd, DdNode *f, DdNode *g)
+ 	Determines whether f is less than or equal to g. 
+DdNode * 	Cudd_addCmpl (DdManager *dd, DdNode *f)
+ 	Computes the complement of an ADD a la C language. 
+DdNode * 	Cudd_addNegate (DdManager *dd, DdNode *f)
+ 	Computes the additive inverse of an ADD. 
+DdNode * 	Cudd_addRoundOff (DdManager *dd, DdNode *f, int N)
+ 	Rounds off the discriminants of an ADD. 
+DdNode * 	Cudd_addWalsh (DdManager *dd, DdNode **x, DdNode **y, int n)
+ 	Generates a Walsh matrix in ADD form. 
+DdNode * 	Cudd_addResidue (DdManager *dd, int n, int m, int options, int top)
+ 	Builds an ADD for the residue modulo m of an n-bit number. 
+DdNode * 	Cudd_bddAndAbstract (DdManager *manager, DdNode *f, DdNode *g, DdNode *cube)
+ 	Takes the AND of two BDDs and simultaneously abstracts the variables in cube. 
+DdNode * 	Cudd_bddAndAbstractLimit (DdManager *manager, DdNode *f, DdNode *g, DdNode *cube, unsigned int limit)
+ 	Takes the AND of two BDDs and simultaneously abstracts variables unless too many nodes are needed. 
+int 	Cudd_ApaNumberOfDigits (int binaryDigits)
+ 	Returns the number of digits for an arbitrary precision integer. 
+DdApaNumber 	Cudd_NewApaNumber (int digits)
+ 	Allocates memory for an arbitrary precision integer. 
+void 	Cudd_FreeApaNumber (DdApaNumber number)
+ 	Frees an arbitrary precision integer. 
+void 	Cudd_ApaCopy (int digits, DdConstApaNumber source, DdApaNumber dest)
+ 	Makes a copy of an arbitrary precision integer. 
+DdApaDigit 	Cudd_ApaAdd (int digits, DdConstApaNumber a, DdConstApaNumber b, DdApaNumber sum)
+ 	Adds two arbitrary precision integers. 
+DdApaDigit 	Cudd_ApaSubtract (int digits, DdConstApaNumber a, DdConstApaNumber b, DdApaNumber diff)
+ 	Subtracts two arbitrary precision integers. 
+DdApaDigit 	Cudd_ApaShortDivision (int digits, DdConstApaNumber dividend, DdApaDigit divisor, DdApaNumber quotient)
+ 	Divides an arbitrary precision integer by a digit. 
+unsigned int 	Cudd_ApaIntDivision (int digits, DdConstApaNumber dividend, unsigned int divisor, DdApaNumber quotient)
+ 	Divides an arbitrary precision integer by an integer. 
+void 	Cudd_ApaShiftRight (int digits, DdApaDigit in, DdConstApaNumber a, DdApaNumber b)
+ 	Shifts right an arbitrary precision integer by one binary place. 
+void 	Cudd_ApaSetToLiteral (int digits, DdApaNumber number, DdApaDigit literal)
+ 	Sets an arbitrary precision integer to a one-digit literal. 
+void 	Cudd_ApaPowerOfTwo (int digits, DdApaNumber number, int power)
+ 	Sets an arbitrary precision integer to a power of two. 
+int 	Cudd_ApaCompare (int digitsFirst, DdConstApaNumber first, int digitsSecond, DdConstApaNumber second)
+ 	Compares two arbitrary precision integers. 
+int 	Cudd_ApaCompareRatios (int digitsFirst, DdConstApaNumber firstNum, unsigned int firstDen, int digitsSecond, DdConstApaNumber secondNum, unsigned int secondDen)
+ 	Compares the ratios of two arbitrary precision integers to two unsigned ints. 
+int 	Cudd_ApaPrintHex (FILE *fp, int digits, DdConstApaNumber number)
+ 	Prints an arbitrary precision integer in hexadecimal format. 
+int 	Cudd_ApaPrintDecimal (FILE *fp, int digits, DdConstApaNumber number)
+ 	Prints an arbitrary precision integer in decimal format. 
+char * 	Cudd_ApaStringDecimal (int digits, DdConstApaNumber number)
+ 	converts an arbitrary precision integer to a string in decimal format. 
+int 	Cudd_ApaPrintExponential (FILE *fp, int digits, DdConstApaNumber number, int precision)
+ 	Prints an arbitrary precision integer in exponential format. 
+DdApaNumber 	Cudd_ApaCountMinterm (DdManager const *manager, DdNode *node, int nvars, int *digits)
+ 	Counts the number of minterms of a DD. 
+int 	Cudd_ApaPrintMinterm (FILE *fp, DdManager const *dd, DdNode *node, int nvars)
+ 	Prints the number of minterms of a BDD or ADD using arbitrary precision arithmetic. 
+int 	Cudd_ApaPrintMintermExp (FILE *fp, DdManager const *dd, DdNode *node, int nvars, int precision)
+ 	Prints the number of minterms of a BDD or ADD in exponential format using arbitrary precision arithmetic. 
+int 	Cudd_ApaPrintDensity (FILE *fp, DdManager *dd, DdNode *node, int nvars)
+ 	Prints the density of a BDD or ADD using arbitrary precision arithmetic. 
+DdNode * 	Cudd_UnderApprox (DdManager *dd, DdNode *f, int numVars, int threshold, int safe, double quality)
+ 	Extracts a dense subset from a BDD with Shiple's underapproximation method. 
+DdNode * 	Cudd_OverApprox (DdManager *dd, DdNode *f, int numVars, int threshold, int safe, double quality)
+ 	Extracts a dense superset from a BDD with Shiple's underapproximation method. 
+DdNode * 	Cudd_RemapUnderApprox (DdManager *dd, DdNode *f, int numVars, int threshold, double quality)
+ 	Extracts a dense subset from a BDD with the remapping underapproximation method. 
+DdNode * 	Cudd_RemapOverApprox (DdManager *dd, DdNode *f, int numVars, int threshold, double quality)
+ 	Extracts a dense superset from a BDD with the remapping underapproximation method. 
+DdNode * 	Cudd_BiasedUnderApprox (DdManager *dd, DdNode *f, DdNode *b, int numVars, int threshold, double quality1, double quality0)
+ 	Extracts a dense subset from a BDD with the biased underapproximation method. 
+DdNode * 	Cudd_BiasedOverApprox (DdManager *dd, DdNode *f, DdNode *b, int numVars, int threshold, double quality1, double quality0)
+ 	Extracts a dense superset from a BDD with the biased underapproximation method. 
+DdNode * 	Cudd_bddExistAbstract (DdManager *manager, DdNode *f, DdNode *cube)
+ 	Existentially abstracts all the variables in cube from f. 
+DdNode * 	Cudd_bddExistAbstractLimit (DdManager *manager, DdNode *f, DdNode *cube, unsigned int limit)
+ 	Existentially abstracts all the variables in cube from f. 
+DdNode * 	Cudd_bddXorExistAbstract (DdManager *manager, DdNode *f, DdNode *g, DdNode *cube)
+ 	Takes the exclusive OR of two BDDs and simultaneously abstracts the variables in cube. 
+DdNode * 	Cudd_bddUnivAbstract (DdManager *manager, DdNode *f, DdNode *cube)
+ 	Universally abstracts all the variables in cube from f. 
+DdNode * 	Cudd_bddBooleanDiff (DdManager *manager, DdNode *f, int x)
+ 	Computes the boolean difference of f with respect to x. 
+int 	Cudd_bddVarIsDependent (DdManager *dd, DdNode *f, DdNode *var)
+ 	Checks whether a variable is dependent on others in a function. 
+double 	Cudd_bddCorrelation (DdManager *manager, DdNode *f, DdNode *g)
+ 	Computes the correlation of f and g. 
+double 	Cudd_bddCorrelationWeights (DdManager *manager, DdNode *f, DdNode *g, double *prob)
+ 	Computes the correlation of f and g for given input probabilities. 
+DdNode * 	Cudd_bddIte (DdManager *dd, DdNode *f, DdNode *g, DdNode *h)
+ 	Implements ITE(f,g,h). 
+DdNode * 	Cudd_bddIteLimit (DdManager *dd, DdNode *f, DdNode *g, DdNode *h, unsigned int limit)
+ 	Implements ITE(f,g,h) unless too many nodes are required. 
+DdNode * 	Cudd_bddIteConstant (DdManager *dd, DdNode *f, DdNode *g, DdNode *h)
+ 	Implements ITEconstant(f,g,h). 
+DdNode * 	Cudd_bddIntersect (DdManager *dd, DdNode *f, DdNode *g)
+ 	Returns a function included in the intersection of f and g. 
+DdNode * 	Cudd_bddAnd (DdManager *dd, DdNode *f, DdNode *g)
+ 	Computes the conjunction of two BDDs f and g. 
+DdNode * 	Cudd_bddAndLimit (DdManager *dd, DdNode *f, DdNode *g, unsigned int limit)
+ 	Computes the conjunction of two BDDs f and g unless too many nodes are required. 
+DdNode * 	Cudd_bddOr (DdManager *dd, DdNode *f, DdNode *g)
+ 	Computes the disjunction of two BDDs f and g. 
+DdNode * 	Cudd_bddOrLimit (DdManager *dd, DdNode *f, DdNode *g, unsigned int limit)
+ 	Computes the disjunction of two BDDs f and g unless too many nodes are required. 
+DdNode * 	Cudd_bddNand (DdManager *dd, DdNode *f, DdNode *g)
+ 	Computes the NAND of two BDDs f and g. 
+DdNode * 	Cudd_bddNor (DdManager *dd, DdNode *f, DdNode *g)
+ 	Computes the NOR of two BDDs f and g. 
+DdNode * 	Cudd_bddXor (DdManager *dd, DdNode *f, DdNode *g)
+ 	Computes the exclusive OR of two BDDs f and g. 
+DdNode * 	Cudd_bddXnor (DdManager *dd, DdNode *f, DdNode *g)
+ 	Computes the exclusive NOR of two BDDs f and g. 
+DdNode * 	Cudd_bddXnorLimit (DdManager *dd, DdNode *f, DdNode *g, unsigned int limit)
+ 	Computes the exclusive NOR of two BDDs f and g unless too many nodes are required. 
+int 	Cudd_bddLeq (DdManager *dd, DdNode *f, DdNode *g)
+ 	Checks whether f is less than or equal to g. 
+DdNode * 	Cudd_addBddThreshold (DdManager *dd, DdNode *f, CUDD_VALUE_TYPE value)
+ 	Converts an ADD to a BDD. 
+DdNode * 	Cudd_addBddStrictThreshold (DdManager *dd, DdNode *f, CUDD_VALUE_TYPE value)
+ 	Converts an ADD to a BDD. 
+DdNode * 	Cudd_addBddInterval (DdManager *dd, DdNode *f, CUDD_VALUE_TYPE lower, CUDD_VALUE_TYPE upper)
+ 	Converts an ADD to a BDD. 
+DdNode * 	Cudd_addBddIthBit (DdManager *dd, DdNode *f, int bit)
+ 	Converts an ADD to a BDD by extracting the i-th bit from the leaves. 
+DdNode * 	Cudd_BddToAdd (DdManager *dd, DdNode *B)
+ 	Converts a BDD to a 0-1 ADD. 
+DdNode * 	Cudd_addBddPattern (DdManager *dd, DdNode *f)
+ 	Converts an ADD to a BDD. 
+DdNode * 	Cudd_bddTransfer (DdManager *ddSource, DdManager *ddDestination, DdNode *f)
+ 	Convert a BDD from a manager to another one. 
+int 	Cudd_DebugCheck (DdManager *table)
+ 	Checks for inconsistencies in the DD heap. 
+int 	Cudd_CheckKeys (DdManager *table)
+ 	Checks for several conditions that should not occur. 
+DdNode * 	Cudd_bddClippingAnd (DdManager *dd, DdNode *f, DdNode *g, int maxDepth, int direction)
+ 	Approximates the conjunction of two BDDs f and g. 
+DdNode * 	Cudd_bddClippingAndAbstract (DdManager *dd, DdNode *f, DdNode *g, DdNode *cube, int maxDepth, int direction)
+ 	Approximates the conjunction of two BDDs f and g and simultaneously abstracts the variables in cube. 
+DdNode * 	Cudd_Cofactor (DdManager *dd, DdNode *f, DdNode *g)
+ 	Computes the cofactor of f with respect to g. 
+int 	Cudd_CheckCube (DdManager *dd, DdNode *g)
+ 	Checks whether g is the BDD of a cube. 
+int 	Cudd_VarsAreSymmetric (DdManager *dd, DdNode *f, int index1, int index2)
+ 	Checks whether two variables are symmetric in a BDD. 
+DdNode * 	Cudd_bddCompose (DdManager *dd, DdNode *f, DdNode *g, int v)
+ 	Substitutes g for x_v in the BDD for f. 
+DdNode * 	Cudd_addCompose (DdManager *dd, DdNode *f, DdNode *g, int v)
+ 	Substitutes g for x_v in the ADD for f. 
+DdNode * 	Cudd_addPermute (DdManager *manager, DdNode *node, int *permut)
+ 	Permutes the variables of an ADD. 
+DdNode * 	Cudd_addSwapVariables (DdManager *dd, DdNode *f, DdNode **x, DdNode **y, int n)
+ 	Swaps two sets of variables of the same size (x and y) in the ADD f. 
+DdNode * 	Cudd_bddPermute (DdManager *manager, DdNode *node, int *permut)
+ 	Permutes the variables of a BDD. 
+DdNode * 	Cudd_bddVarMap (DdManager *manager, DdNode *f)
+ 	Remaps the variables of a BDD using the default variable map. 
+int 	Cudd_SetVarMap (DdManager *manager, DdNode **x, DdNode **y, int n)
+ 	Registers a variable mapping with the manager. 
+DdNode * 	Cudd_bddSwapVariables (DdManager *dd, DdNode *f, DdNode **x, DdNode **y, int n)
+ 	Swaps two sets of variables of the same size (x and y) in the BDD f. 
+DdNode * 	Cudd_bddAdjPermuteX (DdManager *dd, DdNode *B, DdNode **x, int n)
+ 	Rearranges a set of variables in the BDD B. 
+DdNode * 	Cudd_addVectorCompose (DdManager *dd, DdNode *f, DdNode **vector)
+ 	Composes an ADD with a vector of 0-1 ADDs. 
+DdNode * 	Cudd_addGeneralVectorCompose (DdManager *dd, DdNode *f, DdNode **vectorOn, DdNode **vectorOff)
+ 	Composes an ADD with a vector of ADDs. 
+DdNode * 	Cudd_addNonSimCompose (DdManager *dd, DdNode *f, DdNode **vector)
+ 	Composes an ADD with a vector of 0-1 ADDs. 
+DdNode * 	Cudd_bddVectorCompose (DdManager *dd, DdNode *f, DdNode **vector)
+ 	Composes a BDD with a vector of BDDs. 
+int 	Cudd_bddApproxConjDecomp (DdManager *dd, DdNode *f, DdNode ***conjuncts)
+ 	Performs two-way conjunctive decomposition of a BDD. 
+int 	Cudd_bddApproxDisjDecomp (DdManager *dd, DdNode *f, DdNode ***disjuncts)
+ 	Performs two-way disjunctive decomposition of a BDD. 
+int 	Cudd_bddIterConjDecomp (DdManager *dd, DdNode *f, DdNode ***conjuncts)
+ 	Performs two-way conjunctive decomposition of a BDD. 
+int 	Cudd_bddIterDisjDecomp (DdManager *dd, DdNode *f, DdNode ***disjuncts)
+ 	Performs two-way disjunctive decomposition of a BDD. 
+int 	Cudd_bddGenConjDecomp (DdManager *dd, DdNode *f, DdNode ***conjuncts)
+ 	Performs two-way conjunctive decomposition of a BDD. 
+int 	Cudd_bddGenDisjDecomp (DdManager *dd, DdNode *f, DdNode ***disjuncts)
+ 	Performs two-way disjunctive decomposition of a BDD. 
+int 	Cudd_bddVarConjDecomp (DdManager *dd, DdNode *f, DdNode ***conjuncts)
+ 	Performs two-way conjunctive decomposition of a BDD. 
+int 	Cudd_bddVarDisjDecomp (DdManager *dd, DdNode *f, DdNode ***disjuncts)
+ 	Performs two-way disjunctive decomposition of a BDD. 
+DdNode * 	Cudd_FindEssential (DdManager *dd, DdNode *f)
+ 	Finds the essential variables of a DD. 
+int 	Cudd_bddIsVarEssential (DdManager *manager, DdNode *f, int id, int phase)
+ 	Determines whether a given variable is essential with a given phase in a BDD. 
+DdTlcInfo * 	Cudd_FindTwoLiteralClauses (DdManager *dd, DdNode *f)
+ 	Finds the two literal clauses of a DD. 
+int 	Cudd_PrintTwoLiteralClauses (DdManager *dd, DdNode *f, char **names, FILE *fp)
+ 	Prints the one- and two-literal clauses of a DD. 
+int 	Cudd_ReadIthClause (DdTlcInfo *tlc, int i, unsigned *var1, unsigned *var2, int *phase1, int *phase2)
+ 	Accesses the i-th clause of a DD. 
+void 	Cudd_tlcInfoFree (DdTlcInfo *t)
+ 	Frees a DdTlcInfo Structure. 
+int 	Cudd_DumpBlif (DdManager *dd, int n, DdNode **f, char const *const *inames, char const *const *onames, char *mname, FILE *fp, int mv)
+ 	Writes a blif file representing the argument BDDs. 
+int 	Cudd_DumpBlifBody (DdManager *dd, int n, DdNode **f, char const *const *inames, char const *const *onames, FILE *fp, int mv)
+ 	Writes a blif body representing the argument BDDs. 
+int 	Cudd_DumpDot (DdManager *dd, int n, DdNode **f, char const *const *inames, char const *const *onames, FILE *fp)
+ 	Writes a dot file representing the argument DDs. 
+int 	Cudd_DumpDaVinci (DdManager *dd, int n, DdNode **f, char const *const *inames, char const *const *onames, FILE *fp)
+ 	Writes a daVinci file representing the argument BDDs. 
+int 	Cudd_DumpDDcal (DdManager *dd, int n, DdNode **f, char const *const *inames, char const *const *onames, FILE *fp)
+ 	Writes a DDcal file representing the argument BDDs. 
+int 	Cudd_DumpFactoredForm (DdManager *dd, int n, DdNode **f, char const *const *inames, char const *const *onames, FILE *fp)
+ 	Writes factored forms representing the argument BDDs. 
+char * 	Cudd_FactoredFormString (DdManager *dd, DdNode *f, char const *const *inames)
+ 	Returns a string with the factored form of the argument BDDs. 
+DdNode * 	Cudd_bddConstrain (DdManager *dd, DdNode *f, DdNode *c)
+ 	Computes f constrain c. 
+DdNode * 	Cudd_bddRestrict (DdManager *dd, DdNode *f, DdNode *c)
+ 	BDD restrict according to Coudert and Madre's algorithm (ICCAD90). 
+DdNode * 	Cudd_bddNPAnd (DdManager *dd, DdNode *f, DdNode *c)
+ 	Computes f non-polluting-and g. 
+DdNode * 	Cudd_addConstrain (DdManager *dd, DdNode *f, DdNode *c)
+ 	Computes f constrain c for ADDs. 
+DdNode ** 	Cudd_bddConstrainDecomp (DdManager *dd, DdNode *f)
+ 	BDD conjunctive decomposition as in McMillan's CAV96 paper. 
+DdNode * 	Cudd_addRestrict (DdManager *dd, DdNode *f, DdNode *c)
+ 	ADD restrict according to Coudert and Madre's algorithm (ICCAD90). 
+DdNode ** 	Cudd_bddCharToVect (DdManager *dd, DdNode *f)
+ 	Computes a vector of BDDs whose image equals a non-zero function. 
+DdNode * 	Cudd_bddLICompaction (DdManager *dd, DdNode *f, DdNode *c)
+ 	Performs safe minimization of a BDD. 
+DdNode * 	Cudd_bddSqueeze (DdManager *dd, DdNode *l, DdNode *u)
+ 	Finds a small BDD in a function interval. 
+DdNode * 	Cudd_bddInterpolate (DdManager *dd, DdNode *l, DdNode *u)
+ 	Finds an interpolant of two functions. 
+DdNode * 	Cudd_bddMinimize (DdManager *dd, DdNode *f, DdNode *c)
+ 	Finds a small BDD that agrees with `f` over `c`. 
+DdNode * 	Cudd_SubsetCompress (DdManager *dd, DdNode *f, int nvars, int threshold)
+ 	Find a dense subset of BDD `f`. 
+DdNode * 	Cudd_SupersetCompress (DdManager *dd, DdNode *f, int nvars, int threshold)
+ 	Find a dense superset of BDD `f`. 
+int 	Cudd_addHarwell (FILE *fp, DdManager *dd, DdNode **E, DdNode ***x, DdNode ***y, DdNode ***xn, DdNode ***yn_, int *nx, int *ny, int *m, int *n, int bx, int sx, int by, int sy, int pr)
+ 	Reads in a matrix in the format of the Harwell-Boeing benchmark suite. 
+DdManager * 	Cudd_Init (unsigned int numVars, unsigned int numVarsZ, unsigned int numSlots, unsigned int cacheSize, size_t maxMemory)
+ 	Creates a new DD manager. 
+void 	Cudd_Quit (DdManager *unique)
+ 	Deletes resources associated with a DD manager. 
+int 	Cudd_PrintLinear (DdManager *table)
+ 	Prints the linear transform matrix. 
+int 	Cudd_ReadLinear (DdManager *table, int x, int y)
+ 	Reads an entry of the linear transform matrix. 
+DdNode * 	Cudd_bddLiteralSetIntersection (DdManager *dd, DdNode *f, DdNode *g)
+ 	Computes the intesection of two sets of literals represented as BDDs. 
+DdNode * 	Cudd_addMatrixMultiply (DdManager *dd, DdNode *A, DdNode *B, DdNode **z, int nz)
+ 	Calculates the product of two matrices represented as ADDs. 
+DdNode * 	Cudd_addTimesPlus (DdManager *dd, DdNode *A, DdNode *B, DdNode **z, int nz)
+ 	Calculates the product of two matrices represented as ADDs. 
+DdNode * 	Cudd_addTriangle (DdManager *dd, DdNode *f, DdNode *g, DdNode **z, int nz)
+ 	Performs the triangulation step for the shortest path computation. 
+DdNode * 	Cudd_addOuterSum (DdManager *dd, DdNode *M, DdNode *r, DdNode *c)
+ 	Takes the minimum of a matrix and the outer sum of two vectors. 
+DdNode * 	Cudd_PrioritySelect (DdManager *dd, DdNode *R, DdNode **x, DdNode **y, DdNode **z, DdNode *Pi, int n, DD_PRFP PiFunc)
+ 	Selects pairs from R using a priority function. 
+DdNode * 	Cudd_Xgty (DdManager *dd, int N, DdNode **z, DdNode **x, DdNode **y)
+ 	Generates a BDD for the function x > y. 
+DdNode * 	Cudd_Xeqy (DdManager *dd, int N, DdNode **x, DdNode **y)
+ 	Generates a BDD for the function x==y. 
+DdNode * 	Cudd_addXeqy (DdManager *dd, int N, DdNode **x, DdNode **y)
+ 	Generates an ADD for the function x==y. 
+DdNode * 	Cudd_Dxygtdxz (DdManager *dd, int N, DdNode **x, DdNode **y, DdNode **z)
+ 	Generates a BDD for the function d(x,y) > d(x,z). 
+DdNode * 	Cudd_Dxygtdyz (DdManager *dd, int N, DdNode **x, DdNode **y, DdNode **z)
+ 	Generates a BDD for the function d(x,y) > d(y,z). 
+DdNode * 	Cudd_Inequality (DdManager *dd, int N, int c, DdNode **x, DdNode **y)
+ 	Generates a BDD for the function x - y c. 
+DdNode * 	Cudd_Disequality (DdManager *dd, int N, int c, DdNode **x, DdNode **y)
+ 	Generates a BDD for the function x - y != c. 
+DdNode * 	Cudd_bddInterval (DdManager *dd, int N, DdNode **x, unsigned int lowerB, unsigned int upperB)
+ 	Generates a BDD for the function lowerB x upperB. 
+DdNode * 	Cudd_CProjection (DdManager *dd, DdNode *R, DdNode *Y)
+ 	Computes the compatible projection of R w.r.t. cube Y. 
+DdNode * 	Cudd_addHamming (DdManager *dd, DdNode **xVars, DdNode **yVars, int nVars)
+ 	Computes the Hamming distance ADD. 
+int 	Cudd_MinHammingDist (DdManager *dd, DdNode *f, int *minterm, int upperBound)
+ 	Returns the minimum Hamming distance between f and minterm. 
+DdNode * 	Cudd_bddClosestCube (DdManager *dd, DdNode *f, DdNode *g, int *distance)
+ 	Finds a cube of f at minimum Hamming distance from the minterms of g. 
+int 	Cudd_addRead (FILE *fp, DdManager *dd, DdNode **E, DdNode ***x, DdNode ***y, DdNode ***xn, DdNode ***yn_, int *nx, int *ny, int *m, int *n, int bx, int sx, int by, int sy)
+ 	Reads in a sparse matrix. 
+int 	Cudd_bddRead (FILE *fp, DdManager *dd, DdNode **E, DdNode ***x, DdNode ***y, int *nx, int *ny, int *m, int *n, int bx, int sx, int by, int sy)
+ 	Reads in a graph (without labels) given as a list of arcs. 
+void 	Cudd_Ref (DdNode *n)
+ 	Increases the reference count of a node, if it is not saturated. 
+void 	Cudd_RecursiveDeref (DdManager *table, DdNode *n)
+ 	Decreases the reference count of node n. 
+void 	Cudd_IterDerefBdd (DdManager *table, DdNode *n)
+ 	Decreases the reference count of BDD node n. 
+void 	Cudd_DelayedDerefBdd (DdManager *table, DdNode *n)
+ 	Decreases the reference count of BDD node n. 
+void 	Cudd_RecursiveDerefZdd (DdManager *table, DdNode *n)
+ 	Decreases the reference count of ZDD node n. 
+void 	Cudd_Deref (DdNode *node)
+ 	Decreases the reference count of node. 
+int 	Cudd_CheckZeroRef (DdManager *manager)
+ 	Checks the unique table for nodes with non-zero reference counts. 
+int 	Cudd_ReduceHeap (DdManager *table, Cudd_ReorderingType heuristic, int minsize)
+ 	Main dynamic reordering routine. 
+int 	Cudd_ShuffleHeap (DdManager *table, int *permutation)
+ 	Reorders variables according to given permutation. 
+DdNode * 	Cudd_Eval (DdManager *dd, DdNode *f, int *inputs)
+ 	Returns the value of a DD for a given variable assignment. 
+DdNode * 	Cudd_ShortestPath (DdManager *manager, DdNode *f, int *weight, int *support, int *length)
+ 	Finds a shortest path in a DD. 
+DdNode * 	Cudd_LargestCube (DdManager *manager, DdNode *f, int *length)
+ 	Finds a largest cube in a DD. 
+int 	Cudd_ShortestLength (DdManager *manager, DdNode *f, int *weight)
+ 	Find the length of the shortest path(s) in a DD. 
+DdNode * 	Cudd_Decreasing (DdManager *dd, DdNode *f, int i)
+ 	Checks whether a BDD is negative unate in a variable. 
+DdNode * 	Cudd_Increasing (DdManager *dd, DdNode *f, int i)
+ 	Checks whether a BDD is positive unate in a variable. 
+int 	Cudd_EquivDC (DdManager *dd, DdNode *F, DdNode *G, DdNode *D)
+ 	Tells whether F and G are identical wherever D is 0. 
+int 	Cudd_bddLeqUnless (DdManager *dd, DdNode *f, DdNode *g, DdNode *D)
+ 	Tells whether f is less than of equal to G unless D is 1. 
+int 	Cudd_EqualSupNorm (DdManager *dd, DdNode *f, DdNode *g, CUDD_VALUE_TYPE tolerance, int pr)
+ 	Compares two ADDs for equality within tolerance. 
+DdNode * 	Cudd_bddMakePrime (DdManager *dd, DdNode *cube, DdNode *f)
+ 	Expands cube to a prime implicant of f. 
+DdNode * 	Cudd_bddMaximallyExpand (DdManager *dd, DdNode *lb, DdNode *ub, DdNode *f)
+ 	Expands lb to prime implicants of (f and ub). 
+DdNode * 	Cudd_bddLargestPrimeUnate (DdManager *dd, DdNode *f, DdNode *phaseBdd)
+ 	Find a largest prime implicant of a unate function. 
+double * 	Cudd_CofMinterm (DdManager *dd, DdNode *node)
+ 	Computes the fraction of minterms in the on-set of all the positive cofactors of a BDD or ADD. 
+DdNode * 	Cudd_SolveEqn (DdManager *bdd, DdNode *F, DdNode *Y, DdNode **G, int **yIndex, int n)
+ 	Implements the solution of F(x,y) = 0. 
+DdNode * 	Cudd_VerifySol (DdManager *bdd, DdNode *F, DdNode **G, int *yIndex, int n)
+ 	Checks the solution of F(x,y) = 0. 
+DdNode * 	Cudd_SplitSet (DdManager *manager, DdNode *S, DdNode **xVars, int n, double m)
+ 	Returns m minterms from a BDD. 
+DdNode * 	Cudd_SubsetHeavyBranch (DdManager *dd, DdNode *f, int numVars, int threshold)
+ 	Extracts a dense subset from a BDD with the heavy branch heuristic. 
+DdNode * 	Cudd_SupersetHeavyBranch (DdManager *dd, DdNode *f, int numVars, int threshold)
+ 	Extracts a dense superset from a BDD with the heavy branch heuristic. 
+DdNode * 	Cudd_SubsetShortPaths (DdManager *dd, DdNode *f, int numVars, int threshold, int hardlimit)
+ 	Extracts a dense subset from a BDD with the shortest paths heuristic. 
+DdNode * 	Cudd_SupersetShortPaths (DdManager *dd, DdNode *f, int numVars, int threshold, int hardlimit)
+ 	Extracts a dense superset from a BDD with the shortest paths heuristic. 
+void 	Cudd_SymmProfile (DdManager *table, int lower, int upper)
+ 	Prints statistics on symmetric variables. 
+unsigned int 	Cudd_Prime (unsigned int p)
+ 	Returns the next prime p. 
+int 	Cudd_Reserve (DdManager *manager, int amount)
+ 	Expand manager without creating variables. 
+int 	Cudd_PrintMinterm (DdManager *manager, DdNode *node)
+ 	Prints a disjoint sum of products. 
+int 	Cudd_bddPrintCover (DdManager *dd, DdNode *l, DdNode *u)
+ 	Prints a sum of prime implicants of a BDD. 
+int 	Cudd_PrintDebug (DdManager *dd, DdNode *f, int n, int pr)
+ 	Prints to the manager standard output a DD and its statistics. 
+int 	Cudd_PrintSummary (DdManager *dd, DdNode *f, int n, int mode)
+ 	Prints a one-line summary of an ADD or BDD to the manager stdout. 
+int 	Cudd_DagSize (DdNode *node)
+ 	Counts the number of nodes in a DD. 
+int 	Cudd_EstimateCofactor (DdManager *dd, DdNode *node, int i, int phase)
+ 	Estimates the number of nodes in a cofactor of a DD. 
+int 	Cudd_EstimateCofactorSimple (DdNode *node, int i)
+ 	Estimates the number of nodes in a cofactor of a DD. 
+int 	Cudd_SharingSize (DdNode **nodeArray, int n)
+ 	Counts the number of nodes in an array of DDs. 
+double 	Cudd_CountMinterm (DdManager *manager, DdNode *node, int nvars)
+ 	Counts the minterms of an ADD or BDD. 
+long double 	Cudd_LdblCountMinterm (DdManager const *manager, DdNode *node, int nvars)
+ 	Returns the number of minterms of aa ADD or BDD as a long double. 
+int 	Cudd_EpdPrintMinterm (DdManager const *dd, DdNode *node, int nvars)
+ 	Prints the number of minterms of an ADD or BDD with extended range. 
+double 	Cudd_CountPath (DdNode *node)
+ 	Counts the paths of a DD. 
+double 	Cudd_CountPathsToNonZero (DdNode *node)
+ 	Counts the paths to a non-zero terminal of a DD. 
+int 	Cudd_SupportIndices (DdManager *dd, DdNode *f, int **indices)
+ 	Finds the variables on which a DD depends. 
+DdNode * 	Cudd_Support (DdManager *dd, DdNode *f)
+ 	Finds the variables on which a DD depends. 
+int * 		Cudd_SupportIndex (DdManager *dd, DdNode *f)
+ 	Finds the variables on which a DD depends. 
+int 	Cudd_SupportSize (DdManager *dd, DdNode *f)
+ 	Counts the variables on which a DD depends. 
+int 	Cudd_VectorSupportIndices (DdManager *dd, DdNode **F, int n, int **indices)
+ 	Finds the variables on which a set of DDs depends. 
+DdNode * 	Cudd_VectorSupport (DdManager *dd, DdNode **F, int n)
+ 	Finds the variables on which a set of DDs depends. 
+int * 	Cudd_VectorSupportIndex (DdManager *dd, DdNode **F, int n)
+ 	Finds the variables on which a set of DDs depends. 
+int 	Cudd_VectorSupportSize (DdManager *dd, DdNode **F, int n)
+ 	Counts the variables on which a set of DDs depends. 
+int 	Cudd_ClassifySupport (DdManager *dd, DdNode *f, DdNode *g, DdNode **common, DdNode **onlyF, DdNode **onlyG)
+ 	Classifies the variables in the support of two DDs. 
+int 	Cudd_CountLeaves (DdNode *node)
+ 	Counts the number of leaves in a DD. 
+int 	Cudd_bddPickOneCube (DdManager *ddm, DdNode *node, char *string)
+ 	Picks one on-set cube randomly from the given DD. 
+DdNode * 	Cudd_bddPickOneMinterm (DdManager *dd, DdNode *f, DdNode **vars, int n)
+ 	Picks one on-set minterm randomly from the given DD. 
+DdNode ** 	Cudd_bddPickArbitraryMinterms (DdManager *dd, DdNode *f, DdNode **vars, int n, int k)
+ 	Picks k on-set minterms evenly distributed from given DD. 
+DdNode * 	Cudd_SubsetWithMaskVars (DdManager *dd, DdNode *f, DdNode **vars, int nvars, DdNode **maskVars, int mvars)
+ 	Extracts a subset from a BDD. 
+DdGen * 	Cudd_FirstCube (DdManager *dd, DdNode *f, int **cube, CUDD_VALUE_TYPE *value)
+ 	Finds the first cube of a decision diagram. 
+int 	Cudd_NextCube (DdGen *gen, int **cube, CUDD_VALUE_TYPE *value)
+ 	Generates the next cube of a decision diagram onset. 
+DdGen * 	Cudd_FirstPrime (DdManager *dd, DdNode *l, DdNode *u, int **cube)
+ 	Finds the first prime of a Boolean function. 
+int 	Cudd_NextPrime (DdGen *gen, int **cube)
+ 	Generates the next prime of a Boolean function. 
+DdNode * 	Cudd_bddComputeCube (DdManager *dd, DdNode **vars, int *phase, int n)
+ 	Computes the cube of an array of BDD variables. 
+DdNode * 	Cudd_addComputeCube (DdManager *dd, DdNode **vars, int *phase, int n)
+ 	Computes the cube of an array of ADD variables. 
+DdNode * 	Cudd_CubeArrayToBdd (DdManager *dd, int *array)
+ 	Builds the BDD of a cube from a positional array. 
+int 	Cudd_BddToCubeArray (DdManager *dd, DdNode *cube, int *array)
+ 	Builds a positional array from the BDD of a cube. 
+DdGen * 	Cudd_FirstNode (DdManager *dd, DdNode *f, DdNode **node)
+ 	Finds the first node of a decision diagram. 
+int 	Cudd_NextNode (DdGen *gen, DdNode **node)
+ 	Finds the next node of a decision diagram. 
+int 	Cudd_GenFree (DdGen *gen)
+ 	Frees a CUDD generator. 
+int 	Cudd_IsGenEmpty (DdGen *gen)
+ 	Queries the status of a generator. 
+DdNode * 	Cudd_IndicesToCube (DdManager *dd, int *array, int n)
+ 	Builds a cube of BDD variables from an array of indices. 
+void 	Cudd_PrintVersion (FILE *fp)
+ 	Prints the package version number. 
+double 	Cudd_AverageDistance (DdManager *dd)
+ 	Computes the average distance between adjacent nodes in the manager. 
+int32_t 	Cudd_Random (DdManager *dd)
+ 	Portable random number generator. 
+void 	Cudd_Srandom (DdManager *dd, int32_t seed)
+ 	Initializer for the portable random number generator. 
+double 	Cudd_Density (DdManager *dd, DdNode *f, int nvars)
+ 	Computes the density of a BDD or ADD. 
+void 	Cudd_OutOfMem (size_t size)
+ 	Warns that a memory allocation failed. 
+void 	Cudd_OutOfMemSilent (size_t size)
+ 	Doesn not warn that a memory allocation failed. 
+int 	Cudd_zddCount (DdManager *zdd, DdNode *P)
+ 	Counts the number of minterms in a ZDD. 
+double 	Cudd_zddCountDouble (DdManager *zdd, DdNode *P)
+ 	Counts the number of minterms of a ZDD. 
+DdNode * 	Cudd_zddProduct (DdManager *dd, DdNode *f, DdNode *g)
+ 	Computes the product of two covers represented by ZDDs. 
+DdNode * 	Cudd_zddUnateProduct (DdManager *dd, DdNode *f, DdNode *g)
+ 	Computes the product of two unate covers represented as ZDDs. 
+DdNode * 	Cudd_zddWeakDiv (DdManager *dd, DdNode *f, DdNode *g)
+ 	Applies weak division to two covers. 
+DdNode * 	Cudd_zddDivide (DdManager *dd, DdNode *f, DdNode *g)
+ 	Computes the quotient of two unate covers. 
+DdNode * 	Cudd_zddWeakDivF (DdManager *dd, DdNode *f, DdNode *g)
+ 	Modified version of Cudd_zddWeakDiv. 
+DdNode * 	Cudd_zddDivideF (DdManager *dd, DdNode *f, DdNode *g)
+ 	Modified version of Cudd_zddDivide. 
+DdNode * 	Cudd_zddComplement (DdManager *dd, DdNode *node)
+ 	Computes a complement cover for a ZDD node. 
+DdNode * 	Cudd_zddIsop (DdManager *dd, DdNode *L, DdNode *U, DdNode **zdd_I)
+ 	Computes an ISOP in ZDD form from BDDs. 
+DdNode * 	Cudd_bddIsop (DdManager *dd, DdNode *L, DdNode *U)
+ 	Computes a BDD in the interval between L and U with a simple sum-of-product cover. 
+DdNode * 	Cudd_MakeBddFromZddCover (DdManager *dd, DdNode *node)
+ 	Converts a ZDD cover to a BDD. 
+int 	Cudd_zddDagSize (DdNode *p_node)
+ 	Counts the number of nodes in a ZDD. 
+double 	Cudd_zddCountMinterm (DdManager *zdd, DdNode *node, int path)
+ 	Counts the number of minterms of a ZDD. 
+void 	Cudd_zddPrintSubtable (DdManager *table)
+ 	Prints the ZDD table for debugging purposes. 
+DdNode * 	Cudd_zddPortFromBdd (DdManager *dd, DdNode *B)
+ 	Converts a BDD into a ZDD. 
+DdNode * 	Cudd_zddPortToBdd (DdManager *dd, DdNode *f)
+ 	Converts a ZDD into a BDD. 
+int 	Cudd_zddReduceHeap (DdManager *table, Cudd_ReorderingType heuristic, int minsize)
+ 	Main dynamic reordering routine for ZDDs. 
+int 	Cudd_zddShuffleHeap (DdManager *table, int *permutation)
+ 	Reorders ZDD variables according to given permutation. 
+DdNode * 	Cudd_zddIte (DdManager *dd, DdNode *f, DdNode *g, DdNode *h)
+ 	Computes the ITE of three ZDDs. 
+DdNode * 	Cudd_zddUnion (DdManager *dd, DdNode *P, DdNode *Q)
+ 	Computes the union of two ZDDs. 
+DdNode * 	Cudd_zddIntersect (DdManager *dd, DdNode *P, DdNode *Q)
+ 	Computes the intersection of two ZDDs. 
+DdNode * 	Cudd_zddDiff (DdManager *dd, DdNode *P, DdNode *Q)
+ 	Computes the difference of two ZDDs. 
+DdNode * 	Cudd_zddDiffConst (DdManager *zdd, DdNode *P, DdNode *Q)
+ 	Performs the inclusion test for ZDDs (P implies Q). 
+DdNode * 	Cudd_zddSubset1 (DdManager *dd, DdNode *P, int var)
+ 	Computes the positive cofactor of a ZDD w.r.t. a variable. 
+DdNode * 	Cudd_zddSubset0 (DdManager *dd, DdNode *P, int var)
+ 	Computes the negative cofactor of a ZDD w.r.t. a variable. 
+DdNode * 	Cudd_zddChange (DdManager *dd, DdNode *P, int var)
+ 	Substitutes a variable with its complement in a ZDD. 
+void 	Cudd_zddSymmProfile (DdManager *table, int lower, int upper)
+ 	Prints statistics on symmetric ZDD variables. 
+int 	Cudd_zddPrintMinterm (DdManager *zdd, DdNode *node)
+ 	Prints a disjoint sum of product form for a ZDD. 
+int 	Cudd_zddPrintCover (DdManager *zdd, DdNode *node)
+ 	Prints a sum of products from a ZDD representing a cover. 
+int 	Cudd_zddPrintDebug (DdManager *zdd, DdNode *f, int n, int pr)
+ 	Prints to the standard output a ZDD and its statistics. 
+DdGen * 	Cudd_zddFirstPath (DdManager *zdd, DdNode *f, int **path)
+ 	Finds the first path of a ZDD. 
+int 	Cudd_zddNextPath (DdGen *gen, int **path)
+ 	Generates the next path of a ZDD. 
+char * 	Cudd_zddCoverPathToString (DdManager *zdd, int *path, char *str)
+ 	Converts a path of a ZDD representing a cover to a string. 
+DdNode * 	Cudd_zddSupport (DdManager *dd, DdNode *f)
+ 	Finds the variables on which a ZDD depends. 
+int 	Cudd_zddDumpDot (DdManager *dd, int n, DdNode **f, char const *const *inames, char const *const *onames, FILE *fp)
+ 	Writes a dot file representing the argument ZDDs. 
+int 	Cudd_bddSetPiVar (DdManager *dd, int index)
+ 	Sets a variable type to primary input. 
+int 	Cudd_bddSetPsVar (DdManager *dd, int index)
+ 	Sets a variable type to present state. 
+int 	Cudd_bddSetNsVar (DdManager *dd, int index)
+ 	Sets a variable type to next state. 
+int 	Cudd_bddIsPiVar (DdManager *dd, int index)
+ 	Checks whether a variable is primary input. 
+int 	Cudd_bddIsPsVar (DdManager *dd, int index)
+ 	Checks whether a variable is present state. 
+int 	Cudd_bddIsNsVar (DdManager *dd, int index)
+ 	Checks whether a variable is next state. 
+int 	Cudd_bddSetPairIndex (DdManager *dd, int index, int pairIndex)
+ 	Sets a corresponding pair index for a given index. 
+int 	Cudd_bddReadPairIndex (DdManager *dd, int index)
+ 	Reads a corresponding pair index for a given index. 
+int 	Cudd_bddSetVarToBeGrouped (DdManager *dd, int index)
+ 	Sets a variable to be grouped. 
+int 	Cudd_bddSetVarHardGroup (DdManager *dd, int index)
+ 	Sets a variable to be a hard group. 
+int 	Cudd_bddResetVarToBeGrouped (DdManager *dd, int index)
+ 	Resets a variable not to be grouped. 
+int 	Cudd_bddIsVarToBeGrouped (DdManager *dd, int index)
+ 	Checks whether a variable is set to be grouped. 
+int 	Cudd_bddSetVarToBeUngrouped (DdManager *dd, int index)
+ 	Sets a variable to be ungrouped. 
+int 	Cudd_bddIsVarToBeUngrouped (DdManager *dd, int index)
+ 	Checks whether a variable is set to be ungrouped. 
+int 	Cudd_bddIsVarHardGroup (DdManager *dd, int index)
+ 	Checks whether a variable is set to be in a hard group. 

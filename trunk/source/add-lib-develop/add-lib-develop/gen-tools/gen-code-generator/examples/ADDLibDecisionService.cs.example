@@ -1,0 +1,34 @@
+/* This file was generated with the ADD-Lib
+ * http://add-lib.scce.info/ */
+
+namespace @param("namespace") {
+
+    public class @param("class-name")'''ADDLibDecisionService''' {
+@root-dd'''
+
+        public @enabled-param("static-methods")'''static '''@injectable("return-type")'''string''' @attr(label)'''sumOfPredicatesABC'''(@injectable("param-list")'''@param("param-type")'''Predicates''' predicates''') {
+            string result;
+            goto eval@attr(dd, ptr);
+            end:
+            return result;
+
+@internal-dd'''
+
+            eval@attr(ptr):
+            if (@injectable("var-condition")'''predicates.@attr(read-name)'''predA'''()''')
+                goto eval@attr(t, ptr);
+            else
+                goto eval@attr(e, ptr);
+
+'''
+@constant-dd'''
+
+            eval@attr(ptr):
+            result = @injectable("result-instatiation")'''"@attr(to-string)'''2.0'''"''';
+            goto end;
+
+'''
+        }
+'''
+    }
+}

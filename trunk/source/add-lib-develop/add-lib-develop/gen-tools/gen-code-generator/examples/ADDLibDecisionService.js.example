@@ -1,0 +1,31 @@
+/* This file was generated with the ADD-Lib Gen Tools
+ * http://add-lib.scce.info/ */
+
+var @param("obj-name")'''ADDLibDecisionService''' = {
+@root-dd'''
+
+    @attr(label)'''sumOfPredicatesABC''': function(predicates) {
+        return this.eval@attr(dd, ptr)'''0'''(predicates);
+    },
+'''
+@internal-dd'''
+
+    eval@attr(ptr)'''0''': function(predicates) {
+        if (predicates.@attr(read-name)'''predA'''())
+            return this.eval@attr(t, ptr)'''1'''(predicates);
+        else
+            return this.eval@attr(e, ptr)'''2'''(predicates);
+    },
+'''
+@constant-dd'''
+
+    eval@attr(ptr)'''1''': function(predicates) {
+        return @injectable("result-instatiation")'''"@attr(to-string)'''lala'''"''';
+    },
+'''
+};
+@enabled-param("node-export")'''
+
+module.exports.@param("obj-name")'''
+ADDLibDecisionService''' = @param("obj-name")'''ADDLibDecisionService''';
+'''
