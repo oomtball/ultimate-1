@@ -35,22 +35,29 @@ public class RcfgTransitionBuilder{
 	
 	private final Map<String, Map<DebugIdentifier, BoogieIcfgLocation>> mLocNodes;
 	
+	static BDDFactory bdd;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final SimpleEvaluator mSimpleEvaluator;
-	static BDDFactory bdd;
+//	static BDDFactory bdd;
 	public List<BDD> rcfgTrans = new ArrayList<BDD>();
+	
+	BDDDomain[] preVar; // represents different bdd variables
+	BDDDomain[] postVar; // represents different bdd variables
 	
 	String il = "IntegerLiteral";
 	String ie = "IdentifierExpression";
 	String be = "BinaryExpression";
 	
-	public RcfgTransitionBuilder(final BoogieIcfgContainer rcfg, final ILogger logger, final IUltimateServiceProvider services) {
+	public RcfgTransitionBuilder(final BoogieIcfgContainer rcfg, final ILogger logger, final IUltimateServiceProvider services, 
+			BDDFactory b, BDDDomain[] pre, BDDDomain[] post, Set<String> varOrder) {
 		mServices = services;
 		mLogger = logger;
 		
 		mLocNodes = rcfg.getProgramPoints();
 		mStatementExtractor = new RcfgStatementExtractor();
 		mSimpleEvaluator = new SimpleEvaluator(mLogger);
+		
+		bdd = b;
 		
 		// set up the program counters for each thread -- pc.
 		Map<String, Map<BoogieIcfgLocation, Integer>> allStatesWithPc = computeProgramCounter(mLocNodes);
@@ -61,122 +68,28 @@ public class RcfgTransitionBuilder{
 		// set up all possible values for each variable. (filter)
 		Map<String, Set<Integer>> varAndValue = getVarAndValue(allAssignments);
 		
-		bdd = BDDFactory.init("j", 100000, 100000, false);
-//		BDD result = bdd.one();
-//		BDDDomain[] pre = bdd.extDomain(new int[]{16, 16});
-//		BDDDomain[] post = bdd.extDomain(new int[]{16, 16});
-//		
-//		BDDBitVector x = bdd.buildVector(pre[0]);
-//		BDDBitVector y = bdd.buildVector(pre[1]);
-//		BDDBitVector v = bdd.constantVector(4, 11);
-//		BDDBitVector z = y.add(v);
-//		
-//		BDDBitVector xp = bdd.buildVector(post[0]);
-//		BDDBitVector yp = bdd.buildVector(post[1]);
-//		for (int n = 0; n < x.size(); n++) {
-////			result = result.and(xp.getBit(n).biimp(z.getBit(n)));
-//			result = result.and(yp.getBit(n).biimp(v.getBit(n)));
-//			result = result.and(xp.getBit(n).biimp(x.getBit(n)));
-//		}
-//		
-//		BDDBitVector xv = bdd.constantVector(4, 3);
-//		BDDBitVector yv = bdd.constantVector(4, 5);
-//		
-//		for (int n = 0; n < x.size(); n++) {
-//			input = input.and(xpre.getBit(n).biimp(xv.getBit(n)));
-//		}
-//		for (int n = 0; n < x.size(); n++) {
-//			input = input.and(ypre.getBit(n).biimp(yv.getBit(n)));
-//		}
-		
-//		mLogger.info(result);
-//		mLogger.info(input);
-//		mLogger.info(result.restrict(input));
-		
 		// set up all pre-states for BDD transitions.
 //		Set<SimpleState> preState = getPreStates(varAndValue);
 		
 		// calculate post states.
 //		Set<SimpleStateTransition> transitions = calculatePost(preState, allAssignments);
 		
-		// translate transitions to BDD.
-		int[] pam = findRcfgNeededBits(varAndValue).stream().mapToInt(Integer::intValue).toArray();
-////		mLogger.info(Arrays.toString(pam)); 
-//		
-//		int[] pam2 = findPcNeededBits(allStatesWithPc).stream().mapToInt(Integer::intValue).toArray();
-////		mLogger.info(Arrays.toString(pam2)); // [32, 32, 32, 32, 32, 32]
-//		
-//		bdd = BDDFactory.init("jdd", 10000, 10000, false);
-		BDD result = bdd.zero();
-		BDDDomain[] preVar = bdd.extDomain(pam); // represents different bdd variables
-		BDDDomain[] postVar = bdd.extDomain(pam); // represents different bdd variables
+		preVar = pre; // represents different bdd variables
+		postVar = post; // represents different bdd variables
 		
 		// test case
-		BDD input = bdd.one();
+		BDD input = setInput();
 		
-		BDDBitVector turnPre = bdd.buildVector(preVar[0]);
-		BDDBitVector xPre = bdd.buildVector(preVar[1]);
-		BDDBitVector t1Pre = bdd.buildVector(preVar[2]);
-		BDDBitVector flag1Pre = bdd.buildVector(preVar[3]);
-		BDDBitVector tpost1Pre = bdd.buildVector(preVar[4]);
-		BDDBitVector t2Pre = bdd.buildVector(preVar[5]);
-		BDDBitVector flag2Pre = bdd.buildVector(preVar[6]);
-		BDDBitVector f12Pre = bdd.buildVector(preVar[7]);
-		BDDBitVector y2Pre = bdd.buildVector(preVar[8]);
-		BDDBitVector f21Pre = bdd.buildVector(preVar[9]);
-		BDDBitVector tpost0Pre = bdd.buildVector(preVar[10]);
-		BDDBitVector y1Pre = bdd.buildVector(preVar[11]);
-		BDDBitVector turnv = bdd.constantVector(2, 1);
-		BDDBitVector xv = bdd.constantVector(2, 2);
-		BDDBitVector t1v = bdd.constantVector(2, 0);
-		BDDBitVector flag1v = bdd.constantVector(2, 1);
-		BDDBitVector tpost1v = bdd.constantVector(2, 1);
-		BDDBitVector t2v = bdd.constantVector(2, 0);
-		BDDBitVector flag2v = bdd.constantVector(2, 0);
-		BDDBitVector f12v = bdd.constantVector(2, 0);
-		BDDBitVector y2v = bdd.constantVector(2, 0);
-		BDDBitVector f21v = bdd.constantVector(2, 0);
-		BDDBitVector tpost0v = bdd.constantVector(2, 0);
-		BDDBitVector y1v = bdd.constantVector(2, 0);
+		BDDPairing bp = bdd.makePair();
+		bp.set(preVar, postVar);
+		BDD input2 = input.replace(bp);
 		
-		for (int n = 0; n < turnPre.size(); n++) {
-			input = input.and(turnPre.getBit(n).biimp(turnv.getBit(n)));
-		}
-		for (int n = 0; n < xPre.size(); n++) {
-			input = input.and(xPre.getBit(n).biimp(xv.getBit(n)));
-		}
-		for (int n = 0; n < t1Pre.size(); n++) {
-			input = input.and(t1Pre.getBit(n).biimp(t1v.getBit(n)));
-		}
-		for (int n = 0; n < flag1Pre.size(); n++) {
-			input = input.and(flag1Pre.getBit(n).biimp(flag1v.getBit(n)));
-		}
-		for (int n = 0; n < tpost1Pre.size(); n++) {
-			input = input.and(tpost1Pre.getBit(n).biimp(tpost1v.getBit(n)));
-		}
-		for (int n = 0; n < t2Pre.size(); n++) {
-			input = input.and(t2Pre.getBit(n).biimp(t2v.getBit(n)));
-		}
-		for (int n = 0; n < flag2Pre.size(); n++) {
-			input = input.and(flag2Pre.getBit(n).biimp(flag2v.getBit(n)));
-		}
-		for (int n = 0; n < f12Pre.size(); n++) {
-			input = input.and(f12Pre.getBit(n).biimp(f12v.getBit(n)));
-		}
-		for (int n = 0; n < y2Pre.size(); n++) {
-			input = input.and(y2Pre.getBit(n).biimp(y2v.getBit(n)));
-		}
-		for (int n = 0; n < f21Pre.size(); n++) {
-			input = input.and(f21Pre.getBit(n).biimp(f21v.getBit(n)));
-		}
-		for (int n = 0; n < tpost0Pre.size(); n++) {
-			input = input.and(tpost0Pre.getBit(n).biimp(tpost0v.getBit(n)));
-		}
-		for (int n = 0; n < y1Pre.size(); n++) {
-			input = input.and(y1Pre.getBit(n).biimp(y1v.getBit(n)));
-		}
-		
-//		mLogger.info(input);
+		mLogger.info(input);
+		mLogger.info(input2);
+//		for (int i = 0; i < preVar.length; i++) {
+//			BDDPairing bp = bdd.makePair(preVar[i], postVar[i]);
+//			input2 = input.veccompose(bp);
+//		}
 		
 //		BDDDomain[] bddPc = bdd.extDomain(pam2); // represents pc of different threads
 //		
@@ -204,13 +117,13 @@ public class RcfgTransitionBuilder{
 				mLogger.info(var + " = " + expr + " at " + s2.getSecond());
 				// deal with transitions
 				if (expr.getClass().getSimpleName().equals(il)) {
-					transition = caseIL(expr, preVar, postVar, needVar);
+					transition = caseIL(expr, needVar, bdd);
 				}
 				else if (expr.getClass().getSimpleName().equals(ie)) {
-					transition = caseIE(expr, preVar, postVar, needVar, varAndValue);
+					transition = caseIE(expr, needVar, varAndValue, bdd);
 				}
 				else if (expr.getClass().getSimpleName().equals(be)) {
-					transition = caseBE(expr, preVar, postVar, needVar, varAndValue);
+					transition = caseBE(expr, needVar, varAndValue, bdd);
 				} 
 				// deal with PCs
 //				int count = 0;
@@ -239,8 +152,37 @@ public class RcfgTransitionBuilder{
 //				}
 				mLogger.info(transition);
 				mLogger.info(transition.restrict(input));
-				rcfgTrans.add(transition);
-//				result = result.orWith(transition);
+				mLogger.info(input2);
+				BDD post1 = bdd.one();
+				List<Integer> needDomains = new ArrayList<Integer>();
+				for (int i : transition.restrict(input).scanSetDomains()) {
+					needDomains.add(i-12);
+				}
+				for (int i = 0; i < postVar.length; i++) {
+					if (needDomains.contains(i)) {
+						BDDBitVector test1 = bdd.buildVector(postVar[i]);
+						BDDBitVector test2 = bdd.constantVector(test1.size(), transition.restrict(input).scanVar(postVar[i]));
+						
+						for (int n = 0; n < test1.size(); n++) {
+							post1 = post1.and(test1.getBit(n).biimp(test2.getBit(n)));
+						}
+					}
+					else {
+						BDDBitVector test1 = bdd.buildVector(postVar[i]);
+						BDDBitVector test2 = bdd.constantVector(test1.size(), input2.scanVar(postVar[i]));
+						
+						for (int n = 0; n < test1.size(); n++) {
+							post1 = post1.and(test1.getBit(n).biimp(test2.getBit(n)));
+						}
+					}
+				}
+				mLogger.info(post1);
+
+//				for ()
+//				mLogger.info(input2.compose(transition.restrict(input), var));
+//				for (int i = 0; i <　transition.restrict(input).scanSetDomains())
+//				mLogger.info(input2.replace(bp));
+				
 //				break;
 			}
 //			break;
@@ -473,7 +415,75 @@ public class RcfgTransitionBuilder{
 		return v2;
 	}
 
-	private BDD caseIL(Expression expr, BDDDomain[] preVar, BDDDomain[] postVar, int needVar) {
+	private BDD setInput() {
+		BDD input = bdd.one();
+		
+		BDDBitVector turnPre = bdd.buildVector(preVar[0]);
+		BDDBitVector xPre = bdd.buildVector(preVar[1]);
+		BDDBitVector t1Pre = bdd.buildVector(preVar[2]);
+		BDDBitVector flag1Pre = bdd.buildVector(preVar[3]);
+		BDDBitVector tpost1Pre = bdd.buildVector(preVar[4]);
+		BDDBitVector t2Pre = bdd.buildVector(preVar[5]);
+		BDDBitVector flag2Pre = bdd.buildVector(preVar[6]);
+		BDDBitVector f12Pre = bdd.buildVector(preVar[7]);
+		BDDBitVector y2Pre = bdd.buildVector(preVar[8]);
+		BDDBitVector f21Pre = bdd.buildVector(preVar[9]);
+		BDDBitVector tpost0Pre = bdd.buildVector(preVar[10]);
+		BDDBitVector y1Pre = bdd.buildVector(preVar[11]);
+		BDDBitVector turnv = bdd.constantVector(2, 1);
+		BDDBitVector xv = bdd.constantVector(2, 2);
+		BDDBitVector t1v = bdd.constantVector(2, 0);
+		BDDBitVector flag1v = bdd.constantVector(2, 1);
+		BDDBitVector tpost1v = bdd.constantVector(2, 1);
+		BDDBitVector t2v = bdd.constantVector(2, 0);
+		BDDBitVector flag2v = bdd.constantVector(2, 0);
+		BDDBitVector f12v = bdd.constantVector(2, 0);
+		BDDBitVector y2v = bdd.constantVector(2, 0);
+		BDDBitVector f21v = bdd.constantVector(2, 0);
+		BDDBitVector tpost0v = bdd.constantVector(2, 0);
+		BDDBitVector y1v = bdd.constantVector(2, 0);
+		
+		for (int n = 0; n < turnPre.size(); n++) {
+			input = input.and(turnPre.getBit(n).biimp(turnv.getBit(n)));
+		}
+		for (int n = 0; n < xPre.size(); n++) {
+			input = input.and(xPre.getBit(n).biimp(xv.getBit(n)));
+		}
+		for (int n = 0; n < t1Pre.size(); n++) {
+			input = input.and(t1Pre.getBit(n).biimp(t1v.getBit(n)));
+		}
+		for (int n = 0; n < flag1Pre.size(); n++) {
+			input = input.and(flag1Pre.getBit(n).biimp(flag1v.getBit(n)));
+		}
+		for (int n = 0; n < tpost1Pre.size(); n++) {
+			input = input.and(tpost1Pre.getBit(n).biimp(tpost1v.getBit(n)));
+		}
+		for (int n = 0; n < t2Pre.size(); n++) {
+			input = input.and(t2Pre.getBit(n).biimp(t2v.getBit(n)));
+		}
+		for (int n = 0; n < flag2Pre.size(); n++) {
+			input = input.and(flag2Pre.getBit(n).biimp(flag2v.getBit(n)));
+		}
+		for (int n = 0; n < f12Pre.size(); n++) {
+			input = input.and(f12Pre.getBit(n).biimp(f12v.getBit(n)));
+		}
+		for (int n = 0; n < y2Pre.size(); n++) {
+			input = input.and(y2Pre.getBit(n).biimp(y2v.getBit(n)));
+		}
+		for (int n = 0; n < f21Pre.size(); n++) {
+			input = input.and(f21Pre.getBit(n).biimp(f21v.getBit(n)));
+		}
+		for (int n = 0; n < tpost0Pre.size(); n++) {
+			input = input.and(tpost0Pre.getBit(n).biimp(tpost0v.getBit(n)));
+		}
+		for (int n = 0; n < y1Pre.size(); n++) {
+			input = input.and(y1Pre.getBit(n).biimp(y1v.getBit(n)));
+		}
+		
+		return input;
+	}
+	
+	private BDD caseIL(Expression expr, int needVar, BDDFactory bdd) {
 		IntegerLiteral newExpr = (IntegerLiteral) expr;
 		int expValue = Integer.parseInt(newExpr.getValue());
 		BDD transition = bdd.one();
@@ -489,6 +499,8 @@ public class RcfgTransitionBuilder{
 //				for (int j = 0; j < leftVar.size(); j++) {
 //					transition = transition.andWith(leftVar.getBit(j).biimp(rightValue.getBit(j)));
 //				}
+//				leftVar.free();
+//				rightValue.free();
 //			}
 //			else {
 //				BDDBitVector leftVar = bdd.buildVector(postVar[i]);
@@ -496,6 +508,8 @@ public class RcfgTransitionBuilder{
 //				for (int j = 0; j < leftVar.size(); j++) {
 //					transition = transition.andWith(leftVar.getBit(j).biimp(rightVar.getBit(j)));
 //				}
+//				leftVar.free();
+//				rightVar.free();
 //			}
 //		}
 		leftVar.free();
@@ -503,7 +517,7 @@ public class RcfgTransitionBuilder{
 		return transition;
 	}
 	
-	private BDD caseIE(Expression expr, BDDDomain[] preVar, BDDDomain[] postVar, int needVar, Map<String, Set<Integer>> varAndValue) {
+	private BDD caseIE(Expression expr, int needVar, Map<String, Set<Integer>> varAndValue, BDDFactory bdd) {
 		IdentifierExpression newExpr = (IdentifierExpression) expr;
 		String rightv = newExpr.getIdentifier();
 		BDD transition = bdd.one();
@@ -527,7 +541,7 @@ public class RcfgTransitionBuilder{
 		return transition;
 	}
 	
-	private BDD caseBE(Expression expr, BDDDomain[] preVar, BDDDomain[] postVar, int needVar, Map<String, Set<Integer>> varAndValue) {
+	private BDD caseBE(Expression expr, int needVar, Map<String, Set<Integer>> varAndValue, BDDFactory bdd) {
 		BinaryExpression newExpr = (BinaryExpression) expr;
 		BDD transition = bdd.one();
 		Expression binaryLeft = newExpr.getLeft();
@@ -648,9 +662,9 @@ public class RcfgTransitionBuilder{
 		if (ope.equals(ARITHPLUS)) {
 			opeResult = binaryLeftThing.add(binaryRightThing);
 		}
-//		else if (ope.equals(ARITHMINUS)) {
-//			opeResult = binaryLeftThing.sub(binaryRightThing);
-//		}
+		else if (ope.equals(ARITHMINUS)) {
+			opeResult = binaryLeftThing.sub(binaryRightThing);
+		}
 		
 		return opeResult;
 	}
