@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDDFactory;
 
@@ -29,8 +30,10 @@ public class NwaTransitionBuilder {
 	private final IUltimateServiceProvider mServices;
 	
 	static BDDFactory bdd;
-	BDDDomain[] preVar;
-	BDDDomain[] postVar;
+	BDDDomain[] v;
+	BDDDomain[] vprime;
+	
+	public List<BDD> nwaTrans = new ArrayList<BDD>();
 	
 	String il = "IntegerLiteral";
 	String ie = "IdentifierExpression";
@@ -39,14 +42,14 @@ public class NwaTransitionBuilder {
 	String be = "BinaryExpression";
 	
 	public NwaTransitionBuilder(INestedWordAutomaton<CodeBlock, String> nwa, final ILogger logger, final IUltimateServiceProvider services, 
-			BDDFactory bdd, BDDDomain[] pre, BDDDomain[] post, Set<String> varOrder) {
+			BDDFactory bdd, BDDDomain[] _v, BDDDomain[] _vprime, Set<String> varOrder) {
 		mNwa = nwa;
 		mServices = services;
 		mLogger = logger;
 		
 		List<Expression> allExpression = getNwaExpression(mNwa.getAlphabet());
-		preVar = pre;
-		postVar = post;
+		v = _v;
+		vprime = _vprime;
 		
 	}
 	

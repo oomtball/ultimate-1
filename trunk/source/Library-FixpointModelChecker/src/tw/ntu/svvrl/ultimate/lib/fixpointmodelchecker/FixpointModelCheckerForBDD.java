@@ -73,18 +73,20 @@ public class FixpointModelCheckerForBDD {
 		mNWA = nwa;
 		bdd = BDDFactory.init("j", 100000, 100000, false);
 		
+		// set up bdd factory
 		Map<String, Set<Integer>> varAndValue = getVarAndValue();
 		int[] pam = findRcfgNeededBits(varAndValue).stream().mapToInt(Integer::intValue).toArray();
-		BDDDomain[] preVar = bdd.extDomain(pam); // represents different bdd variables
-		BDDDomain[] postVar = bdd.extDomain(pam); // represents different bdd variables
+		BDDDomain[] v = bdd.extDomain(pam); // represents different v bdd variables
+		BDDDomain[] vprime = bdd.extDomain(pam); // represents different vprime bdd variables
 		Set<String> varOrder = varAndValue.keySet();
 		
 		
-
-		mRcfgTransitionBuilder = new RcfgTransitionBuilder(rcfg, mLogger, mServices, bdd, preVar, postVar, varOrder);
-		mNwaTransitionBuilder = new NwaTransitionBuilder(nwa, mLogger, mServices, bdd, preVar, postVar, varOrder);
+		// create RCFG transition builder which can help getting transitions of the system RCFG
+		mRcfgTransitionBuilder = new RcfgTransitionBuilder(rcfg, mLogger, mServices, bdd, v, vprime, varOrder);
+		// create NWA transition builder which can help getting transitions of the property NWA
+		mNwaTransitionBuilder = new NwaTransitionBuilder(nwa, mLogger, mServices, bdd, v, vprime, varOrder);
 		
-		mLogger.info(bdd.getDomain(12));
+		mLogger.info(Arrays.toString(mRcfgTransitionBuilder.getRcfgTrans().toArray()));
 	}
 	
 	private Map<String, Set<Integer>> getVarAndValue(){

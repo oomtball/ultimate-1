@@ -2,7 +2,6 @@ package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,23 +40,22 @@ public class RcfgTransitionBuilder{
 //	static BDDFactory bdd;
 	public List<BDD> rcfgTrans = new ArrayList<BDD>();
 	
-	BDDDomain[] preVar; // represents different bdd variables
-	BDDDomain[] postVar; // represents different bdd variables
+	BDDDomain[] v; // represents different bdd variables
+	BDDDomain[] vprime; // represents different bdd variables
+	Set<String> varOrder;
 	
 	String il = "IntegerLiteral";
 	String ie = "IdentifierExpression";
 	String be = "BinaryExpression";
 	
 	public RcfgTransitionBuilder(final BoogieIcfgContainer rcfg, final ILogger logger, final IUltimateServiceProvider services, 
-			BDDFactory b, BDDDomain[] pre, BDDDomain[] post, Set<String> varOrder) {
+			BDDFactory bf, BDDDomain[] _v, BDDDomain[] _vprime, Set<String> vo) {
 		mServices = services;
 		mLogger = logger;
 		
 		mLocNodes = rcfg.getProgramPoints();
 		mStatementExtractor = new RcfgStatementExtractor();
 		mSimpleEvaluator = new SimpleEvaluator(mLogger);
-		
-		bdd = b;
 		
 		// set up the program counters for each thread -- pc.
 		Map<String, Map<BoogieIcfgLocation, Integer>> allStatesWithPc = computeProgramCounter(mLocNodes);
@@ -66,41 +64,33 @@ public class RcfgTransitionBuilder{
 		Map<String, Set<Pair<Expression, Pair<String, Pair<Integer, Integer>>>>> allAssignments = getAllAssignments(allStatesWithPc);
 		
 		// set up all possible values for each variable. (filter)
-		Map<String, Set<Integer>> varAndValue = getVarAndValue(allAssignments);
+//		Map<String, Set<Integer>> varAndValue = getVarAndValue(allAssignments);
 		
-		// set up all pre-states for BDD transitions.
-//		Set<SimpleState> preState = getPreStates(varAndValue);
-		
-		// calculate post states.
-//		Set<SimpleStateTransition> transitions = calculatePost(preState, allAssignments);
-		
-		preVar = pre; // represents different bdd variables
-		postVar = post; // represents different bdd variables
+		bdd = bf;
+		v = _v; // represents different bdd variables
+		vprime = _vprime; // represents different bdd variables
+		varOrder = vo;
 		
 		// test case
 		BDD input = setInput();
 		
 		BDDPairing bp = bdd.makePair();
-		bp.set(preVar, postVar);
+		bp.set(v, vprime);
 		BDD input2 = input.replace(bp);
 		
 		mLogger.info(input);
 		mLogger.info(input2);
-//		for (int i = 0; i < preVar.length; i++) {
-//			BDDPairing bp = bdd.makePair(preVar[i], postVar[i]);
-//			input2 = input.veccompose(bp);
-//		}
 		
 //		BDDDomain[] bddPc = bdd.extDomain(pam2); // represents pc of different threads
 //		
 //		Set<String> cpondsPc = allStatesWithPc.keySet();
 //		
 		for (String s : allAssignments.keySet()) {
-			if (!varAndValue.containsKey(s)) {
+			if (!varOrder.contains(s)) {
 				continue;
 			}
 			int needVar = 0;
-			for (String s3 : varAndValue.keySet()) {
+			for (String s3 : varOrder) {
 				if (s3.equals(s)) {
 					break;
 				}
@@ -120,10 +110,10 @@ public class RcfgTransitionBuilder{
 					transition = caseIL(expr, needVar, bdd);
 				}
 				else if (expr.getClass().getSimpleName().equals(ie)) {
-					transition = caseIE(expr, needVar, varAndValue, bdd);
+					transition = caseIE(expr, needVar, varOrder, bdd);
 				}
 				else if (expr.getClass().getSimpleName().equals(be)) {
-					transition = caseBE(expr, needVar, varAndValue, bdd);
+					transition = caseBE(expr, needVar, varOrder, bdd);
 				} 
 				// deal with PCs
 //				int count = 0;
@@ -150,44 +140,46 @@ public class RcfgTransitionBuilder{
 //					}
 //					count++;
 //				}
-				mLogger.info(transition);
-				mLogger.info(transition.restrict(input));
-				mLogger.info(input2);
+				mLogger.info("transition : " + transition);
+				rcfgTrans.add(transition);
+				
 				BDD post1 = bdd.one();
 				List<Integer> needDomains = new ArrayList<Integer>();
 				for (int i : transition.restrict(input).scanSetDomains()) {
 					needDomains.add(i-12);
 				}
-				for (int i = 0; i < postVar.length; i++) {
+				for (int i = 0; i < vprime.length; i++) {
 					if (needDomains.contains(i)) {
-						BDDBitVector test1 = bdd.buildVector(postVar[i]);
-						BDDBitVector test2 = bdd.constantVector(test1.size(), transition.restrict(input).scanVar(postVar[i]));
+						BDDBitVector test1 = bdd.buildVector(vprime[i]);
+						BDDBitVector test2 = bdd.constantVector(test1.size(), transition.restrict(input).scanVar(vprime[i]));
 						
 						for (int n = 0; n < test1.size(); n++) {
 							post1 = post1.and(test1.getBit(n).biimp(test2.getBit(n)));
 						}
 					}
 					else {
-						BDDBitVector test1 = bdd.buildVector(postVar[i]);
-						BDDBitVector test2 = bdd.constantVector(test1.size(), input2.scanVar(postVar[i]));
+						BDDBitVector test1 = bdd.buildVector(vprime[i]);
+						BDDBitVector test2 = bdd.constantVector(test1.size(), input2.scanVar(vprime[i]));
 						
 						for (int n = 0; n < test1.size(); n++) {
 							post1 = post1.and(test1.getBit(n).biimp(test2.getBit(n)));
 						}
 					}
 				}
-				mLogger.info(post1);
-
-//				for ()
-//				mLogger.info(input2.compose(transition.restrict(input), var));
-//				for (int i = 0; i <　transition.restrict(input).scanSetDomains())
-//				mLogger.info(input2.replace(bp));
+				mLogger.info("pre : " + input2);
+				mLogger.info("post : " + post1);	
 				
 //				break;
 			}
 //			break;
 		}
 //		mLogger.info(result);	
+		
+		// set up all pre-states for BDD transitions.
+//		Set<SimpleState> preState = getPreStates(varAndValue);
+		
+		// calculate post states.
+//		Set<SimpleStateTransition> transitions = calculatePost(preState, allAssignments);
 	}
 	
 	public List<BDD> getRcfgTrans() {
@@ -255,152 +247,6 @@ public class RcfgTransitionBuilder{
 		return allAssignments;
 	}
 
-	private Map<String, Set<Integer>> getVarAndValue(Map<String, Set<Pair<Expression, Pair<String, Pair<Integer, Integer>>>>> allAssignments){
-		Map<String, Set<Integer>> varAndValue = new HashMap<>();
-		String s1 = "~turn~0";
-		Set<Integer> temp1 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s1, temp1);
-//		String s2 = "main_#t~pre2";
-//		Set<Integer> temp2 = new HashSet<>(Arrays.asList(0, 1));
-//		varAndValue.put(s2, temp2);
-//		String s3 = "main_#res";
-//		Set<Integer> temp3 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s3, temp3);
-//		String s4 = "#res.base";
-//		Set<Integer> temp4 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s4, temp4);
-		String s5 = "~t1~0";
-		Set<Integer> temp5 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s5, temp5);
-//		String s6 = "main_#t~pre4";
-//		Set<Integer> temp6 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s6, temp6);
-		String s7 = "~t2~0";
-		Set<Integer> temp7 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s7, temp7);
-		String s8 = "~f12~0";
-		Set<Integer> temp8 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s8, temp8);
-//		String s9 = "#NULL.offset";
-//		Set<Integer> temp9 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s9, temp9);
-		String s10 = "~y2~0";
-		Set<Integer> temp10 = new HashSet<>(Arrays.asList(0, 1, 2));
-		varAndValue.put(s10, temp10);
-		String s11 = "~f21~0";
-		Set<Integer> temp11 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s11, temp11);
-		String s12 = "~y1~0";
-		Set<Integer> temp12 = new HashSet<>(Arrays.asList(0, 1, 2));
-		varAndValue.put(s12, temp12);
-//		String s13 = "#res.offset";
-//		Set<Integer> temp13 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s13, temp13);
-//		String s14 = "~_.offset";
-//		Set<Integer> temp14 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s14, temp14);
-//		String s15 = "#t~ret8";
-//		Set<Integer> temp15 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s15, temp15);
-		String s16 = "~x~0";
-		Set<Integer> temp16 = new HashSet<>(Arrays.asList(0, 1, 2));
-		varAndValue.put(s16, temp16);
-		String s17 = "~flag1~0";
-		Set<Integer> temp17 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s17, temp17);
-		String s18 = "#t~post1";
-		Set<Integer> temp18 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s18, temp18);
-		String s19 = "~flag2~0";
-		Set<Integer> temp19 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s19, temp1);
-//		String s20 = "#pthreadsForks";
-//		Set<Integer> temp20 = new HashSet<>(Arrays.asList(0, 1));
-//		varAndValue.put(s20, temp20);
-//		String s21 = "~_.base";
-//		Set<Integer> temp21 = new HashSet<>(Arrays.asList(0, 1));
-//		varAndValue.put(s21, temp21);
-//		String s22 = "#NULL.base";
-//		Set<Integer> temp22 = new HashSet<>(Arrays.asList(0, 1));
-//		varAndValue.put(s22, temp22);
-		String s23 = "#t~post0";
-		Set<Integer> temp23 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s23, temp23);
-//		String s24 = "#valid";
-//		Set<Integer> temp24 = new HashSet<>(Arrays.asList(0, 1));
-//		varAndValue.put(s24, temp24);
-		return varAndValue;
-	}
-		
-	private Set<SimpleState> getPreStates(Map<String, Set<Integer>> varAndValue){
-		Set<SimpleState> preStates = new HashSet<>();
-		List<List<Integer>> beforeProduct = new ArrayList<>();
-		for (String s : varAndValue.keySet()) {
-			List<Integer> temp = new ArrayList<>();
-			for (Integer i : varAndValue.get(s)) {
-				temp.add(i);
-			}
-			beforeProduct.add(temp);
-		}
-
-		for (List<Integer> l : computeCombinations(beforeProduct)) {
-			SimpleState tempState = new SimpleState(varAndValue.keySet(), l);
-			preStates.add(tempState);
-		}
-		return preStates;
-	}
-	
-	private static <T> List<List<T>> computeCombinations(List<List<T>> lists) {
-	    List<List<T>> combinations = Arrays.asList(Arrays.asList());
-	    for (List<T> list : lists) {
-	        List<List<T>> extraColumnCombinations = new ArrayList<>();
-	        for (List<T> combination : combinations) {
-	            for (T element : list) {
-	                List<T> newCombination = new ArrayList<>(combination);
-	                newCombination.add(element);
-	                extraColumnCombinations.add(newCombination);
-	            }
-	        }
-	        combinations = extraColumnCombinations;
-	    }
-	    return combinations;
-	}
-
-	private Set<SimpleStateTransition> calculatePost(Set<SimpleState> preStates, Map<String, Set<Pair<Expression, Pair<String, Pair<Integer, Integer>>>>> allAssignments) {
-		Set<SimpleStateTransition> tempTransitions = new HashSet<>();
-		for (SimpleState s : preStates) {
-			mLogger.info(s.getVars());
-			for (String s2 : allAssignments.keySet()) {
-				for(Pair<Expression, Pair<String, Pair<Integer, Integer>>> p : allAssignments.get(s2)) {
-					String test = "IntegerLiteral";
-					if (p.getFirst().getClass().getSimpleName().equals(test)) {
-						List<Integer> postValues = mSimpleEvaluator.calculatePost(s.getVars(), s.getValues(), s2, p.getFirst(), p.getSecond());
-						SimpleStateTransition tempTransition = new SimpleStateTransition(s.getVars(), s.getValues(), postValues);
-						tempTransitions.add(tempTransition);
-					}
-				}
-				break;
-			}
-			break;
-		}
-		return tempTransitions;
-	}
-
-	private List<Integer> findRcfgNeededBits(Map<String, Set<Integer>> varAndValue) {
-		List<Integer> bitArray = new ArrayList<Integer>();
-		for (String s : varAndValue.keySet()) {
-//			mLogger.info(s);
-			bitArray.add(Integer.toBinaryString(Collections.max(varAndValue.get(s))).length());
-		}
-		int maxv = Collections.max(bitArray);
-		
-		List<Integer> v = new ArrayList<Integer>(); 
-		for (int i = 0; i < bitArray.size(); i++) {
-			v.add((int) Math.pow(2, maxv));
-		}
-		return v;
-	}
-	
 	private List<Integer> findPcNeededBits(Map<String, Map<BoogieIcfgLocation, Integer>> allStatesWithPc) {
 		List<Integer> bitArray3 = new ArrayList<Integer>();
 		for (String s : allStatesWithPc.keySet()) {
@@ -418,18 +264,18 @@ public class RcfgTransitionBuilder{
 	private BDD setInput() {
 		BDD input = bdd.one();
 		
-		BDDBitVector turnPre = bdd.buildVector(preVar[0]);
-		BDDBitVector xPre = bdd.buildVector(preVar[1]);
-		BDDBitVector t1Pre = bdd.buildVector(preVar[2]);
-		BDDBitVector flag1Pre = bdd.buildVector(preVar[3]);
-		BDDBitVector tpost1Pre = bdd.buildVector(preVar[4]);
-		BDDBitVector t2Pre = bdd.buildVector(preVar[5]);
-		BDDBitVector flag2Pre = bdd.buildVector(preVar[6]);
-		BDDBitVector f12Pre = bdd.buildVector(preVar[7]);
-		BDDBitVector y2Pre = bdd.buildVector(preVar[8]);
-		BDDBitVector f21Pre = bdd.buildVector(preVar[9]);
-		BDDBitVector tpost0Pre = bdd.buildVector(preVar[10]);
-		BDDBitVector y1Pre = bdd.buildVector(preVar[11]);
+		BDDBitVector turnPre = bdd.buildVector(v[0]);
+		BDDBitVector xPre = bdd.buildVector(v[1]);
+		BDDBitVector t1Pre = bdd.buildVector(v[2]);
+		BDDBitVector flag1Pre = bdd.buildVector(v[3]);
+		BDDBitVector tpost1Pre = bdd.buildVector(v[4]);
+		BDDBitVector t2Pre = bdd.buildVector(v[5]);
+		BDDBitVector flag2Pre = bdd.buildVector(v[6]);
+		BDDBitVector f12Pre = bdd.buildVector(v[7]);
+		BDDBitVector y2Pre = bdd.buildVector(v[8]);
+		BDDBitVector f21Pre = bdd.buildVector(v[9]);
+		BDDBitVector tpost0Pre = bdd.buildVector(v[10]);
+		BDDBitVector y1Pre = bdd.buildVector(v[11]);
 		BDDBitVector turnv = bdd.constantVector(2, 1);
 		BDDBitVector xv = bdd.constantVector(2, 2);
 		BDDBitVector t1v = bdd.constantVector(2, 0);
@@ -487,14 +333,14 @@ public class RcfgTransitionBuilder{
 		IntegerLiteral newExpr = (IntegerLiteral) expr;
 		int expValue = Integer.parseInt(newExpr.getValue());
 		BDD transition = bdd.one();
-		BDDBitVector leftVar = bdd.buildVector(postVar[needVar]);
+		BDDBitVector leftVar = bdd.buildVector(vprime[needVar]);
 		BDDBitVector rightValue = bdd.constantVector(leftVar.size(), expValue);
 		for (int j = 0; j < leftVar.size(); j++) {
 			transition = transition.andWith(leftVar.getBit(j).biimp(rightValue.getBit(j)));
 		}
-//		for (int i = 0; i < preVar.length; i++) {
+//		for (int i = 0; i < v.length; i++) {
 //			if (i == needVar) {
-//				BDDBitVector leftVar = bdd.buildVector(postVar[i]);
+//				BDDBitVector leftVar = bdd.buildVector(vprime[i]);
 //				BDDBitVector rightValue = bdd.constantVector(leftVar.size(), expValue);
 //				for (int j = 0; j < leftVar.size(); j++) {
 //					transition = transition.andWith(leftVar.getBit(j).biimp(rightValue.getBit(j)));
@@ -503,8 +349,8 @@ public class RcfgTransitionBuilder{
 //				rightValue.free();
 //			}
 //			else {
-//				BDDBitVector leftVar = bdd.buildVector(postVar[i]);
-//				BDDBitVector rightVar = bdd.buildVector(preVar[i]);
+//				BDDBitVector leftVar = bdd.buildVector(vprime[i]);
+//				BDDBitVector rightVar = bdd.buildVector(v[i]);
 //				for (int j = 0; j < leftVar.size(); j++) {
 //					transition = transition.andWith(leftVar.getBit(j).biimp(rightVar.getBit(j)));
 //				}
@@ -517,21 +363,21 @@ public class RcfgTransitionBuilder{
 		return transition;
 	}
 	
-	private BDD caseIE(Expression expr, int needVar, Map<String, Set<Integer>> varAndValue, BDDFactory bdd) {
+	private BDD caseIE(Expression expr, int needVar, Set<String> varOrder, BDDFactory bdd) {
 		IdentifierExpression newExpr = (IdentifierExpression) expr;
 		String rightv = newExpr.getIdentifier();
 		BDD transition = bdd.one();
 		
 		int needVar2 = 0;
-		for (String s3 : varAndValue.keySet()) {
+		for (String s3 : varOrder) {
 			if (s3.equals(rightv)) {
 				break;
 			}
 			needVar2++;
 		}
 		
-		BDDBitVector leftVar = bdd.buildVector(postVar[needVar]);
-		BDDBitVector rightVar = bdd.buildVector(preVar[needVar2]);
+		BDDBitVector leftVar = bdd.buildVector(vprime[needVar]);
+		BDDBitVector rightVar = bdd.buildVector(v[needVar2]);
 		
 		for (int i = 0; i < leftVar.size(); i++) {
 			transition = transition.andWith(leftVar.getBit(i).biimp(rightVar.getBit(i)));
@@ -541,7 +387,7 @@ public class RcfgTransitionBuilder{
 		return transition;
 	}
 	
-	private BDD caseBE(Expression expr, int needVar, Map<String, Set<Integer>> varAndValue, BDDFactory bdd) {
+	private BDD caseBE(Expression expr, int needVar, Set<String> varOrder, BDDFactory bdd) {
 		BinaryExpression newExpr = (BinaryExpression) expr;
 		BDD transition = bdd.one();
 		Expression binaryLeft = newExpr.getLeft();
@@ -549,7 +395,7 @@ public class RcfgTransitionBuilder{
 		String leftClass = binaryLeft.getClass().getSimpleName();
 		String rightClass = binaryRight.getClass().getSimpleName();
 		
-		BDDBitVector leftVar = bdd.buildVector(postVar[needVar]);
+		BDDBitVector leftVar = bdd.buildVector(vprime[needVar]);
 		String ope = newExpr.getOperator().toString();
 //		mLogger.info(ope);
 		
@@ -576,13 +422,13 @@ public class RcfgTransitionBuilder{
 			IntegerLiteral newBinaryRight = (IntegerLiteral) binaryRight;
 			
 			int count = 0;
-			for (String s : varAndValue.keySet()) {
+			for (String s : varOrder) {
 				if (s.equals(newBinaryLeft.getIdentifier())) {
 					break;
 				}
 				count++;
 			}
-			binaryLeftThing = bdd.buildVector(preVar[count]);
+			binaryLeftThing = bdd.buildVector(v[count]);
 			binaryRightThing = bdd.constantVector(binaryLeftThing.size(), Integer.parseInt(newBinaryRight.getValue()));
 			rightVar = dealWithOperator(binaryLeftThing, binaryRightThing, ope);
 			binaryLeftThing.free();
@@ -593,13 +439,13 @@ public class RcfgTransitionBuilder{
 			IdentifierExpression newBinaryRight = (IdentifierExpression) binaryRight;
 			
 			int count = 0;
-			for (String s : varAndValue.keySet()) {
+			for (String s : varOrder) {
 				if (s.equals(newBinaryRight.getIdentifier())) {
 					break;
 				}
 				count++;
 			}
-			binaryRightThing = bdd.buildVector(preVar[count]);
+			binaryRightThing = bdd.buildVector(v[count]);
 			binaryLeftThing = bdd.constantVector(binaryRightThing.size(), Integer.parseInt(newBinaryLeft.getValue()));
 			rightVar = dealWithOperator(binaryLeftThing, binaryRightThing, ope);
 			binaryLeftThing.free();
@@ -611,20 +457,20 @@ public class RcfgTransitionBuilder{
 			
 			int count1 = 0;
 			int count2 = 0;
-			for (String s : varAndValue.keySet()) {
+			for (String s : varOrder) {
 				if (s.equals(newBinaryLeft.getIdentifier())) {
 					break;
 				}
 				count1++;
 			}
-			for (String s : varAndValue.keySet()) {
+			for (String s : varOrder) {
 				if (s.equals(newBinaryRight.getIdentifier())) {
 					break;
 				}
 				count2++;
 			}
-			binaryLeftThing = bdd.buildVector(preVar[count1]);
-			binaryRightThing = bdd.buildVector(preVar[count2]);
+			binaryLeftThing = bdd.buildVector(v[count1]);
+			binaryRightThing = bdd.buildVector(v[count2]);
 			rightVar = dealWithOperator(binaryLeftThing, binaryRightThing, ope);
 			binaryLeftThing.free();
 			binaryRightThing.free();
@@ -668,4 +514,58 @@ public class RcfgTransitionBuilder{
 		
 		return opeResult;
 	}
+
+//	private Set<SimpleState> getPreStates(Map<String, Set<Integer>> varAndValue){
+//	Set<SimpleState> preStates = new HashSet<>();
+//	List<List<Integer>> beforeProduct = new ArrayList<>();
+//	for (String s : varAndValue.keySet()) {
+//		List<Integer> temp = new ArrayList<>();
+//		for (Integer i : varAndValue.get(s)) {
+//			temp.add(i);
+//		}
+//		beforeProduct.add(temp);
+//	}
+//
+//	for (List<Integer> l : computeCombinations(beforeProduct)) {
+//		SimpleState tempState = new SimpleState(varAndValue.keySet(), l);
+//		preStates.add(tempState);
+//	}
+//	return preStates;
+//}
+	
+//	private static <T> List<List<T>> computeCombinations(List<List<T>> lists) {
+//    List<List<T>> combinations = Arrays.asList(Arrays.asList());
+//    for (List<T> list : lists) {
+//        List<List<T>> extraColumnCombinations = new ArrayList<>();
+//        for (List<T> combination : combinations) {
+//            for (T element : list) {
+//                List<T> newCombination = new ArrayList<>(combination);
+//                newCombination.add(element);
+//                extraColumnCombinations.add(newCombination);
+//            }
+//        }
+//        combinations = extraColumnCombinations;
+//    }
+//    return combinations;
+//}
+	
+//	private Set<SimpleStateTransition> calculatePost(Set<SimpleState> preStates, Map<String, Set<Pair<Expression, Pair<String, Pair<Integer, Integer>>>>> allAssignments) {
+//	Set<SimpleStateTransition> tempTransitions = new HashSet<>();
+//	for (SimpleState s : preStates) {
+//		mLogger.info(s.getVars());
+//		for (String s2 : allAssignments.keySet()) {
+//			for(Pair<Expression, Pair<String, Pair<Integer, Integer>>> p : allAssignments.get(s2)) {
+//				String test = "IntegerLiteral";
+//				if (p.getFirst().getClass().getSimpleName().equals(test)) {
+//					List<Integer> postValues = mSimpleEvaluator.calculatePost(s.getVars(), s.getValues(), s2, p.getFirst(), p.getSecond());
+//					SimpleStateTransition tempTransition = new SimpleStateTransition(s.getVars(), s.getValues(), postValues);
+//					tempTransitions.add(tempTransition);
+//				}
+//			}
+//			break;
+//		}
+//		break;
+//	}
+//	return tempTransitions;
+//}
 }
