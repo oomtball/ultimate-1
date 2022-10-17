@@ -217,7 +217,7 @@ public abstract class BDDBitVector {
         return res;
     }
     
-    BDD lte(BDDBitVector r)
+    public BDD lte(BDDBitVector r)
     {
         if (bitvec.length != r.bitvec.length) {
 			throw new BDDException();
@@ -233,6 +233,38 @@ public abstract class BDDBitVector {
           final BDD tmp2 = bitvec[n].apply(r.bitvec[n], BDDFactory.biimp);
           tmp2.andWith(p);
           tmp1.orWith(tmp2);
+          p = tmp1;
+       }
+       return p;
+    }
+    
+    public BDD lth(BDDBitVector r)
+    {
+        if (bitvec.length != r.bitvec.length) {
+			throw new BDDException();
+		}
+        
+       final BDDFactory bdd = getFactory();
+       BDD p = bdd.one();
+       for (int n=0 ; n<bitvec.length ; n++) {
+          final BDD tmp1 = bitvec[n].apply(r.bitvec[n], BDDFactory.less);
+          tmp1.andWith(p);
+          p = tmp1;
+       }
+       return p;
+    }
+    
+    public BDD eq(BDDBitVector r)
+    {
+        if (bitvec.length != r.bitvec.length) {
+			throw new BDDException();
+		}
+        
+       final BDDFactory bdd = getFactory();
+       BDD p = bdd.one();
+       for (int n=0 ; n<bitvec.length ; n++) {     
+    	  final BDD tmp1 = bitvec[n].apply(r.bitvec[n], BDDFactory.biimp);
+          tmp1.andWith(p);
           p = tmp1;
        }
        return p;

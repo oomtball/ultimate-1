@@ -57,6 +57,11 @@ public class RcfgTransitionBuilder{
 		mStatementExtractor = new RcfgStatementExtractor();
 		mSimpleEvaluator = new SimpleEvaluator(mLogger);
 		
+		bdd = bf;
+		v = _v; // represents different bdd variables
+		vprime = _vprime; // represents different bdd variables
+		varOrder = vo;
+		
 		// set up the program counters for each thread -- pc.
 		Map<String, Map<BoogieIcfgLocation, Integer>> allStatesWithPc = computeProgramCounter(mLocNodes);
 
@@ -66,11 +71,6 @@ public class RcfgTransitionBuilder{
 		// set up all possible values for each variable. (filter)
 //		Map<String, Set<Integer>> varAndValue = getVarAndValue(allAssignments);
 		
-		bdd = bf;
-		v = _v; // represents different bdd variables
-		vprime = _vprime; // represents different bdd variables
-		varOrder = vo;
-		
 		// test case
 		BDD input = setInput();
 		
@@ -78,8 +78,8 @@ public class RcfgTransitionBuilder{
 		bp.set(v, vprime);
 		BDD input2 = input.replace(bp);
 		
-		mLogger.info(input);
-		mLogger.info(input2);
+//		mLogger.info(input);
+//		mLogger.info(input2);
 		
 //		BDDDomain[] bddPc = bdd.extDomain(pam2); // represents pc of different threads
 //		
@@ -143,31 +143,11 @@ public class RcfgTransitionBuilder{
 				mLogger.info("transition : " + transition);
 				rcfgTrans.add(transition);
 				
-				BDD post1 = bdd.one();
-				List<Integer> needDomains = new ArrayList<Integer>();
-				for (int i : transition.restrict(input).scanSetDomains()) {
-					needDomains.add(i-12);
-				}
-				for (int i = 0; i < vprime.length; i++) {
-					if (needDomains.contains(i)) {
-						BDDBitVector test1 = bdd.buildVector(vprime[i]);
-						BDDBitVector test2 = bdd.constantVector(test1.size(), transition.restrict(input).scanVar(vprime[i]));
-						
-						for (int n = 0; n < test1.size(); n++) {
-							post1 = post1.and(test1.getBit(n).biimp(test2.getBit(n)));
-						}
-					}
-					else {
-						BDDBitVector test1 = bdd.buildVector(vprime[i]);
-						BDDBitVector test2 = bdd.constantVector(test1.size(), input2.scanVar(vprime[i]));
-						
-						for (int n = 0; n < test1.size(); n++) {
-							post1 = post1.and(test1.getBit(n).biimp(test2.getBit(n)));
-						}
-					}
-				}
+				// test case
+				BDD post = rcfgGetPost(input, transition);
+				mLogger.info("changed : " + transition.restrict(input));
 				mLogger.info("pre : " + input2);
-				mLogger.info("post : " + post1);	
+				mLogger.info("post : " + post);	
 				
 //				break;
 			}
@@ -513,6 +493,37 @@ public class RcfgTransitionBuilder{
 		}
 		
 		return opeResult;
+	}
+
+	public BDD rcfgGetPost(BDD input, BDD transition) {
+		BDD post = bdd.one();
+		
+		BDDPairing bp = bdd.makePair();
+		bp.set(v, vprime);
+		BDD input2 = input.replace(bp);
+		List<Integer> needDomains = new ArrayList<Integer>();
+		for (int i : transition.restrict(input).scanSetDomains()) {
+			needDomains.add(i-12);
+		}
+		for (int i = 0; i < vprime.length; i++) {
+			if (needDomains.contains(i)) {
+				BDDBitVector test1 = bdd.buildVector(vprime[i]);
+				BDDBitVector test2 = bdd.constantVector(test1.size(), transition.restrict(input).scanVar(vprime[i]));
+				
+				for (int n = 0; n < test1.size(); n++) {
+					post = post.and(test1.getBit(n).biimp(test2.getBit(n)));
+				}
+			}
+			else {
+				BDDBitVector test1 = bdd.buildVector(vprime[i]);
+				BDDBitVector test2 = bdd.constantVector(test1.size(), input2.scanVar(vprime[i]));
+				
+				for (int n = 0; n < test1.size(); n++) {
+					post = post.and(test1.getBit(n).biimp(test2.getBit(n)));
+				}
+			}
+		}
+		return post;
 	}
 
 //	private Set<SimpleState> getPreStates(Map<String, Set<Integer>> varAndValue){

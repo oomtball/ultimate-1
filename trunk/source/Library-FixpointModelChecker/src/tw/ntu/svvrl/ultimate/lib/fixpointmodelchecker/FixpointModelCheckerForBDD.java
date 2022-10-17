@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDDFactory;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.neverstate.NeverState;
@@ -71,9 +72,10 @@ public class FixpointModelCheckerForBDD {
 		mLogger = logger;
 		mRcfgRoot = rcfg;
 		mNWA = nwa;
+		// set up BDD factory
 		bdd = BDDFactory.init("j", 100000, 100000, false);
 		
-		// set up bdd factory
+		// set up BDD domain
 		Map<String, Set<Integer>> varAndValue = getVarAndValue();
 		int[] pam = findRcfgNeededBits(varAndValue).stream().mapToInt(Integer::intValue).toArray();
 		BDDDomain[] v = bdd.extDomain(pam); // represents different v bdd variables
@@ -86,7 +88,10 @@ public class FixpointModelCheckerForBDD {
 		// create NWA transition builder which can help getting transitions of the property NWA
 		mNwaTransitionBuilder = new NwaTransitionBuilder(nwa, mLogger, mServices, bdd, v, vprime, varOrder);
 		
-		mLogger.info(Arrays.toString(mRcfgTransitionBuilder.getRcfgTrans().toArray()));
+//		for (BDD b : mNwaTransitionBuilder.getNwaTrans()) {
+//			mLogger.info(b.isOne());
+//		}
+		mLogger.info(Arrays.toString(mNwaTransitionBuilder.getNwaTrans().toArray()));
 	}
 	
 	private Map<String, Set<Integer>> getVarAndValue(){
