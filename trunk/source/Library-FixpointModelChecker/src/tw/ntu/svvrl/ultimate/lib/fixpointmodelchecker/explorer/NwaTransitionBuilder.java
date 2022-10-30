@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -34,6 +37,8 @@ public class NwaTransitionBuilder {
 	Set<String> varOrder;
 	
 	public List<BDD> nwaTrans = new ArrayList<BDD>();
+	public List<BDD> nwaFinalTrans = new ArrayList<BDD>();
+	public List<Boolean> tranIsToFinal = new ArrayList<Boolean>();
 	
 	String il = "IntegerLiteral";
 	String ie = "IdentifierExpression";
@@ -53,18 +58,31 @@ public class NwaTransitionBuilder {
 		varOrder = _varOrder;
 		
 		List<Expression> allExpression = getNwaExpression(mNwa.getAlphabet());
+//		mLogger.info(Arrays.toString(allExpression.toArray()));
 		buildNwaTrans(allExpression, bdd);
-		
+//		BDD test = bdd.zero();
+//		for (BDD b : nwaTrans) {
+//			test.orWith(b);
+//			mLogger.info(test);
+//		}
 	}
 	
 	private List<Expression> getNwaExpression(Set<CodeBlock> al) {
 		List<Expression> allExpression = new ArrayList<>();
-		for (CodeBlock cb : al) {
-			StatementSequence ss = (StatementSequence) cb;
-			for (Statement s : ss.getStatements()) {
-				if (s instanceof AssumeStatement) {
-					AssumeStatement as = (AssumeStatement) s;
-					allExpression.add(as.getFormula());
+		for (String s : mNwa.getStates()) {
+			for (IncomingInternalTransition i : mNwa.internalPredecessors(s)) {
+				if (mNwa.isFinal(s)) {
+					tranIsToFinal.add(true);
+				}
+				else {
+					tranIsToFinal.add(false);
+				}
+				StatementSequence ss = (StatementSequence) i.getLetter();
+				for (Statement s2 : ss.getStatements()) {
+					if (s2 instanceof AssumeStatement) {
+						AssumeStatement as = (AssumeStatement) s2;
+						allExpression.add(as.getFormula());
+					}
 				}
 			}
 		}
@@ -72,9 +90,10 @@ public class NwaTransitionBuilder {
 	}
 	
 	private void buildNwaTrans(List<Expression> allExpression, BDDFactory bdd) {
+		int count = 0;
 		for (Expression expr : allExpression) {
 			BDD transition = bdd.one();
-			mLogger.info(expr);
+//			mLogger.info(expr);
 			if (expr instanceof BooleanLiteral) {
 				transition = caseBL(expr);
 			}
@@ -86,7 +105,11 @@ public class NwaTransitionBuilder {
 			}
 			
 			nwaTrans.add(transition);
-			mLogger.info("transition : " + transition);
+			if (tranIsToFinal.get(count)) {
+				nwaFinalTrans.add(transition);
+			}
+			count++;
+//			mLogger.info("transition : " + transition);
 		}
 	}
 	
@@ -123,10 +146,12 @@ public class NwaTransitionBuilder {
 //		mLogger.info(binaryLeftThing);
 //		mLogger.info(binaryRightThing);
 		if (ope.equals(COMPLT)) {
-			opeResult = binaryLeftThing.lth(binaryRightThing);
+			opeResult = binaryRightThing.lte(binaryLeftThing);
+			opeResult = opeResult.not();
 		}
 		else if (ope.equals(COMPGT)) {
-			opeResult = binaryRightThing.lth(binaryLeftThing);
+			opeResult = binaryLeftThing.lte(binaryRightThing);
+			opeResult = opeResult.not();
 		}
 		else if (ope.equals(COMPLEQ)) {
 			opeResult = binaryLeftThing.lte(binaryRightThing);
@@ -224,7 +249,7 @@ public class NwaTransitionBuilder {
 				binaryLeftThing.free();
 				binaryRightThing.free();
 			}
-			mLogger.info(tempBdd);
+//			mLogger.info(tempBdd);
 			if (checkNot.equals(LOGICNEG)) {
 				tempBdd = tempBdd.not();
 			}
@@ -376,10 +401,6 @@ public class NwaTransitionBuilder {
 		String rightClass = binaryRight.getClass().getSimpleName();
 		BDDBitVector binaryLeftThing = null; 
 		BDDBitVector binaryRightThing = null; 
-		String LOGICAND = "LOGICAND";
-		String LOGICOR = "LOGICOR";
-		String LOGICIMPLIES = "LOGICIMPLIES"; // -> 
-		String LOGICIFF = "LOGICIFF"; //  <->
 		if (leftClass.equals(il)) {
 			if (rightClass.equals(ie)) {
 				IntegerLiteral newBinaryLeft = (IntegerLiteral) binaryLeft;
@@ -450,6 +471,10 @@ public class NwaTransitionBuilder {
 	
 	public List<BDD> getNwaTrans(){
 		return nwaTrans;
+	}
+	
+	public List<BDD> getNwaFinalTrans(){
+		return nwaFinalTrans;
 	}
 	
 }

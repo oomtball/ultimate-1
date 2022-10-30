@@ -12,7 +12,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -30,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDBitVector;
@@ -44,7 +50,7 @@ public class FixpointModelCheckerForBDD {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final BoogieIcfgContainer mRcfgRoot;
-	private final INestedWordAutomaton<CodeBlock, String> mNWA;
+	private final INestedWordAutomaton<CodeBlock, String> mNwa;
 	
 	private final NwaTransitionBuilder mNwaTransitionBuilder;
 	private final RcfgTransitionBuilder mRcfgTransitionBuilder;
@@ -75,12 +81,17 @@ public class FixpointModelCheckerForBDD {
 		mServices = services;
 		mLogger = logger;
 		mRcfgRoot = rcfg;
-		mNWA = nwa;
+		mNwa = nwa;
 		// set up BDD factory
-		bdd = BDDFactory.init("j", 100000, 100000, false);
+		bdd = BDDFactory.init("j", 1000000, 1000000, false);
 		
 		// set up BDD domain
-		Map<String, Set<Integer>> varAndValue = getVarAndValue();
+		Map<String, Set<Integer>> varAndValue = getVarAndValue2();
+
+		int propertyNeedBit = findPropertyNeedBit(mNwa);
+		mLogger.info(propertyNeedBit);
+		
+		
 		int[] pam = findRcfgNeededBits(varAndValue).stream().mapToInt(Integer::intValue).toArray();
 		v = bdd.extDomain(pam); // represents different v bdd variables
 		vprime = bdd.extDomain(pam); // represents different vprime bdd variables
@@ -88,23 +99,234 @@ public class FixpointModelCheckerForBDD {
 		
 		
 		// create RCFG transition builder which can help getting transitions of the system RCFG
-		mRcfgTransitionBuilder = new RcfgTransitionBuilder(rcfg, mLogger, mServices, bdd, v, vprime, varOrder);
+		mRcfgTransitionBuilder = new RcfgTransitionBuilder(mRcfgRoot, mLogger, mServices, bdd, v, vprime, varOrder);
 		// create NWA transition builder which can help getting transitions of the property NWA
-		mNwaTransitionBuilder = new NwaTransitionBuilder(nwa, mLogger, mServices, bdd, v, vprime, varOrder);
-		
-		BDD input = setInput();
+		mNwaTransitionBuilder = new NwaTransitionBuilder(mNwa, mLogger, mServices, bdd, v, vprime, varOrder);
 		
 		mLogger.info(Arrays.toString(mRcfgTransitionBuilder.getRcfgTrans().toArray()));
 		mLogger.info(Arrays.toString(mNwaTransitionBuilder.getNwaTrans().toArray()));
+		mLogger.info(Arrays.toString(mNwaTransitionBuilder.getNwaFinalTrans().toArray()));
 		
-		Set<BDD> productTrans = new HashSet<BDD>();
-		for (BDD b1 : mRcfgTransitionBuilder.getRcfgTrans()) {
-			for (BDD b2 : mNwaTransitionBuilder.getNwaTrans()) {
-				mLogger.info(b1.and(b2));
-				productTrans.add(b1.and(b2));
+		// calculate I
+		BDD input = setInput2();
+		Set<BDD> fixpoint = new HashSet<BDD>();
+		fixpoint.add(input);
+//		mLogger.info(Arrays.toString(R_Alpha.toArray()));
+
+		// calculate the fixpoint mu x
+		Set<BDD> initialFixpoint = calculateMuX(fixpoint);
+		
+		// calculate R_Alpha
+		Set<BDD> R_Alpha = calculateR_Alpha(initialFixpoint);
+		
+		// calculate Post(true)
+		Set<BDD> productTrans = getProductTrans();	
+		Set<BDD> postTrue = calculatePostTrue(productTrans);
+		
+		//calculate Post(true) union R_Alpha
+		Set<BDD> fixpoint2 = new HashSet<BDD>();
+		for (BDD a : R_Alpha) {
+			if (postTrue.contains(a)) {
+				fixpoint2.add(a);
 			}
 		}
-		mLogger.info(Arrays.toString(productTrans.toArray()));
+		
+		// calculate nu y
+		Set<BDD> finalFixpoint = calculateNuY(fixpoint2);
+		
+		// check specifications
+		finalCheck(finalFixpoint);
+	}
+	
+	private Set<BDD> calculateMuX(Set<BDD> f){
+		Set<BDD> fixpoint = f;
+		while (true) {
+			Set<BDD> temp = new HashSet<BDD>();
+			for (BDD rcfgTran : mRcfgTransitionBuilder.getRcfgTrans()) {
+				for (BDD property : mNwaTransitionBuilder.getNwaTrans()) {
+					for (BDD b : fixpoint) {
+						if (checkProperty(b, property)) {
+							BDD post = getPost(b, rcfgTran);
+							BDDPairing bp = bdd.makePair();
+							bp.set(vprime, v);
+							BDD input2 = post.replace(bp);
+							if (!temp.contains(input2)) {
+								temp.add(input2);
+							}
+						}
+					}
+				}
+			}
+			if (temp.equals(fixpoint)) {
+				break;
+			}
+			else {
+				fixpoint = temp;
+			}
+//			mLogger.info(Arrays.toString(fixpoint.toArray()));
+		}
+		return fixpoint;
+	}
+	
+	private Set<BDD> calculateR_Alpha(Set<BDD> fixpoint){
+		Set<BDD> R_Alpha = new HashSet<BDD>();
+		for (BDD b1 : mNwaTransitionBuilder.getNwaFinalTrans()) {
+			for (BDD b2 : fixpoint) {
+				if (checkProperty(b2, b1)) {
+					R_Alpha.add(b2);
+				}
+			}
+		}
+		return R_Alpha;
+	}
+	
+	private Set<BDD> calculatePostTrue(Set<BDD> productTrans){
+		Set<BDD> postTrue = new HashSet<BDD>();
+		BDD varset = bdd.makeSet(v).and(bdd.makeSet(vprime));
+		for (BDD b : productTrans) {
+			List<Object> list = new ArrayList<Object>();
+			b.iterator(varset).forEachRemaining(list::add);
+			
+			for (Object o : list) {
+				BDD test = (BDD) o;
+				BDD varset2 = v[0].set();
+				BDDPairing bp = bdd.makePair();
+				bp.set(vprime, v);
+				postTrue.add(test.exist(varset2).replace(bp));
+			}
+		}
+		return postTrue;
+	}
+	
+	private Set<BDD> calculateNuY(Set<BDD> f){
+		Set<BDD> fixpoint2 = f;
+		
+		while (true) {
+			Set<BDD> temp = calculateMuX(fixpoint2);
+			if (temp.equals(fixpoint2)) {
+				break;
+			}
+			else {
+				fixpoint2 = temp;
+			}
+		}
+		return fixpoint2;
+	}
+	
+	private void finalCheck(Set<BDD> fixpoint2){
+		if (fixpoint2.isEmpty()) {
+			mLogger.info("All specifications hold.");
+		}
+		else {
+			mLogger.info("Fixpoint found :");
+			mLogger.info(Arrays.toString(fixpoint2.toArray()));
+		}
+	}
+	
+	private Set<BDD> getProductTrans(){
+		Set<BDD> productTrans = new HashSet<BDD>();
+		
+		for (BDD b1 : mRcfgTransitionBuilder.getRcfgTrans()) {
+			for (BDD b2 : mNwaTransitionBuilder.getNwaTrans()) {
+				BDD a = b1.and(b2);
+				productTrans.add(a);
+			}
+		}
+		return productTrans;
+	}
+	
+	private int findPropertyNeedBit(INestedWordAutomaton<CodeBlock, String> mNwa) {
+		List<Expression> allExpression = getNwaExpression(mNwa.getAlphabet());
+
+		int needMaxBit = 0;
+		for (Expression test : allExpression) {
+			String be = "BinaryExpression";
+			String ue = "UnaryExpression";
+			if (test.getClass().getSimpleName().equals(ue)) {
+				UnaryExpression u = (UnaryExpression) test;
+				if (findBENeedBit(u.getExpr()) > needMaxBit) {
+					needMaxBit = findBENeedBit(u.getExpr());
+				}
+			}
+			else if (test.getClass().getSimpleName().equals(be)) {
+				if (findBENeedBit(test) > needMaxBit) {
+					needMaxBit = findBENeedBit(test);
+				}
+			}
+		}
+		return needMaxBit;
+	}
+	
+	private int findBENeedBit(Expression e) {
+		int needBit  = 0;
+		BinaryExpression newE = (BinaryExpression) e;
+		String be = "BinaryExpression";
+		String il = "IntegerLiteral";
+		if (newE.getLeft().getClass().getSimpleName().equals(be)) {
+			if (findBENeedBit(newE.getLeft()) > needBit) {
+				needBit = findBENeedBit(newE.getLeft());
+			}
+		}
+		else if (newE.getLeft().getClass().getSimpleName().equals(il)) {
+			IntegerLiteral i = (IntegerLiteral) newE.getLeft();
+			int value = Integer.parseInt(i.getValue());
+			int valueLength = Integer.toBinaryString(value).length();
+			if (valueLength > needBit) {
+				needBit = valueLength;
+			}
+		}
+		if (newE.getRight().getClass().getSimpleName().equals(be)) {
+			if (findBENeedBit(newE.getRight()) > needBit) {
+				needBit = findBENeedBit(newE.getRight());
+			}
+		}
+		else if (newE.getRight().getClass().getSimpleName().equals(il)) {
+			IntegerLiteral i = (IntegerLiteral) newE.getRight();
+			int value = Integer.parseInt(i.getValue());
+			int valueLength = Integer.toBinaryString(value).length();
+			if (valueLength > needBit) {
+				needBit = valueLength;
+			}
+		}
+		return needBit;
+	}
+	
+	private List<Expression> getNwaExpression(Set<CodeBlock> al) {
+		List<Expression> allExpression = new ArrayList<>();
+		for (CodeBlock cb : al) {
+			StatementSequence ss = (StatementSequence) cb;
+			for (Statement s : ss.getStatements()) {
+				if (s instanceof AssumeStatement) {
+					AssumeStatement as = (AssumeStatement) s;
+					allExpression.add(as.getFormula());
+				}
+			}
+		}
+		return allExpression;
+	}
+	
+	private boolean checkProperty (BDD input, BDD property) {
+		boolean sat = false;
+		byte[] inputByte = null;
+		for (Object i1 : input.allsat()) {
+			inputByte = (byte[]) i1;
+		}
+		for (Object b2 : property.allsat()) {
+			byte[] b3 = (byte[]) b2;
+			boolean temp = true;
+			for (int i = 0; i < b3.length; i++) {
+				if (b3[i] != -1) {
+					if (inputByte[i] != b3[i]) {
+						temp = false;
+					}
+				}
+			}
+			if (temp) {
+				sat = true;
+				break;
+			}
+		}
+		return sat;
 	}
 	
 	private Map<String, Set<Integer>> getVarAndValue(){
@@ -184,6 +406,14 @@ public class FixpointModelCheckerForBDD {
 		return varAndValue;
 	}
 
+	private Map<String, Set<Integer>> getVarAndValue2() {
+		Map<String, Set<Integer>> varAndValue = new HashMap<>();
+		String s1 = "~x~0";
+		Set<Integer> temp1 = new HashSet<>(Arrays.asList(0, 1, 2));
+		varAndValue.put(s1, temp1);
+		return varAndValue;
+	}
+	
 	private BDD setInput() {
 		BDD input = bdd.one();
 		
@@ -200,7 +430,7 @@ public class FixpointModelCheckerForBDD {
 		BDDBitVector tpost0Pre = bdd.buildVector(v[10]);
 		BDDBitVector y1Pre = bdd.buildVector(v[11]);
 		BDDBitVector turnv = bdd.constantVector(2, 0);
-		BDDBitVector xv = bdd.constantVector(2, 2);
+		BDDBitVector xv = bdd.constantVector(2, 0);
 		BDDBitVector t1v = bdd.constantVector(2, 0);
 		BDDBitVector flag1v = bdd.constantVector(2, 0);
 		BDDBitVector tpost1v = bdd.constantVector(2, 0);
@@ -252,35 +482,52 @@ public class FixpointModelCheckerForBDD {
 		return input;
 	}
 	
-	public BDD rcfgGetPost(BDD input, BDD transition) {
+	private BDD setInput2() {
+		BDD input = bdd.one();
+		
+		BDDBitVector xPre = bdd.buildVector(v[0]);
+		BDDBitVector xv = bdd.constantVector(2, 0);
+		
+		for (int n = 0; n < xPre.size(); n++) {
+			input = input.and(xPre.getBit(n).biimp(xv.getBit(n)));
+		}
+		
+		
+		return input;
+	}
+	
+	public BDD getPost(BDD input, BDD transition) {
 		BDD post = bdd.one();
 		
-		BDDPairing bp = bdd.makePair();
-		bp.set(v, vprime);
-		BDD input2 = input.replace(bp);
-		List<Integer> needDomains = new ArrayList<Integer>();
-		for (int i : transition.restrict(input).scanSetDomains()) {
-			needDomains.add(i-12);
-		}
-		for (int i = 0; i < vprime.length; i++) {
-			if (needDomains.contains(i)) {
-				BDDBitVector test1 = bdd.buildVector(vprime[i]);
-				BDDBitVector test2 = bdd.constantVector(test1.size(), transition.restrict(input).scanVar(vprime[i]));
-				
-				for (int n = 0; n < test1.size(); n++) {
-					post = post.and(test1.getBit(n).biimp(test2.getBit(n)));
-				}
-			}
-			else {
-				BDDBitVector test1 = bdd.buildVector(vprime[i]);
-				BDDBitVector test2 = bdd.constantVector(test1.size(), input2.scanVar(vprime[i]));
-				
-				for (int n = 0; n < test1.size(); n++) {
-					post = post.and(test1.getBit(n).biimp(test2.getBit(n)));
-				}
-			}
-		}
-		return post;
+//		mLogger.info(transition);
+//		mLogger.info(input);
+//		mLogger.info(transition.restrict(input));
+//		BDDPairing bp = bdd.makePair();
+//		bp.set(v, vprime);
+//		BDD input2 = input.replace(bp);
+//		List<Integer> needDomains = new ArrayList<Integer>();
+//		for (int i : transition.restrict(input).scanSetDomains()) {
+//			needDomains.add(i-12);
+//		}
+//		for (int i = 0; i < vprime.length; i++) {
+//			if (needDomains.contains(i)) {
+//				BDDBitVector test1 = bdd.buildVector(vprime[i]);
+//				BDDBitVector test2 = bdd.constantVector(test1.size(), transition.restrict(input).scanVar(vprime[i]));
+//				
+//				for (int n = 0; n < test1.size(); n++) {
+//					post = post.and(test1.getBit(n).biimp(test2.getBit(n)));
+//				}
+//			}
+//			else {
+//				BDDBitVector test1 = bdd.buildVector(vprime[i]);
+//				BDDBitVector test2 = bdd.constantVector(test1.size(), input2.scanVar(vprime[i]));
+//				
+//				for (int n = 0; n < test1.size(); n++) {
+//					post = post.and(test1.getBit(n).biimp(test2.getBit(n)));
+//				}
+//			}
+//		}
+		return transition.restrict(input);
 	}
 	
 	private List<Integer> findRcfgNeededBits(Map<String, Set<Integer>> varAndValue) {

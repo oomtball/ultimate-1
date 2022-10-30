@@ -238,22 +238,6 @@ public abstract class BDDBitVector {
        return p;
     }
     
-    public BDD lth(BDDBitVector r)
-    {
-        if (bitvec.length != r.bitvec.length) {
-			throw new BDDException();
-		}
-        
-       final BDDFactory bdd = getFactory();
-       BDD p = bdd.one();
-       for (int n=0 ; n<bitvec.length ; n++) {
-          final BDD tmp1 = bitvec[n].apply(r.bitvec[n], BDDFactory.less);
-          tmp1.andWith(p);
-          p = tmp1;
-       }
-       return p;
-    }
-    
     public BDD eq(BDDBitVector r)
     {
         if (bitvec.length != r.bitvec.length) {
