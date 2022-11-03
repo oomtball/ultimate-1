@@ -12,12 +12,16 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -77,25 +81,36 @@ public class FixpointModelCheckerForBDD {
 	public FixpointModelCheckerForBDD(final INestedWordAutomaton<CodeBlock, String> nwa, final BoogieIcfgContainer rcfg,
 			final ILogger logger, final IUltimateServiceProvider services) {
 		
-		// services and logger
+		// services and logger+
 		mServices = services;
 		mLogger = logger;
 		mRcfgRoot = rcfg;
 		mNwa = nwa;
 		// set up BDD factory
-		bdd = BDDFactory.init("j", 1000000, 1000000, false);
+		bdd = BDDFactory.init("j", 100000, 100000, false);
 		
 		// set up BDD domain
-		Map<String, Set<Integer>> varAndValue = getVarAndValue2();
-
+		Set<AssignmentStatement> allAssignment = getAllAssignments();
+		
+		Set<String> allVar = getAllVar(allAssignment);
+		
+		mLogger.info(Arrays.toString(allVar.toArray()));
+		
+		int systemNeedBit = 2;
 		int propertyNeedBit = findPropertyNeedBit(mNwa);
-		mLogger.info(propertyNeedBit);
+		int actuallyNeedBit = 0;
+		if (systemNeedBit >= propertyNeedBit) {
+			actuallyNeedBit = systemNeedBit;
+		}
+		else {
+			actuallyNeedBit = propertyNeedBit;
+		}
 		
-		
-		int[] pam = findRcfgNeededBits(varAndValue).stream().mapToInt(Integer::intValue).toArray();
+		int[] pam = setPam(actuallyNeedBit, allVar.size()).stream().mapToInt(Integer::intValue).toArray();
+		mLogger.info(Arrays.toString(pam));
 		v = bdd.extDomain(pam); // represents different v bdd variables
 		vprime = bdd.extDomain(pam); // represents different vprime bdd variables
-		Set<String> varOrder = varAndValue.keySet();
+		Set<String> varOrder = allVar;
 		
 		
 		// create RCFG transition builder which can help getting transitions of the system RCFG
@@ -103,48 +118,107 @@ public class FixpointModelCheckerForBDD {
 		// create NWA transition builder which can help getting transitions of the property NWA
 		mNwaTransitionBuilder = new NwaTransitionBuilder(mNwa, mLogger, mServices, bdd, v, vprime, varOrder);
 		
-		mLogger.info(Arrays.toString(mRcfgTransitionBuilder.getRcfgTrans().toArray()));
-		mLogger.info(Arrays.toString(mNwaTransitionBuilder.getNwaTrans().toArray()));
-		mLogger.info(Arrays.toString(mNwaTransitionBuilder.getNwaFinalTrans().toArray()));
+		mLogger.info("system : " + Arrays.toString(mRcfgTransitionBuilder.getRcfgTrans().toArray()));
+		mLogger.info("property : " + Arrays.toString(mNwaTransitionBuilder.getNwaTrans().toArray()));
+		mLogger.info("property final trans : " + Arrays.toString(mNwaTransitionBuilder.getNwaFinalTrans().toArray()));
 		
 		// calculate I
 		BDD input = setInput2();
-		Set<BDD> fixpoint = new HashSet<BDD>();
-		fixpoint.add(input);
-//		mLogger.info(Arrays.toString(R_Alpha.toArray()));
+		Set<BDD> I = new HashSet<BDD>();
+		I.add(input);
+		mLogger.info("input : " + Arrays.toString(I.toArray()));
 
 		// calculate the fixpoint mu x
-		Set<BDD> initialFixpoint = calculateMuX(fixpoint);
+		Set<BDD> initialFixpoint = calculateMuX(I);
+		mLogger.info("mu x : " + Arrays.toString(initialFixpoint.toArray()));
 		
 		// calculate R_Alpha
 		Set<BDD> R_Alpha = calculateR_Alpha(initialFixpoint);
+		mLogger.info("R_Alpha : " + Arrays.toString(R_Alpha.toArray()));
 		
 		// calculate Post(true)
 		Set<BDD> productTrans = getProductTrans();	
+		mLogger.info("product : " + Arrays.toString(productTrans.toArray()));
 		Set<BDD> postTrue = calculatePostTrue(productTrans);
-		
-		//calculate Post(true) union R_Alpha
-		Set<BDD> fixpoint2 = new HashSet<BDD>();
-		for (BDD a : R_Alpha) {
-			if (postTrue.contains(a)) {
-				fixpoint2.add(a);
-			}
-		}
+		mLogger.info("post(True) : " + Arrays.toString(postTrue.toArray()));
 		
 		// calculate nu y
-		Set<BDD> finalFixpoint = calculateNuY(fixpoint2);
+		Set<BDD> finalFixpoint = calculateNuY(postTrue, R_Alpha);
+		mLogger.info("nu y : " + Arrays.toString(finalFixpoint.toArray()));
 		
 		// check specifications
 		finalCheck(finalFixpoint);
 	}
 	
-	private Set<BDD> calculateMuX(Set<BDD> f){
-		Set<BDD> fixpoint = f;
+	private Set<AssignmentStatement> getAllAssignments(){
+		Set<AssignmentStatement> allAssignment = new HashSet<AssignmentStatement>();
+		for (String s : mRcfgRoot.getProgramPoints().keySet()) {
+			for (DebugIdentifier s2 : mRcfgRoot.getProgramPoints().get(s).keySet()) {
+				for (IcfgEdge i : mRcfgRoot.getProgramPoints().get(s).get(s2).getOutgoingEdges()) {
+					String ss = "StatementSequence";
+					if (i.getClass().getSimpleName().equals(ss)) {
+						StatementSequence newI = (StatementSequence) i;
+//						mLogger.info(i);
+						for (Statement s3 : newI.getStatements()) {
+							String as = "AssignmentStatement";
+							if (s3.getClass().getSimpleName().equals(as)) {
+								AssignmentStatement news3 = (AssignmentStatement) s3;
+								allAssignment.add(news3);
+							}
+						}
+					}
+				}
+			}
+		}
+		return allAssignment;
+	}
+	
+	private Set<String> getAllVar(Set<AssignmentStatement> allAssignment){
+		Set<String> allVar = new HashSet<String>();
+		for (AssignmentStatement as : allAssignment) {
+//			mLogger.info(as);
+			for (LeftHandSide lhs : as.getLhs()) {
+				VariableLHS lhs2 = (VariableLHS) lhs;
+//				mLogger.info(lhs2.getIdentifier());
+				String varCandidate = lhs2.getIdentifier();
+				String c1 = "#";
+				String c2 = "#t~post";
+				String c3 = "~_.offset";
+				String c4 = "~_.base";
+				if (varCandidate.contains(c2) && !varCandidate.contains(c3) && !varCandidate.contains(c4)) {
+					allVar.add(varCandidate);
+				}
+				if (!varCandidate.contains(c1) && !varCandidate.contains(c3) && !varCandidate.contains(c4)) {
+					allVar.add(varCandidate);
+				}
+			}
+		}
+		return allVar;
+	}
+	
+	private List<Integer> setPam(int actuallyNeedBit, int len) {
+		List<Integer> bitArray = new ArrayList<Integer>();
+		for (int i = 0; i < len; i++) {
+			bitArray.add((int) Math.pow(2, actuallyNeedBit));
+		}
+		return bitArray;
+	}
+	
+	private Set<BDD> calculateMuX(Set<BDD> i){
+		Set<BDD> postx = i;
+		Set<BDD> I = i;
 		while (true) {
+			Set<BDD> postxUnionI = new HashSet<BDD>();
+			for (BDD b : postx) {
+				postxUnionI.add(b);
+			}
+			for (BDD b : I) {
+				postxUnionI.add(b);
+			}
 			Set<BDD> temp = new HashSet<BDD>();
 			for (BDD rcfgTran : mRcfgTransitionBuilder.getRcfgTrans()) {
 				for (BDD property : mNwaTransitionBuilder.getNwaTrans()) {
-					for (BDD b : fixpoint) {
+					for (BDD b : postxUnionI) {
 						if (checkProperty(b, property)) {
 							BDD post = getPost(b, rcfgTran);
 							BDDPairing bp = bdd.makePair();
@@ -157,15 +231,15 @@ public class FixpointModelCheckerForBDD {
 					}
 				}
 			}
-			if (temp.equals(fixpoint)) {
+			if (temp.equals(postx)) {
 				break;
 			}
 			else {
-				fixpoint = temp;
+				postx = temp;
 			}
 //			mLogger.info(Arrays.toString(fixpoint.toArray()));
 		}
-		return fixpoint;
+		return postx;
 	}
 	
 	private Set<BDD> calculateR_Alpha(Set<BDD> fixpoint){
@@ -198,19 +272,25 @@ public class FixpointModelCheckerForBDD {
 		return postTrue;
 	}
 	
-	private Set<BDD> calculateNuY(Set<BDD> f){
-		Set<BDD> fixpoint2 = f;
-		
+	private Set<BDD> calculateNuY(Set<BDD> f, Set<BDD> R_Alpha){
+		Set<BDD> posty = f;
+		Set<BDD> R = R_Alpha;
 		while (true) {
-			Set<BDD> temp = calculateMuX(fixpoint2);
-			if (temp.equals(fixpoint2)) {
+			Set<BDD> postyInterR = new HashSet<BDD>();
+			for (BDD b1 : R) {
+				if (posty.contains(b1)) {
+					postyInterR.add(b1);
+				}
+			}
+			Set<BDD> temp = calculateMuX(postyInterR);
+			if (temp.equals(posty)) {
 				break;
 			}
 			else {
-				fixpoint2 = temp;
+				posty = temp;
 			}
 		}
-		return fixpoint2;
+		return posty;
 	}
 	
 	private void finalCheck(Set<BDD> fixpoint2){
@@ -328,92 +408,7 @@ public class FixpointModelCheckerForBDD {
 		}
 		return sat;
 	}
-	
-	private Map<String, Set<Integer>> getVarAndValue(){
-		Map<String, Set<Integer>> varAndValue = new HashMap<>();
-		String s1 = "~turn~0";
-		Set<Integer> temp1 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s1, temp1);
-//		String s2 = "main_#t~pre2";
-//		Set<Integer> temp2 = new HashSet<>(Arrays.asList(0, 1));
-//		varAndValue.put(s2, temp2);
-//		String s3 = "main_#res";
-//		Set<Integer> temp3 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s3, temp3);
-//		String s4 = "#res.base";
-//		Set<Integer> temp4 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s4, temp4);
-		String s5 = "~t1~0";
-		Set<Integer> temp5 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s5, temp5);
-//		String s6 = "main_#t~pre4";
-//		Set<Integer> temp6 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s6, temp6);
-		String s7 = "~t2~0";
-		Set<Integer> temp7 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s7, temp7);
-		String s8 = "~f12~0";
-		Set<Integer> temp8 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s8, temp8);
-//		String s9 = "#NULL.offset";
-//		Set<Integer> temp9 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s9, temp9);
-		String s10 = "~y2~0";
-		Set<Integer> temp10 = new HashSet<>(Arrays.asList(0, 1, 2));
-		varAndValue.put(s10, temp10);
-		String s11 = "~f21~0";
-		Set<Integer> temp11 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s11, temp11);
-		String s12 = "~y1~0";
-		Set<Integer> temp12 = new HashSet<>(Arrays.asList(0, 1, 2));
-		varAndValue.put(s12, temp12);
-//		String s13 = "#res.offset";
-//		Set<Integer> temp13 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s13, temp13);
-//		String s14 = "~_.offset";
-//		Set<Integer> temp14 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s14, temp14);
-//		String s15 = "#t~ret8";
-//		Set<Integer> temp15 = new HashSet<>(Arrays.asList(0));
-//		varAndValue.put(s15, temp15);
-		String s16 = "~x~0";
-		Set<Integer> temp16 = new HashSet<>(Arrays.asList(0, 1, 2));
-		varAndValue.put(s16, temp16);
-		String s17 = "~flag1~0";
-		Set<Integer> temp17 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s17, temp17);
-		String s18 = "#t~post1";
-		Set<Integer> temp18 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s18, temp18);
-		String s19 = "~flag2~0";
-		Set<Integer> temp19 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s19, temp1);
-//		String s20 = "#pthreadsForks";
-//		Set<Integer> temp20 = new HashSet<>(Arrays.asList(0, 1));
-//		varAndValue.put(s20, temp20);
-//		String s21 = "~_.base";
-//		Set<Integer> temp21 = new HashSet<>(Arrays.asList(0, 1));
-//		varAndValue.put(s21, temp21);
-//		String s22 = "#NULL.base";
-//		Set<Integer> temp22 = new HashSet<>(Arrays.asList(0, 1));
-//		varAndValue.put(s22, temp22);
-		String s23 = "#t~post0";
-		Set<Integer> temp23 = new HashSet<>(Arrays.asList(0, 1));
-		varAndValue.put(s23, temp23);
-//		String s24 = "#valid";
-//		Set<Integer> temp24 = new HashSet<>(Arrays.asList(0, 1));
-//		varAndValue.put(s24, temp24);
-		return varAndValue;
-	}
 
-	private Map<String, Set<Integer>> getVarAndValue2() {
-		Map<String, Set<Integer>> varAndValue = new HashMap<>();
-		String s1 = "~x~0";
-		Set<Integer> temp1 = new HashSet<>(Arrays.asList(0, 1, 2));
-		varAndValue.put(s1, temp1);
-		return varAndValue;
-	}
-	
 	private BDD setInput() {
 		BDD input = bdd.one();
 		
@@ -488,10 +483,17 @@ public class FixpointModelCheckerForBDD {
 		BDDBitVector xPre = bdd.buildVector(v[0]);
 		BDDBitVector xv = bdd.constantVector(2, 0);
 		
+//		BDDBitVector tPost0 = bdd.buildVector(v[1]);
+//		BDDBitVector tPost0v = bdd.constantVector(2, 0);
+		
+		
 		for (int n = 0; n < xPre.size(); n++) {
 			input = input.and(xPre.getBit(n).biimp(xv.getBit(n)));
 		}
-		
+//		for (int n = 0; n < tPost0.size(); n++) {
+//			input = input.and(tPost0.getBit(n).biimp(tPost0v.getBit(n)));
+//		}
+//		
 		
 		return input;
 	}
@@ -502,46 +504,98 @@ public class FixpointModelCheckerForBDD {
 //		mLogger.info(transition);
 //		mLogger.info(input);
 //		mLogger.info(transition.restrict(input));
-//		BDDPairing bp = bdd.makePair();
-//		bp.set(v, vprime);
-//		BDD input2 = input.replace(bp);
-//		List<Integer> needDomains = new ArrayList<Integer>();
-//		for (int i : transition.restrict(input).scanSetDomains()) {
-//			needDomains.add(i-12);
-//		}
-//		for (int i = 0; i < vprime.length; i++) {
-//			if (needDomains.contains(i)) {
-//				BDDBitVector test1 = bdd.buildVector(vprime[i]);
-//				BDDBitVector test2 = bdd.constantVector(test1.size(), transition.restrict(input).scanVar(vprime[i]));
-//				
-//				for (int n = 0; n < test1.size(); n++) {
-//					post = post.and(test1.getBit(n).biimp(test2.getBit(n)));
-//				}
-//			}
-//			else {
-//				BDDBitVector test1 = bdd.buildVector(vprime[i]);
-//				BDDBitVector test2 = bdd.constantVector(test1.size(), input2.scanVar(vprime[i]));
-//				
-//				for (int n = 0; n < test1.size(); n++) {
-//					post = post.and(test1.getBit(n).biimp(test2.getBit(n)));
-//				}
-//			}
-//		}
-		return transition.restrict(input);
+		BDDPairing bp = bdd.makePair();
+		bp.set(v, vprime);
+		BDD input2 = input.replace(bp);
+		List<Integer> needDomains = new ArrayList<Integer>();
+		for (int i : transition.restrict(input).scanSetDomains()) {
+			needDomains.add(i-v.length);
+		}
+		for (int i = 0; i < vprime.length; i++) {
+			if (needDomains.contains(i)) {
+				BDDBitVector test1 = bdd.buildVector(vprime[i]);
+				BDDBitVector test2 = bdd.constantVector(test1.size(), transition.restrict(input).scanVar(vprime[i]));
+				
+				for (int n = 0; n < test1.size(); n++) {
+					post = post.and(test1.getBit(n).biimp(test2.getBit(n)));
+				}
+			}
+			else {
+				BDDBitVector test1 = bdd.buildVector(vprime[i]);
+				BDDBitVector test2 = bdd.constantVector(test1.size(), input2.scanVar(vprime[i]));
+				
+				for (int n = 0; n < test1.size(); n++) {
+					post = post.and(test1.getBit(n).biimp(test2.getBit(n)));
+				}
+			}
+		}
+		return post;
 	}
 	
-	private List<Integer> findRcfgNeededBits(Map<String, Set<Integer>> varAndValue) {
-		List<Integer> bitArray = new ArrayList<Integer>();
-		for (String s : varAndValue.keySet()) {
-//			mLogger.info(s);
-			bitArray.add(Integer.toBinaryString(Collections.max(varAndValue.get(s))).length());
-		}
-		int maxv = Collections.max(bitArray);
-		
-		List<Integer> v = new ArrayList<Integer>(); 
-		for (int i = 0; i < bitArray.size(); i++) {
-			v.add((int) Math.pow(2, maxv));
-		}
-		return v;
-	}
+//	private Map<String, Set<Integer>> getVarAndValue(){
+//		Map<String, Set<Integer>> varAndValue = new HashMap<>();
+//		String s1 = "~turn~0";
+//		Set<Integer> temp1 = new HashSet<>(Arrays.asList(0, 1));
+//		varAndValue.put(s1, temp1);
+//		String s5 = "~t1~0";
+//		Set<Integer> temp5 = new HashSet<>(Arrays.asList(0, 1));
+//		varAndValue.put(s5, temp5);
+//		String s7 = "~t2~0";
+//		Set<Integer> temp7 = new HashSet<>(Arrays.asList(0, 1));
+//		varAndValue.put(s7, temp7);
+//		String s8 = "~f12~0";
+//		Set<Integer> temp8 = new HashSet<>(Arrays.asList(0, 1));
+//		varAndValue.put(s8, temp8);
+//		String s10 = "~y2~0";
+//		Set<Integer> temp10 = new HashSet<>(Arrays.asList(0, 1, 2));
+//		varAndValue.put(s10, temp10);
+//		String s11 = "~f21~0";
+//		Set<Integer> temp11 = new HashSet<>(Arrays.asList(0, 1));
+//		varAndValue.put(s11, temp11);
+//		String s12 = "~y1~0";
+//		Set<Integer> temp12 = new HashSet<>(Arrays.asList(0, 1, 2));
+//		varAndValue.put(s12, temp12);
+//		String s16 = "~x~0";
+//		Set<Integer> temp16 = new HashSet<>(Arrays.asList(0, 1, 2));
+//		varAndValue.put(s16, temp16);
+//		String s17 = "~flag1~0";
+//		Set<Integer> temp17 = new HashSet<>(Arrays.asList(0, 1));
+//		varAndValue.put(s17, temp17);
+//		String s18 = "#t~post1";
+//		Set<Integer> temp18 = new HashSet<>(Arrays.asList(0, 1));
+//		varAndValue.put(s18, temp18);
+//		String s19 = "~flag2~0";
+//		Set<Integer> temp19 = new HashSet<>(Arrays.asList(0, 1));
+//		varAndValue.put(s19, temp1);
+//		String s23 = "#t~post0";
+//		Set<Integer> temp23 = new HashSet<>(Arrays.asList(0, 1));
+//		varAndValue.put(s23, temp23);
+//		return varAndValue;
+//	}
+	
+//	private Map<String, Set<Integer>> getVarAndValue2() {
+//		Map<String, Set<Integer>> varAndValue = new HashMap<>();
+//		String s1 = "~x~0";
+//		Set<Integer> temp1 = new HashSet<>(Arrays.asList(0, 1, 2));
+//		varAndValue.put(s1, temp1);
+//		String s2 = "#t~post0";
+//		Set<Integer> temp2 = new HashSet<>(Arrays.asList(0, 1));
+//		varAndValue.put(s2, temp2);
+//		return varAndValue;
+//	}
+	
+//	private List<Integer> findRcfgNeededBits(Map<String, Set<Integer>> varAndValue) {
+//		List<Integer> bitArray = new ArrayList<Integer>();
+//		for (String s : varAndValue.keySet()) {
+////			mLogger.info(s);
+//			bitArray.add(Integer.toBinaryString(Collections.max(varAndValue.get(s))).length());
+//		}
+//		int maxv = Collections.max(bitArray);
+//		
+//		List<Integer> v = new ArrayList<Integer>(); 
+//		for (int i = 0; i < bitArray.size(); i++) {
+//			v.add((int) Math.pow(2, maxv));
+//		}
+//		return v;
+//	}
 }
