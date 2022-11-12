@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -41,10 +42,15 @@ public class RcfgTransitionBuilder{
 	private final SimpleEvaluator mSimpleEvaluator;
 //	static BDDFactory bdd;
 	public List<BDD> rcfgTrans = new ArrayList<BDD>();
+	public List<Pair<String, Pair<Integer, Integer>>> rcfgTransPc = new ArrayList<Pair<String, Pair<Integer, Integer>>>();
+	public List<BDD> initialTrans = new ArrayList<BDD>();
 	
 	BDDDomain[] v; // represents different bdd variables
 	BDDDomain[] vprime; // represents different bdd variables
+	BDDDomain[] rcfgPc;
+	BDDDomain[] rcfgPcPrime;
 	Set<String> varOrder;
+	Set<String> threadOrder;
 	
 	String il = "IntegerLiteral";
 	String ie = "IdentifierExpression";
@@ -70,8 +76,12 @@ public class RcfgTransitionBuilder{
 		// get all assignments we need to build BDD transition.
 		Map<String, Set<Pair<Expression, Pair<String, Pair<Integer, Integer>>>>> allAssignments = getAllAssignments(allStatesWithPc);
 		
-		// set up all possible values for each variable. (filter)
-//		Map<String, Set<Integer>> varAndValue = getVarAndValue(allAssignments);
+		// set up BDDs of the program counter
+		threadOrder = allStatesWithPc.keySet();
+		
+		int[] pam2 = findPcNeededBits(allStatesWithPc).stream().mapToInt(Integer::intValue).toArray();
+		rcfgPc = bdd.extDomain(pam2); // represents pc of different threads
+		rcfgPcPrime = bdd.extDomain(pam2); // represents pcprime of different threads
 		
 		// test case
 		BDD input = setInput2();
@@ -80,7 +90,7 @@ public class RcfgTransitionBuilder{
 		bp.set(v, vprime);
 		BDD input2 = input.replace(bp);
 		
-		buildRcfgTrans(allAssignments, input);
+		buildRcfgTrans(allAssignments, input, threadOrder);
 		
 //		BDD test = bdd.zero();
 //		for (BDD b : rcfgTrans) {
@@ -89,7 +99,6 @@ public class RcfgTransitionBuilder{
 //			mLogger.info(test);
 //		}
 		
-//		BDDDomain[] bddPc = bdd.extDomain(pam2); // represents pc of different threads
 //		Set<String> cpondsPc = allStatesWithPc.keySet();	
 		
 		// set up all pre-states for BDD transitions.
@@ -101,6 +110,22 @@ public class RcfgTransitionBuilder{
 	
 	public List<BDD> getRcfgTrans() {
 		return rcfgTrans;
+	}
+	
+	public List<BDD> getInitialTrans() {
+		return initialTrans;
+	}
+	
+	public List<Pair<String, Pair<Integer, Integer>>> getRcfgTransPc() {
+		return rcfgTransPc;
+	}
+	
+	public BDDDomain[] getRcfgPc() {
+		return rcfgPc;
+	}
+	
+	public BDDDomain[] getRcfgPcPrime() {
+		return rcfgPcPrime;
 	}
 	
 	private Map<String, Map<BoogieIcfgLocation, Integer>> computeProgramCounter(Map<String, Map<DebugIdentifier, BoogieIcfgLocation>> mLocNodes){
@@ -172,7 +197,6 @@ public class RcfgTransitionBuilder{
 		
 		List<Integer> v2 = new ArrayList<Integer>(); 
 		for (int i = 0; i < bitArray3.size(); i++) {
-			v2.add((int) Math.pow(2, bitArray3.get(i)));
 			v2.add((int) Math.pow(2, bitArray3.get(i)));
 		}
 		return v2;
@@ -259,12 +283,15 @@ public class RcfgTransitionBuilder{
 		return input;
 	}
 	
-	private void buildRcfgTrans(Map<String, Set<Pair<Expression, Pair<String, Pair<Integer, Integer>>>>> allAssignments, BDD input) {
+	private void buildRcfgTrans(Map<String, Set<Pair<Expression, Pair<String, Pair<Integer, Integer>>>>> allAssignments, BDD input, 
+			Set<String> threadOrder) {
 		for (String s : allAssignments.keySet()) {
 			if (!varOrder.contains(s)) {
 				continue;
 			}
 			int needVar = calculateIndex(s);
+			int tempMin = 10000;
+			BDD initialTran = bdd.one();
 			for (Pair<Expression, Pair<String, Pair<Integer, Integer>>> s2 : allAssignments.get(s)) {
 				String var = s;
 				Expression expr = s2.getFirst();
@@ -285,42 +312,43 @@ public class RcfgTransitionBuilder{
 					transition = caseBE(expr, needVar, varOrder, bdd);
 				} 
 				// deal with PCs
-//				int count = 0;
-//				for (String thread : cpondsPc) {
-//					if (thread.equals(pcThread)) {
-//						int prePcValue = pc.getFirst();
-//						int postPcValue = pc.getSecond();
-//						BDDBitVector prePc = bdd.buildVector(bddPc[count*2]);
-//						BDDBitVector postPc = bdd.buildVector(bddPc[count*2+1]);
-//						BDDBitVector preBl = bdd.constantVector(prePc.size(), prePcValue);
-//						BDDBitVector postBl = bdd.constantVector(postPc.size(), postPcValue);
-//						
-//						
-//						for (int i = 0; i < prePc.size(); i++) {
-//							transition = transition.andWith(prePc.getBit(i).biimp(preBl.getBit(i)));
-//						}
-//						for (int i = 0; i < postPc.size(); i++) {
-//							transition = transition.andWith(postPc.getBit(i).biimp(postBl.getBit(i)));
-//						}
-//						prePc.free();
-//						postPc.free();
-//						preBl.free();
-//						postBl.free();
-//					}
-//					count++;
-//				}
+				int count = 0;
+				for (String thread : threadOrder) {
+					if (thread.equals(pcThread)) {
+						int prePcValue = pc.getFirst();
+						int postPcValue = pc.getSecond();
+						BDDBitVector prePc = bdd.buildVector(rcfgPc[count]);
+						BDDBitVector postPc = bdd.buildVector(rcfgPcPrime[count]);
+						BDDBitVector preBl = bdd.constantVector(prePc.size(), prePcValue);
+						BDDBitVector postBl = bdd.constantVector(postPc.size(), postPcValue);
+						
+						
+						for (int i = 0; i < prePc.size(); i++) {
+							transition = transition.andWith(prePc.getBit(i).biimp(preBl.getBit(i)));
+						}
+						for (int i = 0; i < postPc.size(); i++) {
+							transition = transition.andWith(postPc.getBit(i).biimp(postBl.getBit(i)));
+						}
+						prePc.free();
+						postPc.free();
+						preBl.free();
+						postBl.free();
+					}
+					count++;
+				}
 //				mLogger.info("transition : " + transition);
 				rcfgTrans.add(transition);
+				rcfgTransPc.add(s2.getSecond());
 				
-				// test case
-				BDD post = rcfgGetPost(input, transition);
-//				mLogger.info("changed : " + transition.restrict(input));
-//				mLogger.info("pre : " + input2);
-//				mLogger.info("post : " + post);	
-				
-//				break;
+				for (String sss : expr.getPayload().getAnnotations().keySet()) {
+					CLocation cl = (CLocation) expr.getPayload().getAnnotations().get(sss);
+					if (cl.getStartLine() < tempMin) {
+						tempMin = cl.getStartLine();
+						initialTran = transition;
+					}
+				}
 			}
-//			break;
+			initialTrans.add(initialTran);
 		}
 	}
 	
@@ -410,7 +438,7 @@ public class RcfgTransitionBuilder{
 				binaryRightThing = caseBEforBvec(binaryRight);
 				binaryLeftThing = bdd.constantVector(binaryRightThing.size(), Integer.parseInt(newBinaryLeft.getValue()));
 			}
-			rightVar = dealWithOperator(binaryLeftThing, binaryRightThing, ope);
+			rightVar = dealWithAssignmentOperator(binaryLeftThing, binaryRightThing, ope);
 			binaryLeftThing.free();
 			binaryRightThing.free();
 		}
@@ -430,7 +458,7 @@ public class RcfgTransitionBuilder{
 			else if (rightClass.equals(be)) {
 				binaryRightThing = caseBEforBvec(binaryRight);
 			}
-			rightVar = dealWithOperator(binaryLeftThing, binaryRightThing, ope);
+			rightVar = dealWithAssignmentOperator(binaryLeftThing, binaryRightThing, ope);
 			binaryLeftThing.free();
 			binaryRightThing.free();
 		}
@@ -448,7 +476,7 @@ public class RcfgTransitionBuilder{
 			else if (rightClass.equals(be)) {
 				binaryRightThing = caseBEforBvec(binaryRight);
 			}
-			rightVar = dealWithOperator(binaryLeftThing, binaryRightThing, ope);
+			rightVar = dealWithAssignmentOperator(binaryLeftThing, binaryRightThing, ope);
 			binaryLeftThing.free();
 			binaryRightThing.free();
 		}
@@ -460,26 +488,6 @@ public class RcfgTransitionBuilder{
 		rightVar.free();
 		
 		return transition;
-	}
-	
-	private BDDBitVector dealWithOperator(BDDBitVector binaryLeftThing, BDDBitVector binaryRightThing, String ope) {
-		BDDBitVector opeResult = null;
-		String BITVECCONCAT = "BITVECCONCAT"; 
-		String ARITHPLUS = "ARITHPLUS"; // +
-		String ARITHMINUS = "ARITHMINUS"; // -
-		String ARITHMUL = "ARITHMUL"; // *
-		String ARITHDIV = "ARITHDIV"; // /
-		String ARITHMOD = "ARITHMOD"; // %
-//		mLogger.info(binaryLeftThing);
-//		mLogger.info(binaryRightThing);
-		if (ope.equals(ARITHPLUS)) {
-			opeResult = binaryLeftThing.add(binaryRightThing);
-		}
-		else if (ope.equals(ARITHMINUS)) {
-			opeResult = binaryLeftThing.sub(binaryRightThing);
-		}
-		
-		return opeResult;
 	}
 
 	public BDD rcfgGetPost(BDD input, BDD transition) {

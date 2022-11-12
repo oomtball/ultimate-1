@@ -2,7 +2,10 @@ package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.explorer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -21,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDBitVector;
 import net.sf.javabdd.BDDDomain;
@@ -35,10 +39,17 @@ public class NwaTransitionBuilder {
 	BDDDomain[] v;
 	BDDDomain[] vprime;
 	Set<String> varOrder;
+	int pcNeedBit;
+	BDDDomain[] nwaPc;
+	BDDDomain[] nwaPcPrime;
+	Set<String> nwaStateOrder;
 	
 	public List<BDD> nwaTrans = new ArrayList<BDD>();
 	public List<BDD> nwaFinalTrans = new ArrayList<BDD>();
+	public Set<Integer> nwaFinalStatesPc = new HashSet<Integer>();
 	public List<Boolean> tranIsToFinal = new ArrayList<Boolean>();
+	public Map<String, Integer> nwaStateToPc = new HashMap<String, Integer>();
+	public List<Pair<Integer, Integer>> nwaTransPc = new ArrayList<>();
 	
 	String il = "IntegerLiteral";
 	String ie = "IdentifierExpression";
@@ -57,9 +68,18 @@ public class NwaTransitionBuilder {
 		vprime = _vprime;
 		varOrder = _varOrder;
 		
+		List<Integer> temp = new ArrayList<Integer>();
+		temp.add((int) Math.pow(2, pcNeedBit));
+		int[] pam = temp.stream().mapToInt(Integer::intValue).toArray();
+		nwaPc = bdd.extDomain(pam);
+		nwaPcPrime = bdd.extDomain(pam);
+		nwaStateOrder = nwa.getStates();
+		
+		nwaStateToPc = setNwaPc();
 		List<Expression> allExpression = getNwaExpression(mNwa.getAlphabet());
 //		mLogger.info(Arrays.toString(allExpression.toArray()));
-		buildNwaTrans(allExpression, bdd);
+		buildNwaTrans(allExpression);
+		
 //		BDD test = bdd.zero();
 //		for (BDD b : nwaTrans) {
 //			test.orWith(b);
@@ -69,15 +89,20 @@ public class NwaTransitionBuilder {
 	
 	private List<Expression> getNwaExpression(Set<CodeBlock> al) {
 		List<Expression> allExpression = new ArrayList<>();
-		for (String s : mNwa.getStates()) {
+		for (String s : nwaStateOrder) {
 			for (IncomingInternalTransition i : mNwa.internalPredecessors(s)) {
+				String test = (String) i.getPred();
+				Pair<Integer, Integer> p =  new Pair<Integer, Integer>(nwaStateToPc.get(test), nwaStateToPc.get(s));
+				nwaTransPc.add(p);
 				if (mNwa.isFinal(s)) {
 					tranIsToFinal.add(true);
+					nwaFinalStatesPc.add(nwaStateToPc.get(s));
 				}
 				else {
 					tranIsToFinal.add(false);
 				}
 				StatementSequence ss = (StatementSequence) i.getLetter();
+				
 				for (Statement s2 : ss.getStatements()) {
 					if (s2 instanceof AssumeStatement) {
 						AssumeStatement as = (AssumeStatement) s2;
@@ -89,7 +114,18 @@ public class NwaTransitionBuilder {
 		return allExpression;
 	}
 	
-	private void buildNwaTrans(List<Expression> allExpression, BDDFactory bdd) {
+	private Map<String, Integer> setNwaPc(){
+		Map<String, Integer> nwaPc = new HashMap<String, Integer>();
+		int tempPc = 0;
+		for (String s : nwaStateOrder) {
+			nwaPc.put(s, tempPc);
+			tempPc++;
+		}
+		pcNeedBit = Integer.toBinaryString(tempPc).length();
+		return nwaPc;
+	}
+	
+	private void buildNwaTrans(List<Expression> allExpression) {
 		int count = 0;
 		for (Expression expr : allExpression) {
 			BDD transition = bdd.one();
@@ -102,6 +138,18 @@ public class NwaTransitionBuilder {
 			}
 			else if (expr instanceof BinaryExpression) {
 				transition = caseBE(expr);
+			}
+			
+			BDDBitVector prePc = bdd.buildVector(nwaPc[0]);
+			BDDBitVector postPc = bdd.buildVector(nwaPcPrime[0]);
+			BDDBitVector preBl = bdd.constantVector(prePc.size(), nwaTransPc.get(count).getFirst());
+			BDDBitVector postBl = bdd.constantVector(postPc.size(), nwaTransPc.get(count).getSecond());
+			
+			for (int i = 0; i < prePc.size(); i++) {
+				transition = transition.andWith(prePc.getBit(i).biimp(preBl.getBit(i)));
+			}
+			for (int i = 0; i < postPc.size(); i++) {
+				transition = transition.andWith(postPc.getBit(i).biimp(postBl.getBit(i)));
 			}
 			
 			nwaTrans.add(transition);
@@ -473,8 +521,23 @@ public class NwaTransitionBuilder {
 		return nwaTrans;
 	}
 	
+	public List<Pair<Integer, Integer>> getNwaTransPc(){
+		return nwaTransPc;
+	}
+	
 	public List<BDD> getNwaFinalTrans(){
 		return nwaFinalTrans;
 	}
 	
+	public BDDDomain[] getNwaPc() {
+		return nwaPc;
+	}
+	
+	public BDDDomain[] getNwaPcPrime() {
+		return nwaPcPrime;
+	}
+	
+	public Set<Integer> getNwaFinalStatesPc() {
+		return nwaFinalStatesPc;
+	}
 }
