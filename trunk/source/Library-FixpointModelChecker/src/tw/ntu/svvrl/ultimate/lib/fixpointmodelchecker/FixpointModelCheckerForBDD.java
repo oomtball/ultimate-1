@@ -1,22 +1,16 @@
 package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker;
 
 import java.util.List;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -25,30 +19,17 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLoopDetector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDBitVector;
 import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDDFactory;
 import net.sf.javabdd.BDDPairing;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.neverstate.NeverState;
+import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm.NwaTransitionBuilder;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm.RcfgTransitionBuilder;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.explorer.NwaTransitionBuilder;
 
 public class FixpointModelCheckerForBDD {
 	private final ILogger mLogger;
@@ -164,11 +145,11 @@ public class FixpointModelCheckerForBDD {
 		mLogger.info("R_Alpha : " + Arrays.toString(R_Alpha.toArray()));
 	
 		// calculate Post(true)
-		Set<BDD> postTrue = calculatePostTrue(productTrans);
-		mLogger.info("post(True) : " + Arrays.toString(postTrue.toArray()));
+//		Set<BDD> postTrue = calculatePostTrue(productTrans);
+//		mLogger.info("post(True) : " + Arrays.toString(postTrue.toArray()));
 		
 		// calculate nu y
-		Set<BDD> finalFixpoint = calculateNuY(postTrue, R_Alpha);
+		Set<BDD> finalFixpoint = calculateNuY(R_Alpha);
 		mLogger.info("nu y : " + Arrays.toString(finalFixpoint.toArray()));
 
 		// check specifications
@@ -329,7 +310,7 @@ public class FixpointModelCheckerForBDD {
 		return postTrue;
 	}
 	
-	private Set<BDD> calculateNuY(Set<BDD> f, Set<BDD> R_Alpha){
+	private Set<BDD> calculateNuY(Set<BDD> R_Alpha){
 		Set<BDD> posty = R_Alpha;
 		Set<BDD> R = R_Alpha;
 		while (true) {

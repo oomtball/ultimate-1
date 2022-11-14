@@ -1,7 +1,6 @@
-package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.explorer;
+package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -9,9 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -82,9 +79,9 @@ public class NwaTransitionBuilder {
 		
 //		BDD test = bdd.zero();
 //		for (BDD b : nwaTrans) {
-//			test.orWith(b);
-//			mLogger.info(test);
+//			test = test.or(b);
 //		}
+//		mLogger.info(test);
 	}
 	
 	private List<Expression> getNwaExpression(Set<CodeBlock> al) {
