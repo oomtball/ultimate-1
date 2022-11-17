@@ -1,6 +1,7 @@
 package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -41,10 +42,11 @@ public class NwaTransitionBuilder {
 	BDDDomain[] nwaPcPrime;
 	Set<String> nwaStateOrder;
 	
+	private final AssumeStatementEvalator mAssumeStatementEvalator;
+	
 	public List<BDD> nwaTrans = new ArrayList<BDD>();
-	public List<BDD> nwaFinalTrans = new ArrayList<BDD>();
+	public Set<Integer> nwaInitialStatesPc = new HashSet<Integer>();
 	public Set<Integer> nwaFinalStatesPc = new HashSet<Integer>();
-	public List<Boolean> tranIsToFinal = new ArrayList<Boolean>();
 	public Map<String, Integer> nwaStateToPc = new HashMap<String, Integer>();
 	public List<Pair<Integer, Integer>> nwaTransPc = new ArrayList<>();
 	
@@ -72,6 +74,9 @@ public class NwaTransitionBuilder {
 		nwaPcPrime = bdd.extDomain(pam);
 		nwaStateOrder = nwa.getStates();
 		
+		mAssumeStatementEvalator = new AssumeStatementEvalator(logger, services, 
+				bdd, _v, _vprime, varOrder);
+		
 		nwaStateToPc = setNwaPc();
 		List<Expression> allExpression = getNwaExpression(mNwa.getAlphabet());
 //		mLogger.info(Arrays.toString(allExpression.toArray()));
@@ -92,11 +97,10 @@ public class NwaTransitionBuilder {
 				Pair<Integer, Integer> p =  new Pair<Integer, Integer>(nwaStateToPc.get(test), nwaStateToPc.get(s));
 				nwaTransPc.add(p);
 				if (mNwa.isFinal(s)) {
-					tranIsToFinal.add(true);
 					nwaFinalStatesPc.add(nwaStateToPc.get(s));
 				}
-				else {
-					tranIsToFinal.add(false);
+				else if (mNwa.isInitial(s)) {
+					nwaInitialStatesPc.add(nwaStateToPc.get(s));
 				}
 				StatementSequence ss = (StatementSequence) i.getLetter();
 				
@@ -125,393 +129,31 @@ public class NwaTransitionBuilder {
 	private void buildNwaTrans(List<Expression> allExpression) {
 		int count = 0;
 		for (Expression expr : allExpression) {
-			BDD transition = bdd.one();
-//			mLogger.info(expr);
-			if (expr instanceof BooleanLiteral) {
-				transition = caseBL(expr);
-			}
-			else if (expr instanceof UnaryExpression) {
-				transition = caseUE(expr);
-			}
-			else if (expr instanceof BinaryExpression) {
-				transition = caseBE(expr);
-			}
+			// deal with transitions
+			BDD transition = mAssumeStatementEvalator.buildTran(expr);
 			
-			BDDBitVector prePc = bdd.buildVector(nwaPc[0]);
-			BDDBitVector postPc = bdd.buildVector(nwaPcPrime[0]);
-			BDDBitVector preBl = bdd.constantVector(prePc.size(), nwaTransPc.get(count).getFirst());
-			BDDBitVector postBl = bdd.constantVector(postPc.size(), nwaTransPc.get(count).getSecond());
+			// deal with PCs
+			BDD transitionWithPc = addPc(transition, count);
 			
-			for (int i = 0; i < prePc.size(); i++) {
-				transition = transition.andWith(prePc.getBit(i).biimp(preBl.getBit(i)));
-			}
-			for (int i = 0; i < postPc.size(); i++) {
-				transition = transition.andWith(postPc.getBit(i).biimp(postBl.getBit(i)));
-			}
-			
-			nwaTrans.add(transition);
-			if (tranIsToFinal.get(count)) {
-				nwaFinalTrans.add(transition);
-			}
-			count++;
-//			mLogger.info("transition : " + transition);
-		}
-	}
-	
-	private BDDBitVector dealWithAssignmentOperator(BDDBitVector binaryLeftThing, BDDBitVector binaryRightThing, String ope) {
-		BDDBitVector opeResult = null;
-		String BITVECCONCAT = "BITVECCONCAT"; 
-		String ARITHPLUS = "ARITHPLUS"; // +
-		String ARITHMINUS = "ARITHMINUS"; // -
-		String ARITHMUL = "ARITHMUL"; // *
-		String ARITHDIV = "ARITHDIV"; // /
-		String ARITHMOD = "ARITHMOD"; // %
-//		mLogger.info(binaryLeftThing);
-//		mLogger.info(binaryRightThing);
-		if (ope.equals(ARITHPLUS)) {
-			opeResult = binaryLeftThing.add(binaryRightThing);
-		}
-		else if (ope.equals(ARITHMINUS)) {
-			opeResult = binaryLeftThing.sub(binaryRightThing);
-		}
-		
-		return opeResult;
-	}
-	
-	private BDD dealWithComparisonOperator(BDDBitVector binaryLeftThing, BDDBitVector binaryRightThing, String ope) {
-		BDD opeResult = bdd.one();
-		String COMPLT = "COMPLT"; // <
-		String COMPGT = "COMPGT";  // >
-		String COMPLEQ = "COMPLEQ";  // <=
-		String COMPGEQ = "COMPGEQ";  // >=
-		String COMPEQ = "COMPEQ";  // <=
-		String COMPNEQ = "COMPNEQ";  // >=
-		String COMPPO = "COMPPO";  
-		
-//		mLogger.info(binaryLeftThing);
-//		mLogger.info(binaryRightThing);
-		if (ope.equals(COMPLT)) {
-			opeResult = binaryRightThing.lte(binaryLeftThing);
-			opeResult = opeResult.not();
-		}
-		else if (ope.equals(COMPGT)) {
-			opeResult = binaryLeftThing.lte(binaryRightThing);
-			opeResult = opeResult.not();
-		}
-		else if (ope.equals(COMPLEQ)) {
-			opeResult = binaryLeftThing.lte(binaryRightThing);
-		}
-		else if (ope.equals(COMPGEQ)) {
-			opeResult = binaryRightThing.lte(binaryLeftThing);
-		}
-		else if (ope.equals(COMPEQ)) {
-			opeResult = binaryRightThing.eq(binaryLeftThing);
-		}
-		else if (ope.equals(COMPNEQ)) {
-			opeResult = binaryRightThing.eq(binaryLeftThing);
-			opeResult = opeResult.not();
-		}
-		
-		return opeResult;
-	}
-	
-	private BDD caseBL(Expression expr) {
-		BDD tempBdd = bdd.one();
-		BooleanLiteral newExpr = (BooleanLiteral) expr;
-		Boolean newExprBooleanValue = newExpr.getValue();
-		if (!newExprBooleanValue) {
-			tempBdd = bdd.zero();
-		}
-		return tempBdd;
-	}
-	
-	private BDD caseUE(Expression expr) {
-		BDD tempBdd = bdd.one();
-		UnaryExpression newExpr = (UnaryExpression) expr;
-		String checkNot = newExpr.getOperator().toString();
-		String LOGICNEG = "LOGICNEG";
-		if (newExpr.getExpr().getClass().getSimpleName().equals(be)) {
-			BinaryExpression newBe = (BinaryExpression) newExpr.getExpr();
-			Expression binaryLeft = newBe.getLeft();
-			Expression binaryRight = newBe.getRight();
-			String ope = newBe.getOperator().toString();
-			String leftClass = binaryLeft.getClass().getSimpleName();
-			String rightClass = binaryRight.getClass().getSimpleName();
-			BDDBitVector binaryLeftThing = null; 
-			BDDBitVector binaryRightThing = null; 
-			if (leftClass.equals(il)) {
-				if (rightClass.equals(ie)) {
-					IntegerLiteral newBinaryLeft = (IntegerLiteral) binaryLeft;
-					IdentifierExpression newBinaryRight = (IdentifierExpression) binaryRight;
-					int count = calculateIndex(newBinaryRight.getIdentifier());
-					binaryRightThing = bdd.buildVector(v[count]);
-					binaryLeftThing = bdd.constantVector(binaryRightThing.size(), Integer.parseInt(newBinaryLeft.getValue()));
-				}
-				else if (rightClass.equals(be)) {
-					IntegerLiteral newBinaryLeft = (IntegerLiteral) binaryLeft;
-					binaryRightThing = caseBEforBvec(binaryRight);
-					binaryLeftThing = bdd.constantVector(binaryRightThing.size(), Integer.parseInt(newBinaryLeft.getValue()));
-				}
-				tempBdd = dealWithComparisonOperator(binaryLeftThing, binaryRightThing, ope);
-				binaryLeftThing.free();
-				binaryRightThing.free();
-			}
-			else if (leftClass.equals(ie)) {
-				IdentifierExpression newBinaryLeft = (IdentifierExpression) binaryLeft;
-				int count = calculateIndex(newBinaryLeft.getIdentifier());
-				binaryLeftThing = bdd.buildVector(v[count]);
-				if (rightClass.equals(il)) {	
-					IntegerLiteral newBinaryRight = (IntegerLiteral) binaryRight;
-					binaryRightThing = bdd.constantVector(binaryLeftThing.size(), Integer.parseInt(newBinaryRight.getValue()));
-				}
-				else if (rightClass.equals(ie)) {
-					IdentifierExpression newBinaryRight = (IdentifierExpression) binaryRight;
-					int count2 = calculateIndex(newBinaryRight.getIdentifier());
-					binaryRightThing = bdd.buildVector(v[count2]);
-				}
-				else if (rightClass.equals(be)) {
-					binaryRightThing = caseBEforBvec(binaryRight);
-				}
-				tempBdd = dealWithComparisonOperator(binaryLeftThing, binaryRightThing, ope);
-				binaryLeftThing.free();
-				binaryRightThing.free();
-			}
-			else if (leftClass.equals(be)) {
-				binaryLeftThing = caseBEforBvec(binaryLeft);
-				if (rightClass.equals(il)) {
-					IntegerLiteral newBinaryRight = (IntegerLiteral) binaryRight;
-					binaryRightThing = bdd.constantVector(binaryLeftThing.size(), Integer.parseInt(newBinaryRight.getValue()));
-				}
-				else if (rightClass.equals(ie)) {
-					IdentifierExpression newBinaryRight = (IdentifierExpression) binaryRight;
-					int count = calculateIndex(newBinaryRight.getIdentifier());
-					binaryRightThing = bdd.buildVector(v[count]);
-				}
-				else if (rightClass.equals(be)) {
-					binaryRightThing = caseBEforBvec(binaryRight);
-				}
-				tempBdd = dealWithComparisonOperator(binaryLeftThing, binaryRightThing, ope);
-				binaryLeftThing.free();
-				binaryRightThing.free();
-			}
-//			mLogger.info(tempBdd);
-			if (checkNot.equals(LOGICNEG)) {
-				tempBdd = tempBdd.not();
-			}
-		}
-		return tempBdd;	
-	}
-	
-	private BDD caseBE(Expression expr) {
-		BDD tempBdd = bdd.one();
-		BinaryExpression newExpr = (BinaryExpression) expr;
-		Expression binaryLeft = newExpr.getLeft();
-		Expression binaryRight = newExpr.getRight();
-		String ope = newExpr.getOperator().toString();
-		BDD leftResult = bdd.one();
-		BDD rightResult = bdd.one();
-		String LOGICAND = "LOGICAND";
-		String LOGICOR = "LOGICOR";
-		String LOGICIMPLIES = "LOGICIMPLIES"; // -> 
-		String LOGICIFF = "LOGICIFF"; //  <->
-		if (binaryLeft.getClass().getSimpleName().equals(bl)) {
-			leftResult = caseBL(binaryLeft);
-		}
-		else if (binaryLeft.getClass().getSimpleName().equals(ue)) {
-			leftResult = caseUE(binaryLeft);
-		}
-		else if (binaryLeft.getClass().getSimpleName().equals(be)) {
-			BinaryExpression newBE = (BinaryExpression) binaryLeft;
-			if (newBE.getOperator().toString().equals(LOGICAND) || newBE.getOperator().toString().equals(LOGICOR) 
-					|| newBE.getOperator().toString().equals(LOGICIMPLIES) || newBE.getOperator().toString().equals(LOGICIFF)) {
-				leftResult = caseBE(binaryLeft);
-			}
-			else {
-				leftResult = caseBEforBDD(binaryLeft);
-			}
-		}
-		if (binaryRight.getClass().getSimpleName().equals(bl)) {
-			rightResult = caseBL(binaryRight);
-		}
-		else if (binaryRight.getClass().getSimpleName().equals(ue)) {
-			rightResult = caseUE(binaryRight);
-		}
-		else if (binaryRight.getClass().getSimpleName().equals(be)) {
-			BinaryExpression newBE = (BinaryExpression) binaryRight;
-			if (newBE.getOperator().toString().equals(LOGICAND) || newBE.getOperator().toString().equals(LOGICOR) 
-					|| newBE.getOperator().toString().equals(LOGICIMPLIES) || newBE.getOperator().toString().equals(LOGICIFF)) {
-				rightResult = caseBE(binaryRight);
-			}
-			else {
-				rightResult = caseBEforBDD(binaryRight);
-			}
-		}
-		if (ope.equals(LOGICAND)) {
-			tempBdd = leftResult.and(rightResult);
-			leftResult.free();
-			rightResult.free();
-		}
-		else if (ope.equals(LOGICOR)) {
-			tempBdd = leftResult.or(rightResult);
-			leftResult.free();
-			rightResult.free();
-		}
-		else if (ope.equals(LOGICIMPLIES)) {
-			tempBdd = leftResult.imp(rightResult);
-			leftResult.free();
-			rightResult.free();
-		}
-		else if (ope.equals(LOGICIFF)) {
-			tempBdd = leftResult.biimp(rightResult);
-			leftResult.free();
-			rightResult.free();
-		}
-		return tempBdd;
-	}
-	
-	private BDDBitVector caseBEforBvec(Expression expr) {
-		BDDBitVector result = null;
-		BinaryExpression newBe = (BinaryExpression) expr;
-		Expression binaryLeft = newBe.getLeft();
-		Expression binaryRight = newBe.getRight();
-		String ope = newBe.getOperator().toString();
-		String leftClass = binaryLeft.getClass().getSimpleName();
-		String rightClass = binaryRight.getClass().getSimpleName();
-		BDDBitVector binaryLeftThing = null; 
-		BDDBitVector binaryRightThing = null; 
-		if (leftClass.equals(il)) {
-			if (rightClass.equals(ie)) {
-				IntegerLiteral newBinaryLeft = (IntegerLiteral) binaryLeft;
-				IdentifierExpression newBinaryRight = (IdentifierExpression) binaryRight;
-				int index  = calculateIndex(newBinaryRight.getIdentifier());
-				binaryRightThing = bdd.buildVector(v[index]);
-				binaryLeftThing = bdd.constantVector(binaryRightThing.size(), Integer.parseInt(newBinaryLeft.getValue()));
-				result = dealWithAssignmentOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-			else if (rightClass.equals(be)) {
-				IntegerLiteral newBinaryLeft = (IntegerLiteral) binaryLeft;
-				binaryRightThing = caseBEforBvec(binaryRight);
-				binaryLeftThing = bdd.constantVector(binaryRightThing.size(), Integer.parseInt(newBinaryLeft.getValue()));
-				result = dealWithAssignmentOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-		}
-		else if (leftClass.equals(ie)) {
-			IdentifierExpression newBinaryLeft = (IdentifierExpression) binaryLeft;
-			int index  = calculateIndex(newBinaryLeft.getIdentifier());
-			binaryLeftThing = bdd.buildVector(v[index]);
-			if (rightClass.equals(il)) {
-				IntegerLiteral newBinaryRight = (IntegerLiteral) binaryRight;
-				binaryRightThing = bdd.constantVector(binaryLeftThing.size(), Integer.parseInt(newBinaryRight.getValue()));
-				result = dealWithAssignmentOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-			else if (rightClass.equals(ie)) {
-				IdentifierExpression newBinaryRight = (IdentifierExpression) binaryRight;
-				int index2  = calculateIndex(newBinaryRight.getIdentifier());
-				binaryRightThing = bdd.buildVector(v[index2]);
-				result = dealWithAssignmentOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-			else if (rightClass.equals(be)) {
-				binaryRightThing = caseBEforBvec(binaryRight);
-				result = dealWithAssignmentOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-		}
-		else if (leftClass.equals(be)) {
-			binaryLeftThing = caseBEforBvec(binaryLeft);
-			if (rightClass.equals(il)) {
-				IntegerLiteral newBinaryRight = (IntegerLiteral) binaryRight;
-				binaryRightThing = bdd.constantVector(binaryLeftThing.size(), Integer.parseInt(newBinaryRight.getValue()));
-				result = dealWithAssignmentOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-			else if (rightClass.equals(ie)) {
-				IdentifierExpression newBinaryRight = (IdentifierExpression) binaryRight;
-				int index2  = calculateIndex(newBinaryRight.getIdentifier());
-				binaryRightThing = bdd.buildVector(v[index2]);
-				result = dealWithAssignmentOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-			else if (rightClass.equals(be)) {
-				binaryRightThing = caseBEforBvec(binaryRight);
-				result = dealWithAssignmentOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-		}
-		return result;
-	}
-	
-	private BDD caseBEforBDD(Expression expr) {
-		BDD result = null;
-		BinaryExpression newBe = (BinaryExpression) expr;
-		Expression binaryLeft = newBe.getLeft();
-		Expression binaryRight = newBe.getRight();
-		String ope = newBe.getOperator().toString();
-		String leftClass = binaryLeft.getClass().getSimpleName();
-		String rightClass = binaryRight.getClass().getSimpleName();
-		BDDBitVector binaryLeftThing = null; 
-		BDDBitVector binaryRightThing = null; 
-		if (leftClass.equals(il)) {
-			if (rightClass.equals(ie)) {
-				IntegerLiteral newBinaryLeft = (IntegerLiteral) binaryLeft;
-				IdentifierExpression newBinaryRight = (IdentifierExpression) binaryRight;
-				int index  = calculateIndex(newBinaryRight.getIdentifier());
-				binaryRightThing = bdd.buildVector(v[index]);
-				binaryLeftThing = bdd.constantVector(binaryRightThing.size(), Integer.parseInt(newBinaryLeft.getValue()));
-				result = dealWithComparisonOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-			else if (rightClass.equals(be)) {
-				IntegerLiteral newBinaryLeft = (IntegerLiteral) binaryLeft;
-				binaryRightThing = caseBEforBvec(binaryRight);
-				binaryLeftThing = bdd.constantVector(binaryRightThing.size(), Integer.parseInt(newBinaryLeft.getValue()));
-				result = dealWithComparisonOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-		}
-		else if (leftClass.equals(ie)) {
-			IdentifierExpression newBinaryLeft = (IdentifierExpression) binaryLeft;
-			int index  = calculateIndex(newBinaryLeft.getIdentifier());
-			binaryLeftThing = bdd.buildVector(v[index]);
-			if (rightClass.equals(il)) {
-				IntegerLiteral newBinaryRight = (IntegerLiteral) binaryRight;
-				binaryRightThing = bdd.constantVector(binaryLeftThing.size(), Integer.parseInt(newBinaryRight.getValue()));
-				result = dealWithComparisonOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-			else if (rightClass.equals(ie)) {
-				IdentifierExpression newBinaryRight = (IdentifierExpression) binaryRight;
-				int index2  = calculateIndex(newBinaryRight.getIdentifier());
-				binaryRightThing = bdd.buildVector(v[index2]);
-				result = dealWithComparisonOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-			else if (rightClass.equals(be)) {
-				binaryRightThing = caseBEforBvec(binaryRight);
-				result = dealWithComparisonOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-		}
-		else if (leftClass.equals(be)) {
-			binaryLeftThing = caseBEforBvec(binaryLeft);
-			if (rightClass.equals(il)) {
-				IntegerLiteral newBinaryRight = (IntegerLiteral) binaryRight;
-				binaryRightThing = bdd.constantVector(binaryLeftThing.size(), Integer.parseInt(newBinaryRight.getValue()));
-				result = dealWithComparisonOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-			else if (rightClass.equals(ie)) {
-				IdentifierExpression newBinaryRight = (IdentifierExpression) binaryRight;
-				int index2  = calculateIndex(newBinaryRight.getIdentifier());
-				binaryRightThing = bdd.buildVector(v[index2]);
-				result = dealWithComparisonOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-			else if (rightClass.equals(be)) {
-				binaryRightThing = caseBEforBvec(binaryRight);
-				result = dealWithComparisonOperator(binaryLeftThing, binaryRightThing, ope);
-			}
-		}
-		return result;
-	}
-	
-	private int calculateIndex(String var) {
-		int count = 0;
-		for (String s : varOrder) {
-			if (s.equals(var)) {
-				break;
-			}
+			nwaTrans.add(transitionWithPc);
 			count++;
 		}
-		return count;
+	}
+	
+	private BDD addPc(BDD t, int count) {
+		BDD transition = t;
+		BDDBitVector prePc = bdd.buildVector(nwaPc[0]);
+		BDDBitVector postPc = bdd.buildVector(nwaPcPrime[0]);
+		BDDBitVector preBl = bdd.constantVector(prePc.size(), nwaTransPc.get(count).getFirst());
+		BDDBitVector postBl = bdd.constantVector(postPc.size(), nwaTransPc.get(count).getSecond());
+		
+		for (int i = 0; i < prePc.size(); i++) {
+			transition = transition.andWith(prePc.getBit(i).biimp(preBl.getBit(i)));
+		}
+		for (int i = 0; i < postPc.size(); i++) {
+			transition = transition.andWith(postPc.getBit(i).biimp(postBl.getBit(i)));
+		}
+		return transition;
 	}
 	
 	public List<BDD> getNwaTrans(){
@@ -521,11 +163,7 @@ public class NwaTransitionBuilder {
 	public List<Pair<Integer, Integer>> getNwaTransPc(){
 		return nwaTransPc;
 	}
-	
-	public List<BDD> getNwaFinalTrans(){
-		return nwaFinalTrans;
-	}
-	
+
 	public BDDDomain[] getNwaPc() {
 		return nwaPc;
 	}
@@ -536,5 +174,9 @@ public class NwaTransitionBuilder {
 	
 	public Set<Integer> getNwaFinalStatesPc() {
 		return nwaFinalStatesPc;
+	}
+	
+	public Set<Integer> getNwaInitialStatesPc() {
+		return nwaInitialStatesPc;
 	}
 }
