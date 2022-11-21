@@ -45,7 +45,9 @@ public class RcfgTransitionBuilder{
 	private final AssignmentStatementEvalator mAssignmentStatementEvalator;
 	private final AssumeStatementEvalator mAssumeStatementEvalator;
 	
-	public List<Integer> finishPcForEachThread;
+//	public List<Integer> finishPcForEachThread;
+	public Map<String, Integer> needInitialBefore;
+	public Map<String, Set<Integer>> finishPcForEachThread2;
 	
 //	static BDDFactory bdd;
 	public List<BDD> rcfgTrans = new ArrayList<BDD>();
@@ -72,16 +74,20 @@ public class RcfgTransitionBuilder{
 		mLogger = logger;
 		varOrder = vo;
 		threadOrder = rcfg.getProcedureEntryNodes().keySet();
-		
 		// get edge for each thread in order
 		Map<String, List<IcfgEdge>> threadToAllEdges = getThreadToEdges(rcfg.getProcedureEntryNodes());
 		assignmentStatementWithPc = new ArrayList<Pair<AssignmentStatement, Pair<String, Pair<Integer, Integer>>>>();
 		assumeStatementWithPc = new ArrayList<Pair<AssumeStatement, Pair<String, Pair<Integer, Integer>>>>();
 
-		finishPcForEachThread = new ArrayList<Integer>();
+//		finishPcForEachThread = new ArrayList<Integer>();
+		needInitialBefore = new HashMap<String, Integer>(); 
+		finishPcForEachThread2 = new HashMap<String, Set<Integer>>();
 		needMaxPc = new ArrayList<Integer>();
 		locationWithPc = new HashMap<IcfgLocation, Integer>();
 		getAsWithPc(threadToAllEdges);
+		getNeedInitialBefore(assignmentStatementWithPc);
+		
+		mLogger.info(needInitialBefore);
 		
 		bdd = _bdd;
 		v = _v; // represents different bdd variables
@@ -96,13 +102,8 @@ public class RcfgTransitionBuilder{
 				bdd, _v, _vprime, varOrder);
 		
 		buildRcfgTrans();
-//		
-//		BDD test = bdd.zero();
-//		for (BDD b : rcfgTrans) {
-//			mLogger.info(b);
-//			test = test.or(b);
-//		}
-//		mLogger.info(test);
+//		buildSelfLoop();
+		mLogger.info(finishPcForEachThread2);
 	}
 	
 	private void dfsRecursive(IcfgLocation initialLoc) {
@@ -111,15 +112,16 @@ public class RcfgTransitionBuilder{
 		}
 		foundLoc.add(initialLoc);
 		
-		for (IcfgEdge ie : initialLoc.getOutgoingEdges()) {
-			foundEdge.add(ie);
-		}
-		
 		if (initialLoc.getOutgoingNodes().isEmpty()) {
 			return;
 		}
 		else {
 			for (IcfgLocation il : initialLoc.getOutgoingNodes()) {
+				for (IcfgEdge ie : initialLoc.getOutgoingEdges()) {
+					if (ie.getTarget().equals(il) && !foundEdge.contains(ie)) {
+						foundEdge.add(ie);
+					}
+				}
 				dfsRecursive(il);
 			}
 		}
@@ -135,12 +137,16 @@ public class RcfgTransitionBuilder{
 			
 			threadToEdges.put(thread, foundEdge);
 		}
+		mLogger.info(threadToEdges);
 		return threadToEdges;
 	}
 	
 	private void getAsWithPc(Map<String, List<IcfgEdge>> threadToAllEdges) {
 		for (String thread : threadOrder){
 			int pcCount =  0;
+//			int finishInitialPc = 0;
+//			Boolean lock = false;
+			Set<Integer> finishPc = new HashSet<Integer>();
 			for (IcfgEdge edge : threadToAllEdges.get(thread)) {
 				IcfgLocation source = edge.getSource();
 				IcfgLocation target = edge.getTarget();
@@ -158,15 +164,20 @@ public class RcfgTransitionBuilder{
 									}
 									if (!locationWithPc.containsKey(target)) {
 										locationWithPc.put(target, pcCount+1);
+										pcCount++;
 									}
+//									if (!lock) {
+//										for (Expression ex : as.getRhs()) {
+//											if (!ex.getClass().getSimpleName().equals(il)){
+//												finishInitialPc = locationWithPc.get(source);
+//												lock = true;
+//											}
+//										}
+//									}
 									Pair<Integer, Integer> pcPair = new Pair<>(locationWithPc.get(source), locationWithPc.get(target));
 									Pair<String, Pair<Integer, Integer>> pcPairWithThread = new Pair<>(thread, pcPair);
 									Pair<AssignmentStatement, Pair<String, Pair<Integer, Integer>>> asWithPc = new Pair<>(as, pcPairWithThread);
 									assignmentStatementWithPc.add(asWithPc);
-									if (target.getOutgoingNodes().isEmpty()) {
-										finishPcForEachThread.add(locationWithPc.get(target));
-									}
-									pcCount++;
 								}
 							}
 						}
@@ -177,27 +188,89 @@ public class RcfgTransitionBuilder{
 							}
 							if (!locationWithPc.containsKey(target)) {
 								locationWithPc.put(target, pcCount+1);
+								pcCount++;
 							}
+//							if (!lock) {
+//								finishInitialPc = locationWithPc.get(source);
+//							}
 							Pair<Integer, Integer> tempPair = new Pair<>(locationWithPc.get(source), locationWithPc.get(target));
 							Pair<String, Pair<Integer, Integer>> tempPair2 = new Pair<>(thread, tempPair);
 							Pair<AssumeStatement, Pair<String, Pair<Integer, Integer>>> tempPair3 = new Pair<>(as, tempPair2);
 							assumeStatementWithPc.add(tempPair3);
-							if (target.getOutgoingNodes().isEmpty()) {
-								finishPcForEachThread.add(locationWithPc.get(target));
+						}
+					}
+				}
+				if (target.getOutgoingEdges().isEmpty()) {
+//					finishPcForEachThread.add(locationWithPc.get(target));
+					finishPc.add(locationWithPc.get(target));
+				}
+			}
+			needMaxPc.add((int) Math.pow(2, Integer.toBinaryString(pcCount).length()));
+//			needInitialBefore.put(thread, finishInitialPc);
+			finishPcForEachThread2.put(thread, finishPc);
+		}
+	}
+	
+	private void getNeedInitialBefore(List<Pair<AssignmentStatement, Pair<String, Pair<Integer, Integer>>>> assignmentStatementWithPc) {
+		String us = "ULTIMATE.start";
+		List<String> usedVar = new ArrayList<String>();
+		int finishInitialPc = 0;
+		Boolean lock = false;
+		for (Pair<AssignmentStatement, Pair<String, Pair<Integer, Integer>>> p1 : assignmentStatementWithPc) {
+			if (p1.getSecond().getFirst().equals(us)) {
+				if (!lock) {
+					for (Expression ex : p1.getFirst().getRhs()) {
+						if (!ex.getClass().getSimpleName().equals(il)){
+							lock = true;
+						}
+						else {
+							for (LeftHandSide lhs : p1.getFirst().getLhs()) {
+								VariableLHS lhs2 = (VariableLHS) lhs;
+								if (!usedVar.contains(lhs2.getIdentifier())) {
+									finishInitialPc++;
+									usedVar.add(lhs2.getIdentifier());
+								}
 							}
-							pcCount++;
 						}
 					}
 				}
 			}
-			needMaxPc.add((int) Math.pow(2, Integer.toBinaryString(pcCount).length()));
-			finishPcForEachThread.add(pcCount);
+		}
+		needInitialBefore.put(us, finishInitialPc);
+		for (String thread : threadOrder){
+			if (!thread.equals(us)) {
+				int finishInitialPc2 = 0;
+				Boolean lock2 = false;
+				for (Pair<AssignmentStatement, Pair<String, Pair<Integer, Integer>>> p1 : assignmentStatementWithPc) {
+					if (p1.getSecond().getFirst().equals(thread)) {
+						if (!lock2) {
+							for (Expression ex : p1.getFirst().getRhs()) {
+								if (!ex.getClass().getSimpleName().equals(il)){
+									finishInitialPc2 = p1.getSecond().getSecond().getFirst();
+									lock2 = true;
+								}
+								else {
+									for (LeftHandSide lhs : p1.getFirst().getLhs()) {
+										VariableLHS lhs2 = (VariableLHS) lhs;
+										if (!usedVar.contains(lhs2.getIdentifier())) {
+											usedVar.add(lhs2.getIdentifier());
+										}
+										else {
+											finishInitialPc2 = p1.getSecond().getSecond().getFirst();
+											lock2 = true;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				needInitialBefore.put(thread, finishInitialPc2);
+			}
 		}
 	}
 	
 	private void buildRcfgTrans() {
-		int tempMin = 10000;
-		BDD initialTran = bdd.one();
 		for (Pair<AssignmentStatement, Pair<String, Pair<Integer, Integer>>> p : assignmentStatementWithPc) {
 			AssignmentStatement as = p.getFirst();
 			int needVar = -1;
@@ -212,18 +285,15 @@ public class RcfgTransitionBuilder{
 
 			// deal with PCs
 			BDD transitionWithPc = addPc(transition, p.getSecond());
-			rcfgTrans.add(transitionWithPc);
-			rcfgTransPc.add(p.getSecond());
-			
-			for (String sss : expr.getPayload().getAnnotations().keySet()) {
-				CLocation cl = (CLocation) expr.getPayload().getAnnotations().get(sss);
-				if (cl.getStartLine() < tempMin) {
-					tempMin = cl.getStartLine();
-					initialTran = transition;
-				}
+			if (!transitionWithPc.isZero()) {
+				rcfgTrans.add(transitionWithPc);
+				rcfgTransPc.add(p.getSecond());
+			}
+			int needBefore = needInitialBefore.get(p.getSecond().getFirst());
+			if (p.getSecond().getSecond().getFirst() < needBefore) {
+				initialTrans.add(transitionWithPc);
 			}
 		}
-		initialTrans.add(initialTran);
 		for (Pair<AssumeStatement, Pair<String, Pair<Integer, Integer>>> p : assumeStatementWithPc) {
 			Expression expr = p.getFirst().getFormula();
 			// deal with transitions
@@ -233,11 +303,39 @@ public class RcfgTransitionBuilder{
 			BDD transitionWithPc = addPc(transition, p.getSecond());	
 			
 //			mLogger.info(transitionWithPc);
-			rcfgTrans.add(transitionWithPc);
-			rcfgTransPc.add(p.getSecond());
+			if (!transitionWithPc.isZero()) {
+				rcfgTrans.add(transitionWithPc);
+				rcfgTransPc.add(p.getSecond());
+			}
 		}
 	}
 
+	private void buildSelfLoop() {
+		int count = 0;
+		for (String s : threadOrder) {
+			for (int pc : finishPcForEachThread2.get(s)) {
+				BDD transition = bdd.one();
+				BDDBitVector prePc = bdd.buildVector(rcfgPc[count]);
+				BDDBitVector postPc = bdd.buildVector(rcfgPcPrime[count]);
+				BDDBitVector preBl = bdd.constantVector(prePc.size(), pc);
+				BDDBitVector postBl = bdd.constantVector(postPc.size(), pc);
+				
+				for (int i = 0; i < prePc.size(); i++) {
+					transition = transition.andWith(prePc.getBit(i).biimp(preBl.getBit(i)));
+				}
+				for (int i = 0; i < postPc.size(); i++) {
+					transition = transition.andWith(postPc.getBit(i).biimp(postBl.getBit(i)));
+				}
+				prePc.free();
+				postPc.free();
+				preBl.free();
+				postBl.free();
+				rcfgTrans.add(transition);
+			}
+			count++;
+		}
+	}
+	
 	private BDD addPc(BDD t, Pair<String, Pair<Integer, Integer>> pcPair) {
 		BDD transition = t;
 		String pcThread = pcPair.getFirst();
@@ -251,8 +349,7 @@ public class RcfgTransitionBuilder{
 				BDDBitVector postPc = bdd.buildVector(rcfgPcPrime[count]);
 				BDDBitVector preBl = bdd.constantVector(prePc.size(), prePcValue);
 				BDDBitVector postBl = bdd.constantVector(postPc.size(), postPcValue);
-				
-				
+							
 				for (int i = 0; i < prePc.size(); i++) {
 					transition = transition.andWith(prePc.getBit(i).biimp(preBl.getBit(i)));
 				}
@@ -304,7 +401,12 @@ public class RcfgTransitionBuilder{
 		return threadOrder;
 	}
 
-	public List<Integer> getFinishPcForEachThread() {
-		return finishPcForEachThread;
+//	public List<Integer> getFinishPcForEachThread() {
+//		return finishPcForEachThread;
+//	}
+	
+	public Map<String, Set<Integer>> getFinishPcForEachThread2() {
+		return finishPcForEachThread2;
 	}
+
 }

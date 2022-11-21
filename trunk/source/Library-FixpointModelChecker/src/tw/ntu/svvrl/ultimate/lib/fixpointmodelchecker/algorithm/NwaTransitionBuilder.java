@@ -79,14 +79,7 @@ public class NwaTransitionBuilder {
 		
 		nwaStateToPc = setNwaPc();
 		List<Expression> allExpression = getNwaExpression(mNwa.getAlphabet());
-//		mLogger.info(Arrays.toString(allExpression.toArray()));
 		buildNwaTrans(allExpression);
-		
-//		BDD test = bdd.zero();
-//		for (BDD b : nwaTrans) {
-//			test = test.or(b);
-//		}
-//		mLogger.info(test);
 	}
 	
 	private List<Expression> getNwaExpression(Set<CodeBlock> al) {
@@ -99,7 +92,7 @@ public class NwaTransitionBuilder {
 				if (mNwa.isFinal(s)) {
 					nwaFinalStatesPc.add(nwaStateToPc.get(s));
 				}
-				else if (mNwa.isInitial(s)) {
+				if (mNwa.isInitial(s)) {
 					nwaInitialStatesPc.add(nwaStateToPc.get(s));
 				}
 				StatementSequence ss = (StatementSequence) i.getLetter();

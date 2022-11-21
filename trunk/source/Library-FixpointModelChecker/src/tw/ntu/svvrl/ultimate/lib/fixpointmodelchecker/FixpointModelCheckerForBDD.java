@@ -1,6 +1,7 @@
 package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker;
 
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -70,7 +71,7 @@ public class FixpointModelCheckerForBDD {
 		mRcfgRoot = rcfg;
 		mNwa = nwa;
 		// set up BDD factory
-		bdd = BDDFactory.init("j", 100000, 100000, false);
+		bdd = BDDFactory.init("j", 1000000, 1000000, false);
 		
 		// set up BDD domain
 		Set<AssignmentStatement> allAssignment = getAllAssignments();
@@ -91,7 +92,7 @@ public class FixpointModelCheckerForBDD {
 		v = bdd.extDomain(pam); // represents different v bdd variables
 		vprime = bdd.extDomain(pam); // represents different vprime bdd variables
 		Set<String> varOrder = allVar;
-		
+//		mLogger.info(Arrays.toString(varOrder.toArray()));
 		
 		// create RCFG transition builder which can help getting transitions of the system RCFG
 		mRcfgTransitionBuilder = new RcfgTransitionBuilder(mRcfgRoot, mLogger, mServices, bdd, v, vprime, varOrder);
@@ -101,10 +102,10 @@ public class FixpointModelCheckerForBDD {
 		List<BDD> rcfgTrans = mRcfgTransitionBuilder.getRcfgTrans();
 		List<BDD> nwaTrans = mNwaTransitionBuilder.getNwaTrans();
 		
-		mLogger.info("system : " + Arrays.toString(rcfgTrans.toArray()));
-		mLogger.info("system pc : " + Arrays.toString(mRcfgTransitionBuilder.getRcfgTransPc().toArray()));
-		mLogger.info("property : " + Arrays.toString(nwaTrans.toArray()));
-		mLogger.info("property pc : " + Arrays.toString(mNwaTransitionBuilder.getNwaTransPc().toArray()));
+//		mLogger.info("system : " + Arrays.toString(rcfgTrans.toArray()));
+//		mLogger.info("system pc : " + Arrays.toString(mRcfgTransitionBuilder.getRcfgTransPc().toArray()));
+//		mLogger.info("property : " + Arrays.toString(nwaTrans.toArray()));
+//		mLogger.info("property pc : " + Arrays.toString(mNwaTransitionBuilder.getNwaTransPc().toArray()));
 //		mLogger.info("property final trans : " + Arrays.toString(mNwaTransitionBuilder.getNwaFinalTrans().toArray()));
 		
 		List<BDD> initialTrans = mRcfgTransitionBuilder.getInitialTrans();
@@ -114,7 +115,7 @@ public class FixpointModelCheckerForBDD {
 		// calculate I 
 		Set<BDD> I = createInitial(initialTrans);
 		
-		mLogger.info("input : " + Arrays.toString(I.toArray()));
+//		mLogger.info("input : " + Arrays.toString(I.toArray()));
 
 		List<BDD> normalTrans = new ArrayList<BDD>();
 		for (BDD b : rcfgTrans) {
@@ -122,31 +123,27 @@ public class FixpointModelCheckerForBDD {
 				normalTrans.add(b);
 			}
 		}
-		mLogger.info("normal transition : " + Arrays.toString(normalTrans.toArray()));
+//		mLogger.info("normal transition : " + Arrays.toString(normalTrans.toArray()));
 		
-		// calculate cross product
+//		// calculate cross product
 		productTrans = getProductTrans(normalTrans, nwaTrans);	
-//		mLogger.info("product : " + productTrans.size());
+		mLogger.info("product : " + productTrans.size());
 		
 		// calculate the fixpoint mu x
 		Set<BDD> initialFixpoint = calculateMuX(I);
-		mLogger.info("mu x : " + Arrays.toString(initialFixpoint.toArray()));
+//		mLogger.info("mu x : " + Arrays.toString(initialFixpoint.toArray()));
 
 		// calculate set of accepting states
 		Set<Integer> acceptingStates = mNwaTransitionBuilder.getNwaFinalStatesPc();
-		mLogger.info("accepting states : " + Arrays.toString(acceptingStates.toArray()));
+//		mLogger.info("accepting states : " + Arrays.toString(acceptingStates.toArray()));
 	
 		// calculate R_Alpha
 		Set<BDD> R_Alpha = calculateR_Alpha(initialFixpoint, acceptingStates);
-		mLogger.info("R_Alpha : " + Arrays.toString(R_Alpha.toArray()));
-	
-		// calculate Post(true)
-//		Set<BDD> postTrue = calculatePostTrue(productTrans);
-//		mLogger.info("post(True) : " + Arrays.toString(postTrue.toArray()));
+//		mLogger.info("R_Alpha : " + Arrays.toString(R_Alpha.toArray()));
 		
 		// calculate nu y
 		Set<BDD> finalFixpoint = calculateF_phi(R_Alpha);
-		mLogger.info("nu y : " + Arrays.toString(finalFixpoint.toArray()));
+//		mLogger.info("nu y : " + Arrays.toString(finalFixpoint.toArray()));
 
 		// check specifications
 		finalCheck(finalFixpoint);
@@ -221,23 +218,13 @@ public class FixpointModelCheckerForBDD {
 	
 	private Set<BDD> createInitial(List<BDD> initialTrans){
 		BDD input = setAllZeroInput();
+		for (BDD b : initialTrans) {
+			BDD post = getPost(input, b);
+			input = post;
+		}
 		Set<BDD> I = new HashSet<BDD>();
 		I.add(input);
-		while (true) {
-			Set<BDD> temp = new HashSet<BDD>();
-			for (BDD a : initialTrans) {
-				for (BDD b : I) {
-					BDD post = getPost(b, a);
-					if (post != null) {
-						temp.add(post);
-					}
-				}
-			}
-			if (temp.isEmpty()) {
-				break;
-			}
-			I = temp;
-		}
+
 		Set<Integer> nwaInitialPc = mNwaTransitionBuilder.getNwaInitialStatesPc();
 		Set<BDD> nwaInitialBDD = new HashSet<BDD>();
 		for (Integer i : nwaInitialPc) {
@@ -263,7 +250,9 @@ public class FixpointModelCheckerForBDD {
 		Set<BDD> postx = i;
 		Set<BDD> I = i;
 		while (true) {
+//			mLogger.info(postx.size());
 			Set<BDD> postxUnionI = new HashSet<BDD>();
+//			mLogger.info(postx.size());
 			for (BDD b : postx) {
 				postxUnionI.add(b);
 			}
@@ -282,7 +271,6 @@ public class FixpointModelCheckerForBDD {
 					}
 				}
 			}
-
 			if (temp.equals(postx)) {
 				break;
 			}
@@ -315,6 +303,7 @@ public class FixpointModelCheckerForBDD {
 					postyInterR.add(b1);
 				}
 			}
+//			mLogger.info(postyInterR.size());
 			Set<BDD> temp = calculateMuX(postyInterR);
 			if (temp.equals(posty)) {
 				break;
@@ -322,17 +311,21 @@ public class FixpointModelCheckerForBDD {
 			else {
 				posty = temp;
 			}
+//			for (BDD b : posty) {
+//				mLogger.info(b);
+//			}
 		}
 		return posty;
 	}
 	
 	private void finalCheck(Set<BDD> fixpoint2){
 		if (fixpoint2.isEmpty()) {
+			mLogger.info("Fixpoint found is empty");
 			mLogger.info("All specifications hold.");
 		}
 		else {
-			mLogger.info("Fixpoint found :");
-			mLogger.info(Arrays.toString(fixpoint2.toArray()));
+			mLogger.info("Fixpoint found is not empty");
+			mLogger.info("Specifications do not hold.");
 		}
 	}
 	
@@ -419,37 +412,6 @@ public class FixpointModelCheckerForBDD {
 		}
 		return allExpression;
 	}
-
-	private BDD setInput2() {
-		BDD input = bdd.one();
-		
-		BDDBitVector turnPre = bdd.buildVector(v[0]);
-		BDDBitVector xPre = bdd.buildVector(v[1]);
-		BDDBitVector flag1Pre = bdd.buildVector(v[3]);
-		BDDBitVector flag2Pre = bdd.buildVector(v[6]);
-		
-		BDDBitVector turnv = bdd.constantVector(2, 0);
-		BDDBitVector xv = bdd.constantVector(2, 0);
-		BDDBitVector flag1v = bdd.constantVector(2, 0);
-		BDDBitVector flag2v = bdd.constantVector(2, 0);
-		
-		for (int n = 0; n < turnPre.size(); n++) {
-			input = input.and(turnPre.getBit(n).biimp(turnv.getBit(n)));
-		}
-		for (int n = 0; n < xPre.size(); n++) {
-			input = input.and(xPre.getBit(n).biimp(xv.getBit(n)));
-		}
-		
-		for (int n = 0; n < flag1Pre.size(); n++) {
-			input = input.and(flag1Pre.getBit(n).biimp(flag1v.getBit(n)));
-		}
-		
-		for (int n = 0; n < flag2Pre.size(); n++) {
-			input = input.and(flag2Pre.getBit(n).biimp(flag2v.getBit(n)));
-		}
-		
-		return input;
-	}
 	
 	public BDD getPost(BDD input, BDD transition) {
 		BDD post = null;
@@ -459,7 +421,8 @@ public class FixpointModelCheckerForBDD {
 		BDDDomain[] rcfgPcPrime = mRcfgTransitionBuilder.getRcfgPcPrime();
 		BDDDomain[] nwaPcPrime = mNwaTransitionBuilder.getNwaPcPrime();
 		
-		List<Integer> finishPcForEachThread = mRcfgTransitionBuilder.getFinishPcForEachThread();
+//		List<Integer> finishPcForEachThread = mRcfgTransitionBuilder.getFinishPcForEachThread();
+		Map<String, Set<Integer>> finishPcForEachThread2 = mRcfgTransitionBuilder.getFinishPcForEachThread2();
 
 		BDD vset = bdd.makeSet(v);
 		BDD rcfgPcSet = bdd.makeSet(rcfgPc);
@@ -469,9 +432,14 @@ public class FixpointModelCheckerForBDD {
 		// check whether the state is the last state
 		boolean last = true;
 		for (int i = 0; i < rcfgPc.length; i++) {
+			String thread = (String) finishPcForEachThread2.keySet().toArray()[i];
+			Set<Integer> fset = finishPcForEachThread2.get(thread);
 			int a = input.scanVar(rcfgPc[i]).intValue();
-			int b = finishPcForEachThread.get(i);
-			if (!(a == b)) {
+//			int b = finishPcForEachThread.get(i);
+//			if (!(a == b)) {
+//				last = false;
+//			}
+			if (!(fset.contains(a))) {
 				last = false;
 			}
 		}
@@ -566,7 +534,7 @@ public class FixpointModelCheckerForBDD {
 				}
 			}
 			post = temp2;
-		}
+		}	
 		return post;
 	}
 }
