@@ -37,6 +37,8 @@ public class FixpointModelCheckerForBDD {
 	private final IUltimateServiceProvider mServices;
 	private final BoogieIcfgContainer mRcfgRoot;
 	private final INestedWordAutomaton<CodeBlock, String> mNwa;
+	Set<String> varOrder;
+	Set<String> threadOrder;
 	
 	private final NwaTransitionBuilder mNwaTransitionBuilder;
 	private final RcfgTransitionBuilder mRcfgTransitionBuilder;
@@ -47,21 +49,6 @@ public class FixpointModelCheckerForBDD {
 	
 	Set<BDD> productTrans;
 	
-//	public FixpointModelCheckerForBDD(final BoogieIcfgContainer rcfg,
-//			final ILogger logger, final IUltimateServiceProvider services) {
-//		
-//		// services and logger
-//		mServices = services;
-//		mLogger = logger;
-//		mRcfgRoot = rcfg;
-//		mNWA = null;
-//		
-//
-//
-//		mRcfgTransitionBuilder = new RcfgTransitionBuilder(rcfg, mLogger, mServices, bdd);
-//		mNwaTransitionBuilder = null;
-//	}
-	
 	public FixpointModelCheckerForBDD(final INestedWordAutomaton<CodeBlock, String> nwa, final BoogieIcfgContainer rcfg,
 			final ILogger logger, final IUltimateServiceProvider services) {
 		
@@ -71,12 +58,13 @@ public class FixpointModelCheckerForBDD {
 		mRcfgRoot = rcfg;
 		mNwa = nwa;
 		// set up BDD factory
-		bdd = BDDFactory.init("j", 1000000, 1000000, false);
+		bdd = BDDFactory.init("j", 200000, 200000, false);
 		
 		// set up BDD domain
 		Set<AssignmentStatement> allAssignment = getAllAssignments();
 		
 		Set<String> allVar = getAllVar(allAssignment);
+		mLogger.info(Arrays.toString(allVar.toArray()));
 		
 		int systemNeedBit = 2;
 		int propertyNeedBit = findPropertyNeedBit(mNwa);
@@ -91,13 +79,15 @@ public class FixpointModelCheckerForBDD {
 		int[] pam = setPam(actuallyNeedBit, allVar.size()).stream().mapToInt(Integer::intValue).toArray();
 		v = bdd.extDomain(pam); // represents different v bdd variables
 		vprime = bdd.extDomain(pam); // represents different vprime bdd variables
-		Set<String> varOrder = allVar;
+		varOrder = allVar;
 //		mLogger.info(Arrays.toString(varOrder.toArray()));
 		
 		// create RCFG transition builder which can help getting transitions of the system RCFG
 		mRcfgTransitionBuilder = new RcfgTransitionBuilder(mRcfgRoot, mLogger, mServices, bdd, v, vprime, varOrder);
 		// create NWA transition builder which can help getting transitions of the property NWA
 		mNwaTransitionBuilder = new NwaTransitionBuilder(mNwa, mLogger, mServices, bdd, v, vprime, varOrder);
+		
+		threadOrder = mRcfgTransitionBuilder.getThreadOrder();
 		
 		List<BDD> rcfgTrans = mRcfgTransitionBuilder.getRcfgTrans();
 		List<BDD> nwaTrans = mNwaTransitionBuilder.getNwaTrans();
@@ -111,10 +101,12 @@ public class FixpointModelCheckerForBDD {
 		List<BDD> initialTrans = mRcfgTransitionBuilder.getInitialTrans();
 //		mLogger.info(Arrays.toString(initialTrans.toArray()));
 		
-		
 		// calculate I 
 		Set<BDD> I = createInitial(initialTrans);
 		
+//		for (BDD b : I) {
+//			mLogger.info(translate(b));
+//		}
 //		mLogger.info("input : " + Arrays.toString(I.toArray()));
 
 		List<BDD> normalTrans = new ArrayList<BDD>();
@@ -127,7 +119,7 @@ public class FixpointModelCheckerForBDD {
 		
 //		// calculate cross product
 		productTrans = getProductTrans(normalTrans, nwaTrans);	
-		mLogger.info("product : " + productTrans.size());
+//		mLogger.info("product : " + productTrans.size());
 		
 		// calculate the fixpoint mu x
 		Set<BDD> initialFixpoint = calculateMuX(I);
@@ -180,10 +172,17 @@ public class FixpointModelCheckerForBDD {
 				VariableLHS lhs2 = (VariableLHS) lhs;
 //				mLogger.info(lhs2.getIdentifier());
 				String varCandidate = lhs2.getIdentifier();
+//				String c1 = "#";
+//				String c2 = "#t";
+//				String c3 = "offset";
+//				String c4 = "base";
+//				String c5 = "ret";
+//				String c6 = "#pthreadsForks";
 				String c1 = "#";
 				String c2 = "#t~post";
-				String c3 = "~_.offset";
-				String c4 = "~_.base";
+				String c3 = "offset";
+				String c4 = "base";
+	
 				if (varCandidate.contains(c2) && !varCandidate.contains(c3) && !varCandidate.contains(c4)) {
 					allVar.add(varCandidate);
 				}
@@ -268,6 +267,7 @@ public class FixpointModelCheckerForBDD {
 					}
 					if (!temp.contains(post)) {
 						temp.add(post);
+//						mLogger.info(translate(post));
 					}
 				}
 			}
@@ -277,7 +277,10 @@ public class FixpointModelCheckerForBDD {
 			else {
 				postx = temp;
 			}
-//			mLogger.info(Arrays.toString(fixpoint.toArray()));
+//			for (BDD b : postx) {
+//				mLogger.info(translate(b));
+//			}
+//			mLogger.info("finish");
 		}
 		return postx;
 	}
@@ -312,19 +315,35 @@ public class FixpointModelCheckerForBDD {
 				posty = temp;
 			}
 //			for (BDD b : posty) {
-//				mLogger.info(b);
+//				mLogger.info(translate(b));
 //			}
+//			mLogger.info("finish");
 		}
 		return posty;
 	}
 	
 	private void finalCheck(Set<BDD> fixpoint2){
-		if (fixpoint2.isEmpty()) {
-			mLogger.info("Fixpoint found is empty");
+		Map<String, Set<Integer>> finishLocation = mRcfgTransitionBuilder.getFinishPcForEachThread2();
+		BDDDomain[] rcfgPc = mRcfgTransitionBuilder.getRcfgPc();
+		boolean propertyHold = true;
+		for (BDD b : fixpoint2) {
+			boolean allSame = true;
+			for (int i = 0; i < threadOrder.size(); i++) {
+				String thread = (String) threadOrder.toArray()[i];
+				Set<Integer> si = finishLocation.get(thread);
+				if (!si.contains(b.scanVar(rcfgPc[i]).intValue())) {
+					allSame = false;
+				}
+			}
+			if (allSame) {
+				propertyHold = false;
+				break;
+			}
+		}
+		if (propertyHold) {
 			mLogger.info("All specifications hold.");
 		}
 		else {
-			mLogger.info("Fixpoint found is not empty");
 			mLogger.info("Specifications do not hold.");
 		}
 	}
@@ -535,7 +554,25 @@ public class FixpointModelCheckerForBDD {
 			}
 			post = temp2;
 		}	
+//		mLogger.info("transition : " + transition);
+//		mLogger.info("input : " + input);
+//		mLogger.info("post : " + post);
 		return post;
+	}
+
+	private String translate(BDD input) {
+		String result = "";
+		for (int c = 0; c < v.length; c++) {
+			result = result + varOrder.toArray()[c] + "=" + input.scanVar(v[c]).intValue() + "; ";
+		}
+		result = result + " at ";
+		for (int c = 0; c < mRcfgTransitionBuilder.getRcfgPc().length; c++) {
+//			result = result + mRcfgTransitionBuilder.getThreadOrder().toArray()[c] + " : " +
+//					input.scanVar(mRcfgTransitionBuilder.getRcfgPc()[c]).intValue();
+			result = result + input.scanVar(mRcfgTransitionBuilder.getRcfgPc()[c]).intValue() + ", ";
+		}
+		result = result + input.scanVar(mNwaTransitionBuilder.getNwaPc()[0]).intValue();
+		return result;
 	}
 }
 

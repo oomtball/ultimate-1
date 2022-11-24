@@ -87,7 +87,7 @@ public class RcfgTransitionBuilder{
 		getAsWithPc(threadToAllEdges);
 		getNeedInitialBefore(assignmentStatementWithPc);
 		
-		mLogger.info(needInitialBefore);
+//		mLogger.info(needInitialBefore);
 		
 		bdd = _bdd;
 		v = _v; // represents different bdd variables
@@ -103,7 +103,7 @@ public class RcfgTransitionBuilder{
 		
 		buildRcfgTrans();
 //		buildSelfLoop();
-		mLogger.info(finishPcForEachThread2);
+//		mLogger.info(finishPcForEachThread2);
 	}
 	
 	private void dfsRecursive(IcfgLocation initialLoc) {
@@ -137,7 +137,7 @@ public class RcfgTransitionBuilder{
 			
 			threadToEdges.put(thread, foundEdge);
 		}
-		mLogger.info(threadToEdges);
+//		mLogger.info(threadToEdges);
 		return threadToEdges;
 	}
 	

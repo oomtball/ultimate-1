@@ -1,6 +1,7 @@
 package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -90,7 +91,6 @@ public class AssignmentStatementEvalator {
 		IdentifierExpression newExpr = (IdentifierExpression) expr;
 		String rightv = newExpr.getIdentifier();
 		BDD transition = bdd.one();
-		
 		int needVar2 = calculateIndex(rightv);
 		
 		BDDBitVector leftVar = bdd.buildVector(vprime[needVar]);
