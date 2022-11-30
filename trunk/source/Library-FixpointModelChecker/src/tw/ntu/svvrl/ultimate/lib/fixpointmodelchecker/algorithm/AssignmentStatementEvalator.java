@@ -1,28 +1,13 @@
 package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDBitVector;
 import net.sf.javabdd.BDDDomain;
@@ -90,6 +75,7 @@ public class AssignmentStatementEvalator {
 	private BDD caseIE(Expression expr, int needVar, Set<String> varOrder, BDDFactory bdd) {
 		IdentifierExpression newExpr = (IdentifierExpression) expr;
 		String rightv = newExpr.getIdentifier();
+//		mLogger.info(rightv);
 		BDD transition = bdd.one();
 		int needVar2 = calculateIndex(rightv);
 		
@@ -192,21 +178,15 @@ public class AssignmentStatementEvalator {
 
 	private BDDBitVector dealWithAssignmentOperator(BDDBitVector binaryLeftThing, BDDBitVector binaryRightThing, String ope) {
 		BDDBitVector opeResult = null;
-		String BITVECCONCAT = "BITVECCONCAT"; 
 		String ARITHPLUS = "ARITHPLUS"; // +
 		String ARITHMINUS = "ARITHMINUS"; // -
-		String ARITHMUL = "ARITHMUL"; // *
-		String ARITHDIV = "ARITHDIV"; // /
-		String ARITHMOD = "ARITHMOD"; // %
-//		mLogger.info(binaryLeftThing);
-//		mLogger.info(binaryRightThing);
+		
 		if (ope.equals(ARITHPLUS)) {
 			opeResult = binaryLeftThing.add(binaryRightThing);
 		}
 		else if (ope.equals(ARITHMINUS)) {
 			opeResult = binaryLeftThing.sub(binaryRightThing);
 		}
-		
 		return opeResult;
 	}
 	

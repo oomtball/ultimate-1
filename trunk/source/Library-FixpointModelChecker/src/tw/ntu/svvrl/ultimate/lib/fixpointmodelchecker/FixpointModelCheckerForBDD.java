@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,7 +12,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -23,7 +26,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDBitVector;
 import net.sf.javabdd.BDDDomain;
@@ -31,6 +36,7 @@ import net.sf.javabdd.BDDFactory;
 import net.sf.javabdd.BDDPairing;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm.NwaTransitionBuilder;
 import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm.RcfgTransitionBuilder;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class FixpointModelCheckerForBDD {
 	private final ILogger mLogger;
@@ -39,6 +45,11 @@ public class FixpointModelCheckerForBDD {
 	private final INestedWordAutomaton<CodeBlock, String> mNwa;
 	Set<String> varOrder;
 	Set<String> threadOrder;
+	
+	Set<AssignmentStatement> allAssignmentStatement;
+	Set<CallStatement> allCallStatement;
+	List<Pair<String, Expression[]>> threadAndInput;
+	Map<String, Integer> arrayWithLength;
 	
 	private final NwaTransitionBuilder mNwaTransitionBuilder;
 	private final RcfgTransitionBuilder mRcfgTransitionBuilder;
@@ -58,13 +69,17 @@ public class FixpointModelCheckerForBDD {
 		mRcfgRoot = rcfg;
 		mNwa = nwa;
 		// set up BDD factory
-		bdd = BDDFactory.init("j", 200000, 200000, false);
+		bdd = BDDFactory.init("j", 500000, 500000, false);
 		
 		// set up BDD domain
-		Set<AssignmentStatement> allAssignment = getAllAssignments();
+		allAssignmentStatement = new HashSet<AssignmentStatement>();
+		allCallStatement = new HashSet<CallStatement>();
+		threadAndInput = new ArrayList<Pair<String, Expression[]>>();
+		arrayWithLength = new HashMap<String, Integer>();
+		getAllStatements();
 		
-		Set<String> allVar = getAllVar(allAssignment);
-		mLogger.info(Arrays.toString(allVar.toArray()));
+		Set<String> allVar = getAllVar(allAssignmentStatement, allCallStatement);
+//		mLogger.info(arrayWithLength);
 		
 		int systemNeedBit = 2;
 		int propertyNeedBit = findPropertyNeedBit(mNwa);
@@ -83,7 +98,7 @@ public class FixpointModelCheckerForBDD {
 //		mLogger.info(Arrays.toString(varOrder.toArray()));
 		
 		// create RCFG transition builder which can help getting transitions of the system RCFG
-		mRcfgTransitionBuilder = new RcfgTransitionBuilder(mRcfgRoot, mLogger, mServices, bdd, v, vprime, varOrder);
+		mRcfgTransitionBuilder = new RcfgTransitionBuilder(mRcfgRoot, mLogger, mServices, bdd, v, vprime, varOrder, threadAndInput, arrayWithLength);
 		// create NWA transition builder which can help getting transitions of the property NWA
 		mNwaTransitionBuilder = new NwaTransitionBuilder(mNwa, mLogger, mServices, bdd, v, vprime, varOrder);
 		
@@ -141,53 +156,98 @@ public class FixpointModelCheckerForBDD {
 		finalCheck(finalFixpoint);
 	}
 	
-	private Set<AssignmentStatement> getAllAssignments(){
-		Set<AssignmentStatement> allAssignment = new HashSet<AssignmentStatement>();
+	private void getAllStatements(){
 		for (String s : mRcfgRoot.getProgramPoints().keySet()) {
 			for (DebugIdentifier s2 : mRcfgRoot.getProgramPoints().get(s).keySet()) {
 				for (IcfgEdge i : mRcfgRoot.getProgramPoints().get(s).get(s2).getOutgoingEdges()) {
-					String ss = "StatementSequence";
-					if (i.getClass().getSimpleName().equals(ss)) {
+					if (i instanceof StatementSequence) {
 						StatementSequence newI = (StatementSequence) i;
-//						mLogger.info(i);
 						for (Statement s3 : newI.getStatements()) {
 							String as = "AssignmentStatement";
 							if (s3.getClass().getSimpleName().equals(as)) {
 								AssignmentStatement news3 = (AssignmentStatement) s3;
-								allAssignment.add(news3);
+								allAssignmentStatement.add(news3);
+							}
+						}
+					}
+					else if (i instanceof Summary) {
+						Summary newI = (Summary) i;
+						CallStatement cs = newI.getCallStatement();
+						allCallStatement.add(cs);
+					}
+					else if (i instanceof ForkThreadCurrent) {
+						ForkThreadCurrent newI = (ForkThreadCurrent) i;
+						ForkStatement fs = newI.getForkStatement();
+						Pair<String, Expression[]> temp = new Pair<>(fs.getProcedureName(), fs.getArguments());
+						threadAndInput.add(temp);
+					}
+				}
+			}
+		}
+	}
+	
+	private Set<String> getAllVar(Set<AssignmentStatement> allAssignmentStatements, Set<CallStatement> allCallStatements){
+		Set<String> allVar = new HashSet<String>();
+		for (AssignmentStatement as : allAssignmentStatements) {
+			for (LeftHandSide lhs : as.getLhs()) {
+				VariableLHS lhs2 = (VariableLHS) lhs;
+				String varCandidate = lhs2.getIdentifier();
+//				String c1 = "#";
+//				String c2 = "#t~post";
+//				String c3 = "offset";
+//				String c4 = "base";
+//	
+//				if (varCandidate.contains(c2) && !varCandidate.contains(c3) && !varCandidate.contains(c4)) {
+//					allVar.add(varCandidate);
+//				}
+//				if (!varCandidate.contains(c1) && !varCandidate.contains(c3) && !varCandidate.contains(c4)) {
+//					allVar.add(varCandidate);
+//				}
+				String pre = "main_#t~pre";
+				String nul = "#NULL";
+				String val = "#valid";
+				String res = "res";
+				String ret = "ret";
+				String pthr = "#pthreadsForks";
+				if (!varCandidate.contains(pre) && !varCandidate.contains(nul) && !varCandidate.contains(res) && 
+						!varCandidate.contains(val) && !varCandidate.contains(pthr) && !varCandidate.contains(ret)) {
+					allVar.add(varCandidate);
+				}
+			}
+		}
+		for (CallStatement cs : allCallStatements) {
+			String ua = "#Ultimate.allocOnStack";
+			String ri = "read~int";
+			if (cs.getMethodName().equals(ua)) {
+				String result = "";
+				String c = "main_~#t";
+				IntegerLiteral il = (IntegerLiteral) cs.getArguments()[0];
+				int t = Integer.parseInt(il.getValue());
+				for (VariableLHS lhs : cs.getLhs()) {
+					if (!lhs.getIdentifier().contains(c)) {
+						if (!allVar.contains(lhs.getIdentifier())) {
+//							mLogger.info(lhs.getIdentifier());
+							allVar.add(lhs.getIdentifier());
+						}	
+						result = lhs.getIdentifier().replace(".base", "");
+						result = result.replace(".offset", "");
+						arrayWithLength.put(result, t/4);
+						for (int i = 0; i < t/4; i++) {
+							String result2 = result + "~"+ i;
+							if (!allVar.contains(result2)){
+								allVar.add(result2);
 							}
 						}
 					}
 				}
 			}
-		}
-		return allAssignment;
-	}
-	
-	private Set<String> getAllVar(Set<AssignmentStatement> allAssignment){
-		Set<String> allVar = new HashSet<String>();
-		for (AssignmentStatement as : allAssignment) {
-//			mLogger.info(as);
-			for (LeftHandSide lhs : as.getLhs()) {
-				VariableLHS lhs2 = (VariableLHS) lhs;
-//				mLogger.info(lhs2.getIdentifier());
-				String varCandidate = lhs2.getIdentifier();
-//				String c1 = "#";
-//				String c2 = "#t";
-//				String c3 = "offset";
-//				String c4 = "base";
-//				String c5 = "ret";
-//				String c6 = "#pthreadsForks";
-				String c1 = "#";
-				String c2 = "#t~post";
-				String c3 = "offset";
-				String c4 = "base";
-	
-				if (varCandidate.contains(c2) && !varCandidate.contains(c3) && !varCandidate.contains(c4)) {
-					allVar.add(varCandidate);
-				}
-				if (!varCandidate.contains(c1) && !varCandidate.contains(c3) && !varCandidate.contains(c4)) {
-					allVar.add(varCandidate);
+			else if (cs.getMethodName().equals(ri)) {
+				String c = "main_~#t";
+				String c2 = "main_#t~mem";
+				for (VariableLHS lhs : cs.getLhs()) {
+					if (!lhs.getIdentifier().contains(c) && !lhs.getIdentifier().contains(c2)) {
+						allVar.add(lhs.getIdentifier());
+					}
 				}
 			}
 		}
@@ -217,12 +277,27 @@ public class FixpointModelCheckerForBDD {
 	
 	private Set<BDD> createInitial(List<BDD> initialTrans){
 		BDD input = setAllZeroInput();
-		for (BDD b : initialTrans) {
-			BDD post = getPost(input, b);
-			input = post;
+		Set<BDD> temp = new HashSet<BDD>();
+		temp.add(input);
+		while (true) {
+			Set<BDD> temp2 = new HashSet<BDD>();
+			for (BDD b : initialTrans) {
+				for (BDD b2 : temp) {
+					BDD post = getPost(b2, b);
+					if (post != null) {
+//						mLogger.info("hi");
+						temp2.add(post);
+					}
+				}
+			}
+			if (temp2.isEmpty()) {
+				break;
+			}
+			else {
+				temp = temp2;
+			}
 		}
-		Set<BDD> I = new HashSet<BDD>();
-		I.add(input);
+		Set<BDD> I = temp;
 
 		Set<Integer> nwaInitialPc = mNwaTransitionBuilder.getNwaInitialStatesPc();
 		Set<BDD> nwaInitialBDD = new HashSet<BDD>();
@@ -323,13 +398,19 @@ public class FixpointModelCheckerForBDD {
 	}
 	
 	private void finalCheck(Set<BDD> fixpoint2){
-		Map<String, Set<Integer>> finishLocation = mRcfgTransitionBuilder.getFinishPcForEachThread2();
+		Map<String, Set<Integer>> finishLocation = mRcfgTransitionBuilder.getFinishPcForEachThread();
 		BDDDomain[] rcfgPc = mRcfgTransitionBuilder.getRcfgPc();
 		boolean propertyHold = true;
 		for (BDD b : fixpoint2) {
 			boolean allSame = true;
-			for (int i = 0; i < threadOrder.size(); i++) {
-				String thread = (String) threadOrder.toArray()[i];
+			for (int i = 0; i < rcfgPc.length; i++) {
+				String thread = null;
+				if (i == 0) {
+					thread = "ULTIMATE.start";
+				}
+				else {
+					thread = threadAndInput.get(i-1).getFirst();
+				}
 				Set<Integer> si = finishLocation.get(thread);
 				if (!si.contains(b.scanVar(rcfgPc[i]).intValue())) {
 					allSame = false;
@@ -440,8 +521,7 @@ public class FixpointModelCheckerForBDD {
 		BDDDomain[] rcfgPcPrime = mRcfgTransitionBuilder.getRcfgPcPrime();
 		BDDDomain[] nwaPcPrime = mNwaTransitionBuilder.getNwaPcPrime();
 		
-//		List<Integer> finishPcForEachThread = mRcfgTransitionBuilder.getFinishPcForEachThread();
-		Map<String, Set<Integer>> finishPcForEachThread2 = mRcfgTransitionBuilder.getFinishPcForEachThread2();
+		Map<String, Set<Integer>> finishPcForEachThread = mRcfgTransitionBuilder.getFinishPcForEachThread();
 
 		BDD vset = bdd.makeSet(v);
 		BDD rcfgPcSet = bdd.makeSet(rcfgPc);
@@ -451,8 +531,14 @@ public class FixpointModelCheckerForBDD {
 		// check whether the state is the last state
 		boolean last = true;
 		for (int i = 0; i < rcfgPc.length; i++) {
-			String thread = (String) finishPcForEachThread2.keySet().toArray()[i];
-			Set<Integer> fset = finishPcForEachThread2.get(thread);
+			String thread = null;
+			if (i == 0) {
+				thread = "ULTIMATE.start";
+			}
+			else {
+				thread = threadAndInput.get(i-1).getFirst();
+			}
+			Set<Integer> fset = finishPcForEachThread.get(thread);
 			int a = input.scanVar(rcfgPc[i]).intValue();
 //			int b = finishPcForEachThread.get(i);
 //			if (!(a == b)) {
@@ -567,8 +653,6 @@ public class FixpointModelCheckerForBDD {
 		}
 		result = result + " at ";
 		for (int c = 0; c < mRcfgTransitionBuilder.getRcfgPc().length; c++) {
-//			result = result + mRcfgTransitionBuilder.getThreadOrder().toArray()[c] + " : " +
-//					input.scanVar(mRcfgTransitionBuilder.getRcfgPc()[c]).intValue();
 			result = result + input.scanVar(mRcfgTransitionBuilder.getRcfgPc()[c]).intValue() + ", ";
 		}
 		result = result + input.scanVar(mNwaTransitionBuilder.getNwaPc()[0]).intValue();

@@ -1,27 +1,16 @@
 package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDBitVector;
 import net.sf.javabdd.BDDDomain;
@@ -42,6 +31,19 @@ public class AssumeStatementEvalator {
 	String bl = "BooleanLiteral";
 	String ue = "UnaryExpression";
 	String be = "BinaryExpression";
+	
+	String COMPEQ = "COMPEQ";  // ==
+	String COMPNEQ = "COMPNEQ";  // !=
+	String COMPLT = "COMPLT"; // <
+	String COMPGT = "COMPGT";  // >
+	String COMPLEQ = "COMPLEQ";  // <=
+	String COMPGEQ = "COMPGEQ";  // >=
+	
+	String LOGICNEG = "LOGICNEG";
+	String LOGICAND = "LOGICAND";
+	String LOGICOR = "LOGICOR";
+	String LOGICIMPLIES = "LOGICIMPLIES"; // -> 
+	String LOGICIFF = "LOGICIFF"; // 
 	
 	public AssumeStatementEvalator(final ILogger logger, final IUltimateServiceProvider services, 
 			BDDFactory _bdd, BDDDomain[] _v, BDDDomain[] _vprime, Set<String> _varOrder) {
@@ -64,7 +66,30 @@ public class AssumeStatementEvalator {
 			transition = caseUE(expr);
 		}
 		else if (expr instanceof BinaryExpression) {
-			transition = caseBE(expr);
+			BinaryExpression be = (BinaryExpression) expr;
+			
+			transition = caseBE(be.getLeft(), be.getRight(), be.getOperator());
+			if (be.getOperator().toString().equals(COMPEQ) || be.getOperator().toString().equals(COMPNEQ) || be.getOperator().toString().equals(COMPLT) 
+					|| be.getOperator().toString().equals(COMPGT) || be.getOperator().toString().equals(COMPLEQ) || 
+					be.getOperator().toString().equals(COMPGEQ)) {
+				transition = caseBEforBDD(be.getLeft(), be.getRight(), be.getOperator());
+			}
+			else {
+				transition = caseBE(be.getLeft(), be.getRight(), be.getOperator());
+			}
+		}
+		
+		return transition;
+	}
+	
+	public BDD buildTran2(Expression leftExpr, Expression rightExpr, Operator op) {
+		BDD transition = bdd.one();
+		if (op.toString().equals(COMPEQ) || op.toString().equals(COMPNEQ) || op.toString().equals(COMPLT) || op.toString().equals(COMPGT) ||
+				op.toString().equals(COMPLEQ) || op.toString().equals(COMPGEQ)) {
+			transition = caseBEforBDD(leftExpr, rightExpr, op);
+		}
+		else {
+			transition = caseBE(leftExpr, rightExpr, op);
 		}
 		
 		return transition;
@@ -92,13 +117,6 @@ public class AssumeStatementEvalator {
 	
 	private BDD dealWithComparisonOperator(BDDBitVector binaryLeftThing, BDDBitVector binaryRightThing, String ope) {
 		BDD opeResult = bdd.one();
-		String COMPLT = "COMPLT"; // <
-		String COMPGT = "COMPGT";  // >
-		String COMPLEQ = "COMPLEQ";  // <=
-		String COMPGEQ = "COMPGEQ";  // >=
-		String COMPEQ = "COMPEQ";  // ==
-		String COMPNEQ = "COMPNEQ";  // !=
-		String COMPPO = "COMPPO";  
 		
 //		mLogger.info(binaryLeftThing);
 //		mLogger.info(binaryRightThing);
@@ -141,19 +159,14 @@ public class AssumeStatementEvalator {
 		BDD tempBdd = bdd.one();
 		UnaryExpression newExpr = (UnaryExpression) expr;
 		String checkNot = newExpr.getOperator().toString();
-		String LOGICNEG = "LOGICNEG";
-		String LOGICAND = "LOGICAND";
-		String LOGICOR = "LOGICOR";
-		String LOGICIMPLIES = "LOGICIMPLIES"; // -> 
-		String LOGICIFF = "LOGICIFF"; // 
 		if (newExpr.getExpr().getClass().getSimpleName().equals(be)) {
 			BinaryExpression newBE = (BinaryExpression) newExpr.getExpr();
 			if (newBE.getOperator().toString().equals(LOGICAND) || newBE.getOperator().toString().equals(LOGICOR) 
 					|| newBE.getOperator().toString().equals(LOGICIMPLIES) || newBE.getOperator().toString().equals(LOGICIFF)) {
-				tempBdd = caseBE(newExpr.getExpr());
+				tempBdd = caseBE(newBE.getLeft(), newBE.getRight(), newBE.getOperator());
 			}
 			else {
-				tempBdd = caseBEforBDD(newExpr.getExpr());
+				tempBdd = caseBEforBDD(newBE.getLeft(), newBE.getRight(), newBE.getOperator());
 			}
 		}
 		else if (newExpr.getExpr().getClass().getSimpleName().equals(ue)) {
@@ -165,18 +178,13 @@ public class AssumeStatementEvalator {
 		return tempBdd;	
 	}
 	
-	private BDD caseBE(Expression expr) {
+	private BDD caseBE(Expression leftExpr, Expression rightExpr, Operator op) {
 		BDD tempBdd = bdd.one();
-		BinaryExpression newExpr = (BinaryExpression) expr;
-		Expression binaryLeft = newExpr.getLeft();
-		Expression binaryRight = newExpr.getRight();
-		String ope = newExpr.getOperator().toString();
+		Expression binaryLeft = leftExpr;
+		Expression binaryRight = rightExpr;
+		String ope = op.toString();
 		BDD leftResult = bdd.one();
 		BDD rightResult = bdd.one();
-		String LOGICAND = "LOGICAND";
-		String LOGICOR = "LOGICOR";
-		String LOGICIMPLIES = "LOGICIMPLIES"; // -> 
-		String LOGICIFF = "LOGICIFF"; //  <->
 		if (binaryLeft.getClass().getSimpleName().equals(bl)) {
 			leftResult = caseBL(binaryLeft);
 		}
@@ -187,10 +195,10 @@ public class AssumeStatementEvalator {
 			BinaryExpression newBE = (BinaryExpression) binaryLeft;
 			if (newBE.getOperator().toString().equals(LOGICAND) || newBE.getOperator().toString().equals(LOGICOR) 
 					|| newBE.getOperator().toString().equals(LOGICIMPLIES) || newBE.getOperator().toString().equals(LOGICIFF)) {
-				leftResult = caseBE(binaryLeft);
+				leftResult = caseBE(newBE.getLeft(), newBE.getRight(), newBE.getOperator());
 			}
 			else {
-				leftResult = caseBEforBDD(binaryLeft);
+				leftResult = caseBEforBDD(newBE.getLeft(), newBE.getRight(), newBE.getOperator());
 			}
 		}
 		if (binaryRight.getClass().getSimpleName().equals(bl)) {
@@ -203,10 +211,10 @@ public class AssumeStatementEvalator {
 			BinaryExpression newBE = (BinaryExpression) binaryRight;
 			if (newBE.getOperator().toString().equals(LOGICAND) || newBE.getOperator().toString().equals(LOGICOR) 
 					|| newBE.getOperator().toString().equals(LOGICIMPLIES) || newBE.getOperator().toString().equals(LOGICIFF)) {
-				rightResult = caseBE(binaryRight);
+				rightResult = caseBE(newBE.getLeft(), newBE.getRight(), newBE.getOperator());
 			}
 			else {
-				rightResult = caseBEforBDD(binaryRight);
+				rightResult = caseBEforBDD(newBE.getLeft(), newBE.getRight(), newBE.getOperator());
 			}
 		}
 		if (ope.equals(LOGICAND)) {
@@ -299,12 +307,11 @@ public class AssumeStatementEvalator {
 		return result;
 	}
 	
-	private BDD caseBEforBDD(Expression expr) {
+	private BDD caseBEforBDD(Expression leftExpr, Expression rightExpr, Operator op) {
 		BDD result = null;
-		BinaryExpression newBe = (BinaryExpression) expr;
-		Expression binaryLeft = newBe.getLeft();
-		Expression binaryRight = newBe.getRight();
-		String ope = newBe.getOperator().toString();
+		Expression binaryLeft = leftExpr;
+		Expression binaryRight = rightExpr;
+		String ope = op.toString();
 		String leftClass = binaryLeft.getClass().getSimpleName();
 		String rightClass = binaryRight.getClass().getSimpleName();
 		BDDBitVector binaryLeftThing = null; 
