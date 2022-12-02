@@ -108,7 +108,7 @@ public class FixpointModelCheckerForBDD {
 		List<BDD> nwaTrans = mNwaTransitionBuilder.getNwaTrans();
 		
 //		mLogger.info("system : " + Arrays.toString(rcfgTrans.toArray()));
-//		mLogger.info("system pc : " + Arrays.toString(mRcfgTransitionBuilder.getRcfgTransPc().toArray()));
+		mLogger.info("system pc : " + Arrays.toString(mRcfgTransitionBuilder.getRcfgTransPc().toArray()));
 //		mLogger.info("property : " + Arrays.toString(nwaTrans.toArray()));
 //		mLogger.info("property pc : " + Arrays.toString(mNwaTransitionBuilder.getNwaTransPc().toArray()));
 //		mLogger.info("property final trans : " + Arrays.toString(mNwaTransitionBuilder.getNwaFinalTrans().toArray()));

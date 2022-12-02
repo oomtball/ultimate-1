@@ -435,8 +435,6 @@ public class RcfgTransitionBuilder{
 			needVar = calculateIndex(leftVar);
 			if (!leftVar.contains(tshort)) {
 				Expression expr = as.getRhs()[0];
-				
-				// deal with transitions
 				transition = mAssignmentStatementEvalator.buildTran(expr, needVar);
 			}
 			else {
@@ -487,6 +485,8 @@ public class RcfgTransitionBuilder{
 		// deal with PCs
 		BDD transitionWithPc = addPc2(transition, count, p.getSecond().getSecond());
 		if (!transitionWithPc.isZero()) {
+			mLogger.info(p.getFirst());
+			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(p.getSecond());
 		}
@@ -554,6 +554,8 @@ public class RcfgTransitionBuilder{
 								
 //		mLogger.info(transitionWithPc);
 		if (!transitionWithPc.isZero()) {
+			mLogger.info(p.getFirst());
+			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(p.getSecond());
 		}	
@@ -572,6 +574,8 @@ public class RcfgTransitionBuilder{
 		if (cs.getMethodName().equals(ua)) {
 			BDD transition = bdd.one();
 			BDD transitionWithPc = addPc2(transition, count, threadWithPcPair.getSecond());
+			mLogger.info(p.getFirst());
+			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(threadWithPcPair);
 			
@@ -598,6 +602,8 @@ public class RcfgTransitionBuilder{
 
 			BDD transition = mAssignmentStatementEvalator.buildTran(il, needVar);
 			BDD transitionWithPc = addPc2(transition, count, threadWithPcPair.getSecond());
+			mLogger.info(p.getFirst());
+			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(threadWithPcPair);
 			
@@ -648,6 +654,8 @@ public class RcfgTransitionBuilder{
 				}
 			}
 			BDD transitionWithPc = addPc2(transition, count, threadWithPcPair.getSecond());
+			mLogger.info(p.getFirst());
+			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(threadWithPcPair);
 		}
@@ -702,15 +710,20 @@ public class RcfgTransitionBuilder{
 				}
 			}
 			BDD transitionWithPc = addPc2(transition, count, threadWithPcPair.getSecond());
+			mLogger.info(p.getFirst());
+			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(threadWithPcPair);
 		}
 	}
 	
+	
 	private void havocSection(Pair<HavocStatement, Pair<String, Pair<Integer, Integer>>> p, int count) {
 		BDD transition = bdd.one();
 		BDD transitionWithPc = addPc2(transition, count, p.getSecond().getSecond());
 		if (!transitionWithPc.isZero()) {
+			mLogger.info(p.getFirst());
+			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(p.getSecond());
 		}
