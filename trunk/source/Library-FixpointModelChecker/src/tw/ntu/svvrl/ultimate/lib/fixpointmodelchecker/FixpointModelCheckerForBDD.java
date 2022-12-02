@@ -133,27 +133,27 @@ public class FixpointModelCheckerForBDD {
 //		mLogger.info("normal transition : " + Arrays.toString(normalTrans.toArray()));
 		
 //		// calculate cross product
-		productTrans = getProductTrans(normalTrans, nwaTrans);	
-//		mLogger.info("product : " + productTrans.size());
-		
-		// calculate the fixpoint mu x
-		Set<BDD> initialFixpoint = calculateMuX(I);
-//		mLogger.info("mu x : " + Arrays.toString(initialFixpoint.toArray()));
-
-		// calculate set of accepting states
-		Set<Integer> acceptingStates = mNwaTransitionBuilder.getNwaFinalStatesPc();
-//		mLogger.info("accepting states : " + Arrays.toString(acceptingStates.toArray()));
-	
-		// calculate R_Alpha
-		Set<BDD> R_Alpha = calculateR_Alpha(initialFixpoint, acceptingStates);
-//		mLogger.info("R_Alpha : " + Arrays.toString(R_Alpha.toArray()));
-		
-		// calculate nu y
-		Set<BDD> finalFixpoint = calculateF_phi(R_Alpha);
-//		mLogger.info("nu y : " + Arrays.toString(finalFixpoint.toArray()));
-
-		// check specifications
-		finalCheck(finalFixpoint);
+//		productTrans = getProductTrans(normalTrans, nwaTrans);	
+////		mLogger.info("product : " + productTrans.size());
+//		
+//		// calculate the fixpoint mu x
+//		Set<BDD> initialFixpoint = calculateMuX(I);
+////		mLogger.info("mu x : " + Arrays.toString(initialFixpoint.toArray()));
+//
+//		// calculate set of accepting states
+//		Set<Integer> acceptingStates = mNwaTransitionBuilder.getNwaFinalStatesPc();
+////		mLogger.info("accepting states : " + Arrays.toString(acceptingStates.toArray()));
+//	
+//		// calculate R_Alpha
+//		Set<BDD> R_Alpha = calculateR_Alpha(initialFixpoint, acceptingStates);
+////		mLogger.info("R_Alpha : " + Arrays.toString(R_Alpha.toArray()));
+//		
+//		// calculate nu y
+//		Set<BDD> finalFixpoint = calculateF_phi(R_Alpha);
+////		mLogger.info("nu y : " + Arrays.toString(finalFixpoint.toArray()));
+//
+//		// check specifications
+//		finalCheck(finalFixpoint);
 	}
 	
 	private void getAllStatements(){

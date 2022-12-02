@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -37,15 +38,15 @@ public class RcfgTransitionBuilder{
 	
 	static BDDFactory bdd;
 	
-	List<IcfgLocation> foundLoc;
-	List<IcfgEdge> foundEdge;
+	private List<IcfgLocation> foundLoc;
+	private List<IcfgEdge> foundEdge;
 	
-	Map<String, Integer> arrayWithLength;
+	private Map<String, Integer> arrayWithLength;
 	
-	List<Pair<AssignmentStatement, Pair<String, Pair<Integer, Integer>>>> assignmentStatementWithPc;
-	List<Pair<AssumeStatement, Pair<String, Pair<Integer, Integer>>>> assumeStatementWithPc;
-	List<Pair<CallStatement, Pair<String, Pair<Integer, Integer>>>> callStatementWithPc;
-	List<Pair<HavocStatement, Pair<String, Pair<Integer, Integer>>>> havocStatementWithPc;
+	private List<Pair<AssignmentStatement, Pair<String, Pair<Integer, Integer>>>> assignmentStatementWithPc;
+	private List<Pair<AssumeStatement, Pair<String, Pair<Integer, Integer>>>> assumeStatementWithPc;
+	private List<Pair<CallStatement, Pair<String, Pair<Integer, Integer>>>> callStatementWithPc;
+	private List<Pair<HavocStatement, Pair<String, Pair<Integer, Integer>>>> havocStatementWithPc;
 	
 	private final AssignmentStatementEvalator mAssignmentStatementEvalator;
 	private final AssumeStatementEvalator mAssumeStatementEvalator;
@@ -74,6 +75,7 @@ public class RcfgTransitionBuilder{
 	String il = "IntegerLiteral";
 	String ie = "IdentifierExpression";
 	String be = "BinaryExpression";
+	String tshort = "#t~short";
 	
 	public RcfgTransitionBuilder(final BoogieIcfgContainer rcfg, final ILogger logger, final IUltimateServiceProvider services, 
 			BDDFactory _bdd, BDDDomain[] _v, BDDDomain[] _vprime, Set<String> vo, List<Pair<String, Expression[]>> _threadAndInput, 
@@ -141,6 +143,7 @@ public class RcfgTransitionBuilder{
 		}
 	}
 	
+	
 	private Map<String, List<IcfgEdge>> getThreadToEdges(Map<String, BoogieIcfgLocation> initialStates) {
 		Map<String, List<IcfgEdge>> threadToEdges = new HashMap<String, List<IcfgEdge>>();
 		for (String thread : threadOrder) {
@@ -154,6 +157,7 @@ public class RcfgTransitionBuilder{
 //		mLogger.info(threadToEdges);
 		return threadToEdges;
 	}
+	
 	
 	private void getAsWithPc(Map<String, List<IcfgEdge>> threadToAllEdges) {
 		for (String thread : threadOrder){
@@ -275,6 +279,7 @@ public class RcfgTransitionBuilder{
 		}
 	}
 
+	
 	private List<Integer> test() {
 		List<Integer> temp = new ArrayList<Integer>();
 		String us = "ULTIMATE.start";
@@ -284,6 +289,7 @@ public class RcfgTransitionBuilder{
 		}
 		return temp;
 	}
+	
 	
 	private void getNeedInitialBefore() {
 		String us = "ULTIMATE.start";
@@ -365,6 +371,7 @@ public class RcfgTransitionBuilder{
 		}
 	}
 	
+	
 	private void buildRcfgTrans() {
 		// First do thread ULTIMATE.start
 		String us = "ULTIMATE.start";
@@ -424,11 +431,31 @@ public class RcfgTransitionBuilder{
 		BDD transition = bdd.one();
 		if (as.getLhs().length == 1) {
 			VariableLHS lhs = (VariableLHS) as.getLhs()[0];
-			needVar = calculateIndex(lhs.getIdentifier());
-			Expression expr = as.getRhs()[0];
-			
-			// deal with transitions
-			transition = mAssignmentStatementEvalator.buildTran(expr, needVar);
+			String leftVar = lhs.getIdentifier();
+			needVar = calculateIndex(leftVar);
+			if (!leftVar.contains(tshort)) {
+				Expression expr = as.getRhs()[0];
+				
+				// deal with transitions
+				transition = mAssignmentStatementEvalator.buildTran(expr, needVar);
+			}
+			else {
+				if (as.getRhs()[0] instanceof IdentifierExpression) {
+					Expression expr = as.getRhs()[0];
+					transition = mAssignmentStatementEvalator.buildTran(expr, needVar);
+				}
+				else if (as.getRhs()[0] instanceof BinaryExpression) {
+					transition = bdd.zero();
+					BDD temp1 = mAssumeStatementEvalator.buildTran(p.getFirst().getRhs()[0]);
+					IntegerLiteral il1 = new IntegerLiteral(as.getLoc(), Integer.toString(1));
+					BDD temp2 = mAssignmentStatementEvalator.buildTran(il1, needVar);
+					transition = transition.or(temp1.and(temp2));
+					BDD temp3 = temp1.not();
+					IntegerLiteral il2 = new IntegerLiteral(as.getLoc(), Integer.toString(0));
+					BDD temp4 = mAssignmentStatementEvalator.buildTran(il2, needVar);
+					transition = transition.or(temp3.and(temp4));
+				}
+			}
 		}
 		else if (as.getLhs().length == 2) {
 			VariableLHS lhs = (VariableLHS) as.getLhs()[0];
@@ -471,19 +498,67 @@ public class RcfgTransitionBuilder{
 	
 	private void assumeSection(Pair<AssumeStatement, Pair<String, Pair<Integer, Integer>>> p, int count) {
 		Expression expr = p.getFirst().getFormula();
-
-		// deal with transitions
-		BDD transition = mAssumeStatementEvalator.buildTran(expr);
-
+		boolean isShort = false;
+		int checkType = 0;
+		if (expr instanceof IdentifierExpression) {
+			isShort = true;
+			checkType = 1;
+		}
+		else if (expr instanceof UnaryExpression) {
+			UnaryExpression ue = (UnaryExpression) expr;
+			if (ue.getExpr() instanceof IdentifierExpression) {
+				isShort = true;
+				checkType = 2;
+			}
+			else if (ue.getExpr() instanceof UnaryExpression) {
+				UnaryExpression ue2 = (UnaryExpression) ue.getExpr();
+				if (ue2.getExpr() instanceof IdentifierExpression) {
+					isShort = true;
+					checkType = 3;
+				}
+			}
+		}
+		BDD transition = bdd.one();
+		if (!isShort) {
+			// deal with transitions
+			transition = mAssumeStatementEvalator.buildTran(expr);
+		}
+		else {
+			if (checkType == 1) {
+				IdentifierExpression ie = (IdentifierExpression) expr;
+				String var = ie.getIdentifier();
+				Expression intLit = new IntegerLiteral(p.getFirst().getLoc(), Integer.toString(1));
+				Expression wantToCompare = new IdentifierExpression(p.getFirst().getLoc(), var);
+				transition = mAssumeStatementEvalator.buildTran2(intLit, wantToCompare, Operator.COMPEQ);
+			}
+			else if (checkType == 2) {
+				UnaryExpression ue = (UnaryExpression) expr;
+				IdentifierExpression ie = (IdentifierExpression) ue.getExpr();
+				String var = ie.getIdentifier();
+				Expression intLit = new IntegerLiteral(p.getFirst().getLoc(), Integer.toString(1));
+				Expression wantToCompare = new IdentifierExpression(p.getFirst().getLoc(), var);
+				transition = mAssumeStatementEvalator.buildTran2(intLit, wantToCompare, Operator.COMPEQ).not();
+			}
+			else if (checkType == 3) {
+				UnaryExpression ue = (UnaryExpression) expr;
+				UnaryExpression ue2 = (UnaryExpression) ue.getExpr();
+				IdentifierExpression ie = (IdentifierExpression) ue2.getExpr();
+				String var = ie.getIdentifier();
+				Expression intLit = new IntegerLiteral(p.getFirst().getLoc(), Integer.toString(1));
+				Expression wantToCompare = new IdentifierExpression(p.getFirst().getLoc(), var);
+				transition = mAssumeStatementEvalator.buildTran2(intLit, wantToCompare, Operator.COMPEQ);
+			}
+		}
 		// deal with PCs
 		BDD transitionWithPc = addPc2(transition, count, p.getSecond().getSecond());	
-		
+								
 //		mLogger.info(transitionWithPc);
 		if (!transitionWithPc.isZero()) {
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(p.getSecond());
-		}
+		}	
 	}
+	
 	
 	private void callSection(Pair<CallStatement, Pair<String, Pair<Integer, Integer>>> p, int count, Expression[] newEx) {
 		String ua = "#Ultimate.allocOnStack";
@@ -557,7 +632,7 @@ public class RcfgTransitionBuilder{
 				String leftVar2 = leftVar + "~" + i;
 				leftNeedVar = calculateIndex(leftVar2);
 				if (index instanceof IdentifierExpression) {
-					final Expression intLit = new IntegerLiteral(cs.getLoc(), Integer.toString(i));
+					Expression intLit = new IntegerLiteral(cs.getLoc(), Integer.toString(i));
 					BDD temp1 = mAssumeStatementEvalator.buildTran2(intLit, index, Operator.COMPEQ);
 					BDD temp2 = mAssignmentStatementEvalator.buildTran(wantToWrite, leftNeedVar);
 					BDD temp3 = temp1.and(temp2);
@@ -582,8 +657,7 @@ public class RcfgTransitionBuilder{
 			int leftNeedVar = calculateIndex(leftVar);
 			if (expr[1] instanceof IdentifierExpression) {
 				IdentifierExpression ie = (IdentifierExpression) expr[1];
-				String in = "#in";
-				if (ie.getIdentifier().contains(in)) {
+				if (!arrayWithLength.containsKey(ie.getIdentifier())) {
 					expr = newEx;
 				}
 			}
@@ -607,11 +681,10 @@ public class RcfgTransitionBuilder{
 				index = new IntegerLiteral(cs.getLoc(), Integer.toString(0));
 			}
 			BDD transition = bdd.zero();
-		
 			for (int i = 0; i < arrayWithLength.get(rightVar); i++) {
 				String rightVar2 = rightVar + "~" + i;
 				if (index instanceof IdentifierExpression) {
-					final Expression intLit = new IntegerLiteral(cs.getLoc(), Integer.toString(i));
+					Expression intLit = new IntegerLiteral(cs.getLoc(), Integer.toString(i));
 					Expression wantToWrite = new IdentifierExpression(cs.getLoc(), rightVar2);
 					BDD temp1 = mAssumeStatementEvalator.buildTran2(intLit, index, Operator.COMPEQ);
 					BDD temp2 = mAssignmentStatementEvalator.buildTran(wantToWrite, leftNeedVar);
@@ -673,6 +746,7 @@ public class RcfgTransitionBuilder{
 		return transition;
 	}
 		
+	
 	private BDD addPc2(BDD t, int threadIndex, Pair<Integer, Integer> pcPair) {
 		BDD transition = t;
 		Pair<Integer, Integer> pc = pcPair;
@@ -763,6 +837,7 @@ public class RcfgTransitionBuilder{
 			count++;
 		}
 	}
+	
 	
 	public Map<String, Set<Integer>> getFinishPcForEachThread() {
 		return finishPcForEachThread;
