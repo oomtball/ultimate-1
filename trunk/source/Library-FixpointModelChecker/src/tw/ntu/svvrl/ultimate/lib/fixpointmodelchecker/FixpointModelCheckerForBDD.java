@@ -69,7 +69,7 @@ public class FixpointModelCheckerForBDD {
 		mRcfgRoot = rcfg;
 		mNwa = nwa;
 		// set up BDD factory
-		bdd = BDDFactory.init("j", 500000, 500000, false);
+		bdd = BDDFactory.init("j", 1000000, 1000000, false);
 		
 		// set up BDD domain
 		allAssignmentStatement = new HashSet<AssignmentStatement>();
@@ -81,7 +81,7 @@ public class FixpointModelCheckerForBDD {
 		Set<String> allVar = getAllVar(allAssignmentStatement, allCallStatement);
 //		mLogger.info(arrayWithLength);
 		
-		int systemNeedBit = 2;
+		int systemNeedBit = 3;
 		int propertyNeedBit = findPropertyNeedBit(mNwa);
 		int actuallyNeedBit = 0;
 		if (systemNeedBit >= propertyNeedBit) {
@@ -108,7 +108,7 @@ public class FixpointModelCheckerForBDD {
 		List<BDD> nwaTrans = mNwaTransitionBuilder.getNwaTrans();
 		
 //		mLogger.info("system : " + Arrays.toString(rcfgTrans.toArray()));
-		mLogger.info("system pc : " + Arrays.toString(mRcfgTransitionBuilder.getRcfgTransPc().toArray()));
+//		mLogger.info("system pc : " + Arrays.toString(mRcfgTransitionBuilder.getRcfgTransPc().toArray()));
 //		mLogger.info("property : " + Arrays.toString(nwaTrans.toArray()));
 //		mLogger.info("property pc : " + Arrays.toString(mNwaTransitionBuilder.getNwaTransPc().toArray()));
 //		mLogger.info("property final trans : " + Arrays.toString(mNwaTransitionBuilder.getNwaFinalTrans().toArray()));
@@ -118,7 +118,7 @@ public class FixpointModelCheckerForBDD {
 		
 		// calculate I 
 		Set<BDD> I = createInitial(initialTrans);
-		
+		mLogger.info("Finish initialization.");
 //		for (BDD b : I) {
 //			mLogger.info(translate(b));
 //		}
@@ -133,27 +133,33 @@ public class FixpointModelCheckerForBDD {
 //		mLogger.info("normal transition : " + Arrays.toString(normalTrans.toArray()));
 		
 //		// calculate cross product
-//		productTrans = getProductTrans(normalTrans, nwaTrans);	
-////		mLogger.info("product : " + productTrans.size());
-//		
-//		// calculate the fixpoint mu x
-//		Set<BDD> initialFixpoint = calculateMuX(I);
-////		mLogger.info("mu x : " + Arrays.toString(initialFixpoint.toArray()));
-//
-//		// calculate set of accepting states
-//		Set<Integer> acceptingStates = mNwaTransitionBuilder.getNwaFinalStatesPc();
-////		mLogger.info("accepting states : " + Arrays.toString(acceptingStates.toArray()));
-//	
-//		// calculate R_Alpha
-//		Set<BDD> R_Alpha = calculateR_Alpha(initialFixpoint, acceptingStates);
-////		mLogger.info("R_Alpha : " + Arrays.toString(R_Alpha.toArray()));
-//		
-//		// calculate nu y
-//		Set<BDD> finalFixpoint = calculateF_phi(R_Alpha);
-////		mLogger.info("nu y : " + Arrays.toString(finalFixpoint.toArray()));
-//
-//		// check specifications
-//		finalCheck(finalFixpoint);
+		productTrans = getProductTrans(normalTrans, nwaTrans);	
+//		for (BDD b : productTrans) {
+//			mLogger.info(b);
+//		}
+		mLogger.info("Finish cross product.");
+		
+		// calculate the fixpoint mu x
+		Set<BDD> initialFixpoint = calculateMuX(I);
+		mLogger.info("mu x size : " + initialFixpoint.size());
+//		mLogger.info("Finish calculateMuX().");
+
+		// calculate set of accepting states
+		Set<Integer> acceptingStates = mNwaTransitionBuilder.getNwaFinalStatesPc();
+//		mLogger.info("accepting states : " + Arrays.toString(acceptingStates.toArray()));
+	
+		// calculate R_Alpha
+		Set<BDD> R_Alpha = calculateR_Alpha(initialFixpoint, acceptingStates);
+//		mLogger.info("R_Alpha : " + Arrays.toString(R_Alpha.toArray()));
+		mLogger.info("Finish calculating R_Alpha.");
+		
+		// calculate nu y
+		Set<BDD> finalFixpoint = calculateF_phi(R_Alpha);
+		mLogger.info("nu y size : " + finalFixpoint.size());
+//		mLogger.info("Finish calculating F_phi.");
+
+		// check specifications
+		finalCheck(finalFixpoint);
 	}
 	
 	private void getAllStatements(){
@@ -585,6 +591,12 @@ public class FixpointModelCheckerForBDD {
 		}
 		BDD contToDo = bdd.zero();
 		if (haveToDo.isEmpty()) {
+			if (transition.scanVar(rcfgPcPrime[1]).intValue() == 1 && input.scanVar(rcfgPc[0]).intValue() == 12 && 
+					input.scanVar(rcfgPc[1]).intValue() == 0 && input.scanVar(rcfgPc[2]).intValue() == 0 && 
+					input.scanVar(rcfgPc[3]).intValue() == 0) {
+//				mLogger.info("transition : " + transition);
+//				mLogger.info("input : " + input);
+			}
 			return post;
 		}
 		else {

@@ -108,6 +108,7 @@ public class RcfgTransitionBuilder{
 		v = _v; // represents different bdd variables
 		vprime = _vprime; // represents different bdd variables
 		int[] pam2 = needMaxPc.stream().mapToInt(Integer::intValue).toArray();
+//		mLogger.info(Arrays.toString(pam2));
 		rcfgPc = bdd.extDomain(pam2); // represents pc of different threads
 		rcfgPcPrime = bdd.extDomain(pam2); // represents pcprime of different threads
 		
@@ -143,7 +144,6 @@ public class RcfgTransitionBuilder{
 		}
 	}
 	
-	
 	private Map<String, List<IcfgEdge>> getThreadToEdges(Map<String, BoogieIcfgLocation> initialStates) {
 		Map<String, List<IcfgEdge>> threadToEdges = new HashMap<String, List<IcfgEdge>>();
 		for (String thread : threadOrder) {
@@ -157,7 +157,6 @@ public class RcfgTransitionBuilder{
 //		mLogger.info(threadToEdges);
 		return threadToEdges;
 	}
-	
 	
 	private void getAsWithPc(Map<String, List<IcfgEdge>> threadToAllEdges) {
 		for (String thread : threadOrder){
@@ -279,7 +278,6 @@ public class RcfgTransitionBuilder{
 		}
 	}
 
-	
 	private List<Integer> test() {
 		List<Integer> temp = new ArrayList<Integer>();
 		String us = "ULTIMATE.start";
@@ -289,7 +287,6 @@ public class RcfgTransitionBuilder{
 		}
 		return temp;
 	}
-	
 	
 	private void getNeedInitialBefore() {
 		String us = "ULTIMATE.start";
@@ -371,7 +368,6 @@ public class RcfgTransitionBuilder{
 		}
 	}
 	
-	
 	private void buildRcfgTrans() {
 		// First do thread ULTIMATE.start
 		String us = "ULTIMATE.start";
@@ -422,8 +418,6 @@ public class RcfgTransitionBuilder{
 		}
 	}
 
-	
-
 	private void assignmentSection(Pair<AssignmentStatement, Pair<String, Pair<Integer, Integer>>> p, int count, Expression[] inputEx) {
 		AssignmentStatement as = p.getFirst();
 		int needVar = -1;
@@ -455,38 +449,39 @@ public class RcfgTransitionBuilder{
 				}
 			}
 		}
-		else if (as.getLhs().length == 2) {
-			VariableLHS lhs = (VariableLHS) as.getLhs()[0];
-			needVar = calculateIndex(lhs.getIdentifier());
-			Expression expr = as.getRhs()[0];
-			if (expr instanceof IdentifierExpression) {
-				IdentifierExpression ie = (IdentifierExpression) expr;
-				if (!varOrder.contains(ie.getIdentifier())) {
-					expr = inputEx[0];
-				}
-			}
-			
-			BDD transition1 = mAssignmentStatementEvalator.buildTran(expr, needVar);
-			
-			VariableLHS lhs2 = (VariableLHS) as.getLhs()[1];
-			needVar2 = calculateIndex(lhs2.getIdentifier());
-			Expression expr2 = as.getRhs()[1];
-			if (expr2 instanceof IdentifierExpression) {
-				IdentifierExpression ie = (IdentifierExpression) expr2;
-				if (!varOrder.contains(ie.getIdentifier())) {
-					expr2 = inputEx[1];
-				}
-			}
-			
-			BDD transition2 = mAssignmentStatementEvalator.buildTran(expr2, needVar2);
-			
-			transition = transition1.and(transition2);
-		}
+//		else if (as.getLhs().length == 2) {
+//			VariableLHS lhs = (VariableLHS) as.getLhs()[0];
+//			needVar = calculateIndex(lhs.getIdentifier());
+//			Expression expr = as.getRhs()[0];
+//			mLogger.info(as);
+//			if (expr instanceof IdentifierExpression) {
+//				IdentifierExpression ie = (IdentifierExpression) expr;
+//				if (!varOrder.contains(ie.getIdentifier())) {
+//					expr = inputEx[0];
+//				}
+//			}
+//			
+//			BDD transition1 = mAssignmentStatementEvalator.buildTran(expr, needVar);
+//			
+//			VariableLHS lhs2 = (VariableLHS) as.getLhs()[1];
+//			needVar2 = calculateIndex(lhs2.getIdentifier());
+//			Expression expr2 = as.getRhs()[1];
+//			if (expr2 instanceof IdentifierExpression) {
+//				IdentifierExpression ie = (IdentifierExpression) expr2;
+//				if (!varOrder.contains(ie.getIdentifier())) {
+//					expr2 = inputEx[1];
+//				}
+//			}
+//			
+//			BDD transition2 = mAssignmentStatementEvalator.buildTran(expr2, needVar2);
+//			
+//			transition = transition1.and(transition2);
+//		}
 		// deal with PCs
 		BDD transitionWithPc = addPc2(transition, count, p.getSecond().getSecond());
 		if (!transitionWithPc.isZero()) {
-			mLogger.info(p.getFirst());
-			mLogger.info(p.getSecond());
+//			mLogger.info(transitionWithPc);
+//			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(p.getSecond());
 		}
@@ -554,14 +549,13 @@ public class RcfgTransitionBuilder{
 								
 //		mLogger.info(transitionWithPc);
 		if (!transitionWithPc.isZero()) {
-			mLogger.info(p.getFirst());
-			mLogger.info(p.getSecond());
+//			mLogger.info(p.getFirst());
+//			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(p.getSecond());
 		}	
 	}
-	
-	
+		
 	private void callSection(Pair<CallStatement, Pair<String, Pair<Integer, Integer>>> p, int count, Expression[] newEx) {
 		String ua = "#Ultimate.allocOnStack";
 		String ri = "read~int";
@@ -574,8 +568,8 @@ public class RcfgTransitionBuilder{
 		if (cs.getMethodName().equals(ua)) {
 			BDD transition = bdd.one();
 			BDD transitionWithPc = addPc2(transition, count, threadWithPcPair.getSecond());
-			mLogger.info(p.getFirst());
-			mLogger.info(p.getSecond());
+//			mLogger.info(p.getFirst());
+//			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(threadWithPcPair);
 			
@@ -602,8 +596,8 @@ public class RcfgTransitionBuilder{
 
 			BDD transition = mAssignmentStatementEvalator.buildTran(il, needVar);
 			BDD transitionWithPc = addPc2(transition, count, threadWithPcPair.getSecond());
-			mLogger.info(p.getFirst());
-			mLogger.info(p.getSecond());
+//			mLogger.info(p.getFirst());
+//			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(threadWithPcPair);
 			
@@ -654,8 +648,8 @@ public class RcfgTransitionBuilder{
 				}
 			}
 			BDD transitionWithPc = addPc2(transition, count, threadWithPcPair.getSecond());
-			mLogger.info(p.getFirst());
-			mLogger.info(p.getSecond());
+//			mLogger.info(p.getFirst());
+//			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(threadWithPcPair);
 		}
@@ -665,7 +659,8 @@ public class RcfgTransitionBuilder{
 			int leftNeedVar = calculateIndex(leftVar);
 			if (expr[1] instanceof IdentifierExpression) {
 				IdentifierExpression ie = (IdentifierExpression) expr[1];
-				if (!arrayWithLength.containsKey(ie.getIdentifier())) {
+				String temp = ie.getIdentifier().replace(".base", "").replace(".offset", "");
+				if (!arrayWithLength.containsKey(temp)) {
 					expr = newEx;
 				}
 			}
@@ -710,20 +705,19 @@ public class RcfgTransitionBuilder{
 				}
 			}
 			BDD transitionWithPc = addPc2(transition, count, threadWithPcPair.getSecond());
-			mLogger.info(p.getFirst());
-			mLogger.info(p.getSecond());
+//			mLogger.info(p.getFirst());
+//			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(threadWithPcPair);
 		}
 	}
 	
-	
 	private void havocSection(Pair<HavocStatement, Pair<String, Pair<Integer, Integer>>> p, int count) {
 		BDD transition = bdd.one();
 		BDD transitionWithPc = addPc2(transition, count, p.getSecond().getSecond());
 		if (!transitionWithPc.isZero()) {
-			mLogger.info(p.getFirst());
-			mLogger.info(p.getSecond());
+//			mLogger.info(p.getFirst());
+//			mLogger.info(p.getSecond());
 			rcfgTrans.add(transitionWithPc);
 			rcfgTransPc.add(p.getSecond());
 		}
@@ -759,7 +753,6 @@ public class RcfgTransitionBuilder{
 		return transition;
 	}
 		
-	
 	private BDD addPc2(BDD t, int threadIndex, Pair<Integer, Integer> pcPair) {
 		BDD transition = t;
 		Pair<Integer, Integer> pc = pcPair;
@@ -782,7 +775,6 @@ public class RcfgTransitionBuilder{
 		postBl.free();
 		return transition;
 	}
-	
 
 	private int calculateIndex(String var) {
 		int count = 0;
@@ -795,32 +787,26 @@ public class RcfgTransitionBuilder{
 		return count;
 	}
 
-
 	public List<BDD> getRcfgTrans() {
 		return rcfgTrans;
 	}
 	
-
 	public List<BDD> getInitialTrans() {
 		return initialTrans;
 	}
 	
-
 	public List<Pair<String, Pair<Integer, Integer>>> getRcfgTransPc() {
 		return rcfgTransPc;
 	}
 	
-
 	public BDDDomain[] getRcfgPc() {
 		return rcfgPc;
 	}
-
-
+	
 	public BDDDomain[] getRcfgPcPrime() {
 		return rcfgPcPrime;
 	}
 	
-
 	public Set<String> getThreadOrder() {
 		return threadOrder;
 	}
@@ -850,7 +836,6 @@ public class RcfgTransitionBuilder{
 			count++;
 		}
 	}
-	
 	
 	public Map<String, Set<Integer>> getFinishPcForEachThread() {
 		return finishPcForEachThread;
