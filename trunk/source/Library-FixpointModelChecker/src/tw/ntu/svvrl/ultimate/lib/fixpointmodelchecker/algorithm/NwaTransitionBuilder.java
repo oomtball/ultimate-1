@@ -61,17 +61,18 @@ public class NwaTransitionBuilder {
 		vprime = _vprime;
 		varOrder = _varOrder;
 		
+		nwaStateOrder = nwa.getStates();
+		nwaStateToPc = setNwaPc();
+		
 		List<Integer> temp = new ArrayList<Integer>();
 		temp.add((int) Math.pow(2, pcNeedBit));
 		int[] pam = temp.stream().mapToInt(Integer::intValue).toArray();
 		nwaPc = bdd.extDomain(pam);
 		nwaPcPrime = bdd.extDomain(pam);
-		nwaStateOrder = nwa.getStates();
 		
 		mAssumeStatementEvalator = new AssumeStatementEvalator(logger, services, 
 				bdd, _v, _vprime, varOrder);
 		
-		nwaStateToPc = setNwaPc();
 		List<Expression> allExpression = getNwaExpression(mNwa.getAlphabet());
 		buildNwaTrans(allExpression);
 	}
@@ -109,7 +110,7 @@ public class NwaTransitionBuilder {
 			nwaPc.put(s, tempPc);
 			tempPc++;
 		}
-		pcNeedBit = Integer.toBinaryString(tempPc).length();
+		pcNeedBit = Integer.toBinaryString(tempPc-1).length();
 		return nwaPc;
 	}
 	

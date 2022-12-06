@@ -109,6 +109,9 @@ public class FixpointModelCheckerForBDD {
 		
 //		mLogger.info("system : " + Arrays.toString(rcfgTrans.toArray()));
 //		mLogger.info("system pc : " + Arrays.toString(mRcfgTransitionBuilder.getRcfgTransPc().toArray()));
+//		for (BDD b : nwaTrans) {
+//			mLogger.info(b);
+//		}
 //		mLogger.info("property : " + Arrays.toString(nwaTrans.toArray()));
 //		mLogger.info("property pc : " + Arrays.toString(mNwaTransitionBuilder.getNwaTransPc().toArray()));
 //		mLogger.info("property final trans : " + Arrays.toString(mNwaTransitionBuilder.getNwaFinalTrans().toArray()));
@@ -184,6 +187,7 @@ public class FixpointModelCheckerForBDD {
 					else if (i instanceof ForkThreadCurrent) {
 						ForkThreadCurrent newI = (ForkThreadCurrent) i;
 						ForkStatement fs = newI.getForkStatement();
+//						mLogger.info(fs);
 						Pair<String, Expression[]> temp = new Pair<>(fs.getProcedureName(), fs.getArguments());
 						threadAndInput.add(temp);
 					}
@@ -591,12 +595,6 @@ public class FixpointModelCheckerForBDD {
 		}
 		BDD contToDo = bdd.zero();
 		if (haveToDo.isEmpty()) {
-			if (transition.scanVar(rcfgPcPrime[1]).intValue() == 1 && input.scanVar(rcfgPc[0]).intValue() == 12 && 
-					input.scanVar(rcfgPc[1]).intValue() == 0 && input.scanVar(rcfgPc[2]).intValue() == 0 && 
-					input.scanVar(rcfgPc[3]).intValue() == 0) {
-//				mLogger.info("transition : " + transition);
-//				mLogger.info("input : " + input);
-			}
 			return post;
 		}
 		else {

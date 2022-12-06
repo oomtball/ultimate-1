@@ -372,21 +372,25 @@ public class RcfgTransitionBuilder{
 		// First do thread ULTIMATE.start
 		String us = "ULTIMATE.start";
 		for (Pair<AssignmentStatement, Pair<String, Pair<Integer, Integer>>> p : assignmentStatementWithPc) {
+//			mLogger.info(p.getFirst());
 			if (us.equals(p.getSecond().getFirst())) {
 				assignmentSection(p, 0, null);
 			}
 		}
 		for (Pair<AssumeStatement, Pair<String, Pair<Integer, Integer>>> p : assumeStatementWithPc) {
+//			mLogger.info(p.getFirst());
 			if (us.equals(p.getSecond().getFirst())) {
 				assumeSection(p, 0);
 			}
 		}
 		for (Pair<CallStatement, Pair<String, Pair<Integer, Integer>>> p : callStatementWithPc) {
+//			mLogger.info(p.getFirst());
 			if (us.equals(p.getSecond().getFirst())) {
 				callSection(p, 0, null);
 			}
 		}
 		for (Pair<HavocStatement, Pair<String, Pair<Integer, Integer>>> p : havocStatementWithPc) {
+//			mLogger.info(p.getFirst());
 			if (us.equals(p.getSecond().getFirst())) {
 				havocSection(p, 0);
 			}
