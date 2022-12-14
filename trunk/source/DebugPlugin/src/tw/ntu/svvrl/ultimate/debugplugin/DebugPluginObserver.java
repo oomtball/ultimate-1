@@ -70,8 +70,7 @@ public class DebugPluginObserver implements IUnmanagedObserver {
 	private NWAContainer mNeverClaimNWAContainer;
 	private final IUltimateServiceProvider mServices;
 	
-	private ModelCheckerAssistant mModelCheckerAssistant;
-	private FixpointModelChecker mFMC;
+//	private ModelCheckerAssistant mModelCheckerAssistant;
 	private FixpointModelCheckerForBDD mFMCBDD;
 
 	public DebugPluginObserver(final ILogger logger, final IUltimateServiceProvider services) {
@@ -79,7 +78,7 @@ public class DebugPluginObserver implements IUnmanagedObserver {
 		mServices = services;
 		mRcfg = null;
 		mNeverClaimNWAContainer = null;
-		mModelCheckerAssistant = null;
+//		mModelCheckerAssistant = null;
 	}
 
 	@Override
@@ -101,11 +100,9 @@ public class DebugPluginObserver implements IUnmanagedObserver {
 		// new crawler here. 
 //		mModelCheckerAssistant = new ModelCheckerAssistant(mNeverClaimNWAContainer.getValue(), mRcfg, mLogger, mServices);
 		//mModelCheckerAssistant = new ModelCheckerAssistant(mRcfg, mLogger, mServices);
-		mFMC = new FixpointModelChecker(mNeverClaimNWAContainer.getValue(), mRcfg, mLogger, mServices);
 		mFMCBDD = new FixpointModelCheckerForBDD(mNeverClaimNWAContainer.getValue(), mRcfg, mLogger, mServices);
 		
 //		TestVerifier v = new TestVerifier(mLogger, mModelCheckerAssistant);
-		FixpointVerifier v = new FixpointVerifier(mLogger, mFMC);
 		FixpointVerifierForBDD v2 = new FixpointVerifierForBDD(mLogger, mFMCBDD);
 //		v.run();
 		v2.run();

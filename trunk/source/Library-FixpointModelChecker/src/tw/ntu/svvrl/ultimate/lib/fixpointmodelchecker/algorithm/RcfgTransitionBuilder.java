@@ -119,7 +119,7 @@ public class RcfgTransitionBuilder{
 		
 		mLogger.info(Arrays.toString(varOrder.toArray()));
 		buildRcfgTrans();
-//		buildSelfLoop();
+		buildSelfLoop();
 //		mLogger.info(finishPcForEachThread);
 	}
 	
@@ -425,7 +425,6 @@ public class RcfgTransitionBuilder{
 	private void assignmentSection(Pair<AssignmentStatement, Pair<String, Pair<Integer, Integer>>> p, int count, Expression[] inputEx) {
 		AssignmentStatement as = p.getFirst();
 		int needVar = -1;
-		int needVar2 = -1;
 		BDD transition = bdd.one();
 		if (as.getLhs().length == 1) {
 			VariableLHS lhs = (VariableLHS) as.getLhs()[0];
@@ -584,7 +583,7 @@ public class RcfgTransitionBuilder{
 		}
 		else if (cs.getMethodName().equals(wii)) {
 			IntegerLiteral il = (IntegerLiteral) expr[0];
-			int value = Integer.parseInt(il.getValue());
+//			int value = Integer.parseInt(il.getValue());
 			IdentifierExpression ie = (IdentifierExpression) expr[1];
 			String leftVar = ie.getIdentifier().replace(".base", "").replace(".offset", "");
 			if (expr[1] instanceof IdentifierExpression && expr[2] instanceof IdentifierExpression) {
@@ -727,35 +726,35 @@ public class RcfgTransitionBuilder{
 		}
 	}
 	
-	private BDD addPc(BDD t, Pair<String, Pair<Integer, Integer>> pcPair) {
-		BDD transition = t;
-		String pcThread = pcPair.getFirst();
-		Pair<Integer, Integer> pc = pcPair.getSecond();
-		int count = 0;
-		for (String thread : threadOrder) {
-			if (thread.equals(pcThread)) {
-				int prePcValue = pc.getFirst();
-				int postPcValue = pc.getSecond();
-				BDDBitVector prePc = bdd.buildVector(rcfgPc[count]);
-				BDDBitVector postPc = bdd.buildVector(rcfgPcPrime[count]);
-				BDDBitVector preBl = bdd.constantVector(prePc.size(), prePcValue);
-				BDDBitVector postBl = bdd.constantVector(postPc.size(), postPcValue);
-							
-				for (int i = 0; i < prePc.size(); i++) {
-					transition = transition.andWith(prePc.getBit(i).biimp(preBl.getBit(i)));
-				}
-				for (int i = 0; i < postPc.size(); i++) {
-					transition = transition.andWith(postPc.getBit(i).biimp(postBl.getBit(i)));
-				}
-				prePc.free();
-				postPc.free();
-				preBl.free();
-				postBl.free();
-			}
-			count++;
-		}
-		return transition;
-	}
+//	private BDD addPc(BDD t, Pair<String, Pair<Integer, Integer>> pcPair) {
+//		BDD transition = t;
+//		String pcThread = pcPair.getFirst();
+//		Pair<Integer, Integer> pc = pcPair.getSecond();
+//		int count = 0;
+//		for (String thread : threadOrder) {
+//			if (thread.equals(pcThread)) {
+//				int prePcValue = pc.getFirst();
+//				int postPcValue = pc.getSecond();
+//				BDDBitVector prePc = bdd.buildVector(rcfgPc[count]);
+//				BDDBitVector postPc = bdd.buildVector(rcfgPcPrime[count]);
+//				BDDBitVector preBl = bdd.constantVector(prePc.size(), prePcValue);
+//				BDDBitVector postBl = bdd.constantVector(postPc.size(), postPcValue);
+//							
+//				for (int i = 0; i < prePc.size(); i++) {
+//					transition = transition.andWith(prePc.getBit(i).biimp(preBl.getBit(i)));
+//				}
+//				for (int i = 0; i < postPc.size(); i++) {
+//					transition = transition.andWith(postPc.getBit(i).biimp(postBl.getBit(i)));
+//				}
+//				prePc.free();
+//				postPc.free();
+//				preBl.free();
+//				postBl.free();
+//			}
+//			count++;
+//		}
+//		return transition;
+//	}
 		
 	private BDD addPc2(BDD t, int threadIndex, Pair<Integer, Integer> pcPair) {
 		BDD transition = t;

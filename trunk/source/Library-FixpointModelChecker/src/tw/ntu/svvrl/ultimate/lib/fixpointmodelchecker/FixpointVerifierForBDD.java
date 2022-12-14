@@ -1,11 +1,6 @@
 package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import jdd.bdd.BDD;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.neverstate.NeverState;
-import tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.state.programstate.ProgramState;
 
 public class FixpointVerifierForBDD {
 	private final FixpointModelCheckerForBDD mFMCBDD;

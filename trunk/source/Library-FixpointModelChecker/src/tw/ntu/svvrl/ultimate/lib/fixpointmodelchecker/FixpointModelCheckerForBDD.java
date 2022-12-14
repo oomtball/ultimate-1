@@ -153,13 +153,13 @@ public class FixpointModelCheckerForBDD {
 	
 		// calculate R_Alpha
 		Set<BDD> R_Alpha = calculateR_Alpha(initialFixpoint, acceptingStates);
-//		mLogger.info("R_Alpha : " + Arrays.toString(R_Alpha.toArray()));
+		mLogger.info("R_Alpha size : " + R_Alpha.size());
 		mLogger.info("Finish calculating R_Alpha.");
 		
 		// calculate nu y
 		Set<BDD> finalFixpoint = calculateF_phi(R_Alpha);
 		mLogger.info("nu y size : " + finalFixpoint.size());
-//		mLogger.info("Finish calculating F_phi.");
+		mLogger.info("Finish calculating F_phi.");
 
 		// check specifications
 		finalCheck(finalFixpoint);
@@ -331,21 +331,11 @@ public class FixpointModelCheckerForBDD {
 	}
 	
 	private Set<BDD> calculateMuX(Set<BDD> i){
-		Set<BDD> postx = i;
-		Set<BDD> I = i;
+		Set<BDD> postx = new HashSet<>();
 		while (true) {
-//			mLogger.info(postx.size());
-			Set<BDD> postxUnionI = new HashSet<BDD>();
-//			mLogger.info(postx.size());
-			for (BDD b : postx) {
-				postxUnionI.add(b);
-			}
-			for (BDD b : I) {
-				postxUnionI.add(b);
-			}
 			Set<BDD> temp = new HashSet<BDD>();
 			for (BDD productTran : productTrans) {
-				for (BDD b : postxUnionI) {
+				for (BDD b : postx) {
 					BDD post = getPost(b, productTran);
 					if (post == null) {
 						continue;
@@ -356,11 +346,14 @@ public class FixpointModelCheckerForBDD {
 					}
 				}
 			}
-			if (temp.equals(postx)) {
+			Set<BDD> postxUnionI = new HashSet<BDD>(i);
+			postxUnionI.addAll(temp);
+//			mLogger.info(postxUnionI.size());
+			if (postxUnionI.equals(postx)) {
 				break;
 			}
 			else {
-				postx = temp;
+				postx = postxUnionI;
 			}
 //			for (BDD b : postx) {
 //				mLogger.info(translate(b));
@@ -383,21 +376,29 @@ public class FixpointModelCheckerForBDD {
 	
 	private Set<BDD> calculateF_phi(Set<BDD> R_Alpha){
 		Set<BDD> posty = R_Alpha;
-		Set<BDD> R = R_Alpha;
 		while (true) {
-			Set<BDD> postyInterR = new HashSet<BDD>();
-			for (BDD b1 : R) {
-				if (posty.contains(b1)) {
-					postyInterR.add(b1);
+			Set<BDD> temp = new HashSet<>();
+			for (BDD b : posty) {
+				for (BDD productTran : productTrans) {
+					BDD post = getPost(b, productTran);
+					if (post == null) {
+						continue;
+					}
+					if (!temp.contains(post)) {
+						temp.add(post);
+//						mLogger.info(translate(post));
+					}
 				}
 			}
-//			mLogger.info(postyInterR.size());
-			Set<BDD> temp = calculateMuX(postyInterR);
-			if (temp.equals(posty)) {
+			Set<BDD> postyInterR = new HashSet<BDD>(R_Alpha);
+			postyInterR.retainAll(temp);
+			Set<BDD> result = calculateMuX(postyInterR);
+			mLogger.info(result.size());
+			if (result.equals(posty)) {
 				break;
 			}
 			else {
-				posty = temp;
+				posty = result;
 			}
 //			for (BDD b : posty) {
 //				mLogger.info(translate(b));
@@ -439,18 +440,27 @@ public class FixpointModelCheckerForBDD {
 		}
 	}
 	
+	private void finalCheck2(Set<BDD> fixpoint2){
+		if (fixpoint2.isEmpty()) {
+			mLogger.info("All specifications hold.");
+		}
+		else {
+			mLogger.info("Specifications do not hold.");
+		}
+	}
+	
 	private Set<BDD> getProductTrans(List<BDD> rcfgTrans, List<BDD> nwaTrans){
 		Set<BDD> productTrans = new HashSet<BDD>();
 		
-		for (BDD b1 : rcfgTrans) {
-			for (BDD b2 : nwaTrans) {
-				BDD a = b1.and(b2);
-				if (a.nodeCount() != 0) {
+		for (BDD b1 : rcfgTrans) { // all BDD transitions of system RCFG
+			for (BDD b2 : nwaTrans) { // all BDD transitions of property NWA
+				BDD a = b1.and(b2); // do AND operations 
+				if (a.nodeCount() != 0) { // check whether the result is NULL or not
 					productTrans.add(a);
 				}
 			}
 		}
-		return productTrans;
+		return productTrans; // return the result
 	}
 	
 	private int findPropertyNeedBit(INestedWordAutomaton<CodeBlock, String> mNwa) {
@@ -539,28 +549,24 @@ public class FixpointModelCheckerForBDD {
 		BDD preSet = vset.and(rcfgPcSet).and(nwaPcSet);
 		
 		// check whether the state is the last state
-		boolean last = true;
-		for (int i = 0; i < rcfgPc.length; i++) {
-			String thread = null;
-			if (i == 0) {
-				thread = "ULTIMATE.start";
-			}
-			else {
-				thread = threadAndInput.get(i-1).getFirst();
-			}
-			Set<Integer> fset = finishPcForEachThread.get(thread);
-			int a = input.scanVar(rcfgPc[i]).intValue();
-//			int b = finishPcForEachThread.get(i);
-//			if (!(a == b)) {
+//		boolean last = true;
+//		for (int i = 0; i < rcfgPc.length; i++) {
+//			String thread = null;
+//			if (i == 0) {
+//				thread = "ULTIMATE.start";
+//			}
+//			else {
+//				thread = threadAndInput.get(i-1).getFirst();
+//			}
+//			Set<Integer> fset = finishPcForEachThread.get(thread);
+//			int a = input.scanVar(rcfgPc[i]).intValue();
+//			if (!(fset.contains(a))) {
 //				last = false;
 //			}
-			if (!(fset.contains(a))) {
-				last = false;
-			}
-		}
-		if (last) {
-			return input;
-		}
+//		}
+//		if (last) {
+//			return input;
+//		}
 		
 		// check whether the input will do this transition
 		BDD temp = transition.restrict(input);
