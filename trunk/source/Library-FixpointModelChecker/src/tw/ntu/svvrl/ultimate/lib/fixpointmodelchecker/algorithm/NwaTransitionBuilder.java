@@ -1,6 +1,7 @@
 package tw.ntu.svvrl.ultimate.lib.fixpointmodelchecker.algorithm;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -75,6 +76,7 @@ public class NwaTransitionBuilder {
 		
 		List<Expression> allExpression = getNwaExpression(mNwa.getAlphabet());
 		buildNwaTrans(allExpression);
+		mLogger.info(Arrays.toString(nwaFinalStatesPc.toArray()));
 	}
 	
 	private List<Expression> getNwaExpression(Set<CodeBlock> al) {

@@ -57,6 +57,13 @@ public class FixpointModelCheckerForBDD {
 	static BDDFactory bdd;
 	BDDDomain[] v; // represents different v bdd variables
 	BDDDomain[] vprime; // represents different vprime bdd variables
+	BDDDomain[] rcfgPc;
+	BDDDomain[] nwaPc;
+	BDDDomain[] rcfgPcPrime;
+	BDDDomain[] nwaPcPrime;
+	BDDPairing bp1;
+	BDDPairing bp2;
+	BDDPairing bp3;
 	
 	Set<BDD> productTrans;
 	
@@ -106,6 +113,16 @@ public class FixpointModelCheckerForBDD {
 		
 		List<BDD> rcfgTrans = mRcfgTransitionBuilder.getRcfgTrans();
 		List<BDD> nwaTrans = mNwaTransitionBuilder.getNwaTrans();
+		rcfgPc = mRcfgTransitionBuilder.getRcfgPc();
+		nwaPc = mNwaTransitionBuilder.getNwaPc();
+		rcfgPcPrime = mRcfgTransitionBuilder.getRcfgPcPrime();
+		nwaPcPrime = mNwaTransitionBuilder.getNwaPcPrime();
+		bp1 = bdd.makePair();
+		bp2 = bdd.makePair();
+		bp3 = bdd.makePair();
+		bp1.set(vprime, v);
+		bp2.set(rcfgPcPrime, rcfgPc);
+		bp3.set(nwaPcPrime, nwaPc);
 		
 //		mLogger.info("system : " + Arrays.toString(rcfgTrans.toArray()));
 //		mLogger.info("system pc : " + Arrays.toString(mRcfgTransitionBuilder.getRcfgTransPc().toArray()));
@@ -157,7 +174,7 @@ public class FixpointModelCheckerForBDD {
 		mLogger.info("Finish calculating R_Alpha.");
 		
 		// calculate nu y
-		Set<BDD> finalFixpoint = calculateF_phi(R_Alpha);
+		Set<BDD> finalFixpoint = calculateF_phi(R_Alpha, I);
 		mLogger.info("nu y size : " + finalFixpoint.size());
 		mLogger.info("Finish calculating F_phi.");
 
@@ -333,19 +350,7 @@ public class FixpointModelCheckerForBDD {
 	private Set<BDD> calculateMuX(Set<BDD> i){
 		Set<BDD> postx = new HashSet<>();
 		while (true) {
-			Set<BDD> temp = new HashSet<BDD>();
-			for (BDD productTran : productTrans) {
-				for (BDD b : postx) {
-					BDD post = getPost(b, productTran);
-					if (post == null) {
-						continue;
-					}
-					if (!temp.contains(post)) {
-						temp.add(post);
-//						mLogger.info(translate(post));
-					}
-				}
-			}
+			Set<BDD> temp = getPost2(postx, productTrans);
 			Set<BDD> postxUnionI = new HashSet<BDD>(i);
 			postxUnionI.addAll(temp);
 //			mLogger.info(postxUnionI.size());
@@ -364,6 +369,7 @@ public class FixpointModelCheckerForBDD {
 	}
 	
 	private Set<BDD> calculateR_Alpha(Set<BDD> fixpoint, Set<Integer> acceptingStates){
+//		mLogger.info(Arrays.toString(acceptingStates.toArray()));
 		Set<BDD> R_Alpha = new HashSet<BDD>();
 		for (BDD b1 : fixpoint) {
 			int c = b1.scanVar(mNwaTransitionBuilder.getNwaPc()[0]).intValue();
@@ -374,22 +380,12 @@ public class FixpointModelCheckerForBDD {
 		return R_Alpha;
 	}
 	
-	private Set<BDD> calculateF_phi(Set<BDD> R_Alpha){
-		Set<BDD> posty = R_Alpha;
+	private Set<BDD> calculateF_phi(Set<BDD> R_Alpha, Set<BDD> I){
+		Set<BDD> postTrue = R_Alpha;
+		postTrue.removeAll(I);
+		Set<BDD> posty = postTrue;
 		while (true) {
-			Set<BDD> temp = new HashSet<>();
-			for (BDD b : posty) {
-				for (BDD productTran : productTrans) {
-					BDD post = getPost(b, productTran);
-					if (post == null) {
-						continue;
-					}
-					if (!temp.contains(post)) {
-						temp.add(post);
-//						mLogger.info(translate(post));
-					}
-				}
-			}
+			Set<BDD> temp = getPost2(posty, productTrans);
 			Set<BDD> postyInterR = new HashSet<BDD>(R_Alpha);
 			postyInterR.retainAll(temp);
 			Set<BDD> result = calculateMuX(postyInterR);
@@ -536,12 +532,7 @@ public class FixpointModelCheckerForBDD {
 	public BDD getPost(BDD input, BDD transition) {
 		BDD post = null;
 		
-		BDDDomain[] rcfgPc = mRcfgTransitionBuilder.getRcfgPc();
-		BDDDomain[] nwaPc = mNwaTransitionBuilder.getNwaPc();
-		BDDDomain[] rcfgPcPrime = mRcfgTransitionBuilder.getRcfgPcPrime();
-		BDDDomain[] nwaPcPrime = mNwaTransitionBuilder.getNwaPcPrime();
-		
-		Map<String, Set<Integer>> finishPcForEachThread = mRcfgTransitionBuilder.getFinishPcForEachThread();
+//		Map<String, Set<Integer>> finishPcForEachThread = mRcfgTransitionBuilder.getFinishPcForEachThread();
 
 		BDD vset = bdd.makeSet(v);
 		BDD rcfgPcSet = bdd.makeSet(rcfgPc);
@@ -618,12 +609,6 @@ public class FixpointModelCheckerForBDD {
 			}
 		}
 		temp = contToDo;
-		BDDPairing bp1 = bdd.makePair();
-		BDDPairing bp2 = bdd.makePair();
-		BDDPairing bp3 = bdd.makePair();
-		bp1.set(vprime, v);
-		bp2.set(rcfgPcPrime, rcfgPc);
-		bp3.set(nwaPcPrime, nwaPc);
 		temp = temp.replace(bp1).replace(bp2).replace(bp3);
 		
 		if (temp.scanAllVar() != null) {
@@ -662,6 +647,110 @@ public class FixpointModelCheckerForBDD {
 		return post;
 	}
 
+	public Set<BDD> getPost2(Set<BDD> inputs, Set<BDD> transitions) {
+		Set<BDD> result = new HashSet<BDD>();
+		
+		BDD vset = bdd.makeSet(v);
+		BDD rcfgPcSet = bdd.makeSet(rcfgPc);
+		BDD nwaPcSet = bdd.makeSet(nwaPc);
+		BDD preSet = vset.and(rcfgPcSet).and(nwaPcSet);
+		
+		for (BDD input : inputs) {
+			for (BDD transition : transitions) {
+				BDD post = null;
+				
+				// check whether the input will do this transition
+				BDD temp = transition.restrict(input);
+				int[] preVarNum = preSet.scanSet();
+				List<List<Integer>> tempByte = new ArrayList<List<Integer>>();
+				for (Object o : temp.allsat()) {
+					byte[] btemp = (byte[]) o;
+					List<Integer> itemp = new ArrayList<Integer>();
+					for (int i = 0; i < btemp.length; i++) {
+						if (btemp[i] != -1) {
+							itemp.add(i);
+						}
+					}
+					tempByte.add(itemp);
+				}
+				
+				List<byte[]> haveToDo = new ArrayList<byte[]>();
+				int count = 0;
+				for (List<Integer> li : tempByte) {
+					Boolean contain = false;
+					for (Integer i1 : preVarNum) {
+						for (Integer i2 : li) {
+							if (i1 == i2) {
+								contain = true;
+							}
+						}
+					}
+					if (!contain) {
+						haveToDo.add((byte[]) temp.allsat().get(count));
+					}
+					count++;
+				}
+				BDD contToDo = bdd.zero();
+				if (haveToDo.isEmpty()) {
+					continue;
+				}
+				else {
+					for (byte[] b : haveToDo) {
+						BDD temp2 = bdd.one();
+						for (int i = 0; i < b.length; i++) {
+							if (b[i] == 0) {
+								temp2 = temp2.and(bdd.nithVar(i));
+							}
+							else if (b[i] == 1) {
+								temp2 = temp2.and(bdd.ithVar(i));
+							}
+						}
+						contToDo = contToDo.or(temp2);
+					}
+				}
+				temp = contToDo;
+				temp = temp.replace(bp1).replace(bp2).replace(bp3);
+				
+				if (temp.scanAllVar() != null) {
+					byte[] changed = null;
+					byte[] notChanged = null;
+					byte[] newOne = null;
+					for (Object o : temp.allsat()) {
+						changed = (byte[]) o;
+						newOne = changed;
+					}
+					for (Object o : input.allsat()) {
+						notChanged = (byte[]) o;
+					}
+					for (int i = 0; i < changed.length; i++) {
+						if (changed[i] == -1) {
+							newOne[i] = notChanged[i];
+						}
+						else {
+							newOne[i] = changed[i];
+						}
+					}
+					BDD temp2 = bdd.one();
+					for (int i = 0; i < newOne.length; i++) {
+						if (newOne[i] == 0) {
+							temp2 = temp2.and(bdd.nithVar(i));
+						}
+						else if (newOne[i] == 1) {
+							temp2 = temp2.and(bdd.ithVar(i));
+						}
+					}
+					post = temp2;
+				}	
+//				mLogger.info("transition : " + transition);
+//				mLogger.info("input : " + input);
+//				mLogger.info("post : " + post);
+				result.add(post);
+			}
+		}
+		
+		return result;
+	}
+	
 	private String translate(BDD input) {
 		String result = "";
 		for (int c = 0; c < v.length; c++) {
@@ -676,56 +765,3 @@ public class FixpointModelCheckerForBDD {
 	}
 }
 
-//private Set<BDD> calculatePostTrue(Set<BDD> productTrans){
-//	Set<BDD> postTrue = new HashSet<BDD>();
-//	BDDPairing bp = bdd.makePair();
-//	bp.set(vprime, v);
-//	BDDPairing bp2 = bdd.makePair();
-//	bp.set(mRcfgTransitionBuilder.getRcfgPcPrime(), mRcfgTransitionBuilder.getRcfgPc());
-//	BDDPairing bp3 = bdd.makePair();
-//	bp.set(mNwaTransitionBuilder.getNwaPcPrime(), mNwaTransitionBuilder.getNwaPc());
-//	for (BDD b : productTrans) {
-//		BDD test = b;
-////		mLogger.info(test);
-//		for (Object o : test.allsat()) {
-//			byte[] by = (byte[]) o;
-//			BDD test2 = bdd.one();
-//			int count = 0;
-//			for (byte b3 : by) {
-//				if (b3 == 0) {;
-//					test2 = test2.and(bdd.nithVar(count));
-//				}
-//				else if (b3 == 1) {
-//					test2 = test2.and(bdd.ithVar(count));
-//				}
-//				count++;
-//			}
-//			for (BDDDomain b2 : v) {
-//				test2 = test2.exist(b2.set());
-//			}
-//			for (BDDDomain b2 : mRcfgTransitionBuilder.getRcfgPc()) {
-//				test2 = test2.exist(b2.set());
-//			}
-//			for (BDDDomain b2 : mNwaTransitionBuilder.getNwaPc()) {
-//				test2 = test2.exist(b2.set());
-//			}
-//			test2 = test2.replace(bp);
-//			test2 = test2.replace(bp2);
-//			test2 = test2.replace(bp3);
-//			postTrue.add(test2);
-//		}
-////		for (BDDDomain b2 : v) {
-////			test.exist(b2.set());
-////		}
-////		for (BDDDomain b2 : mRcfgTransitionBuilder.getRcfgPc()) {
-////			test.exist(b2.set());
-////		}
-////		for (BDDDomain b2 : mNwaTransitionBuilder.getNwaPc()) {
-////			test.exist(b2.set());
-////		}
-//		
-////		List<Object> list = new ArrayList<Object>();
-////		test.iterator(varset4).forEachRemaining(list::add);
-//	}
-//	return postTrue;
-//}

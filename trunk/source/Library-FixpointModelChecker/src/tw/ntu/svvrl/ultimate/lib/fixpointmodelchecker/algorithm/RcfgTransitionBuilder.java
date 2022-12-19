@@ -102,7 +102,7 @@ public class RcfgTransitionBuilder{
 		getNeedInitialBefore();
 		mLogger.info(needInitialBefore);
 		needMaxPc = test();
-//		mLogger.info(Arrays.toString(needMaxPc.toArray()));
+		mLogger.info(Arrays.toString(needMaxPc.toArray()));
 		
 		bdd = _bdd;
 		v = _v; // represents different bdd variables
@@ -273,6 +273,7 @@ public class RcfgTransitionBuilder{
 				}
 			}
 			needMaxPc2.put(thread, (int) Math.pow(2, Integer.toBinaryString(pcCount).length()));
+			mLogger.info(pcCount);
 //			needInitialBefore.put(thread, finishInitialPc);
 			finishPcForEachThread.put(thread, finishPc);
 		}
@@ -834,6 +835,7 @@ public class RcfgTransitionBuilder{
 				postPc.free();
 				preBl.free();
 				postBl.free();
+//				mLogger.info(transition);
 				rcfgTrans.add(transition);
 			}
 			count++;
