@@ -217,7 +217,7 @@ public class FixpointModelCheckerForBDD {
 		mLogger.info("Finish calculating F_phi.");
 
 		// check specifications
-		finalCheck(finalFixpoint);
+		finalCheck2(finalFixpoint);
 	}
 	
 	private void getAllStatements(){
@@ -391,7 +391,7 @@ public class FixpointModelCheckerForBDD {
 			Set<BDD> temp = getPost4(postx, productTrans);
 			Set<BDD> postxUnionI = new HashSet<BDD>(i);
 			postxUnionI.addAll(temp);
-			mLogger.info(postxUnionI.size());
+//			mLogger.info(postxUnionI.size());
 			sz.add(postxUnionI.size());
 			if (postxUnionI.equals(postx)) {
 				break;
@@ -421,7 +421,7 @@ public class FixpointModelCheckerForBDD {
 		postTrue.removeAll(I);
 		Set<BDD> posty = postTrue;
 		while (true) {
-			Set<BDD> temp = getPost2(posty, productTrans);
+			Set<BDD> temp = getPost4(posty, productTrans);
 			Set<BDD> postyInterR = new HashSet<BDD>(R_Alpha);
 			postyInterR.retainAll(temp);
 //			Set<BDD> result = postyInterR;
@@ -923,7 +923,7 @@ public class FixpointModelCheckerForBDD {
 					}
 				}
 				if (canDo) {
-					BDD temp2 = temp.replace(bp1).replace(bp1).replace(bp1);
+					BDD temp2 = temp.replace(bp1).replace(bp2).replace(bp3);
 					List<Integer> temp2Used = new ArrayList<Integer>();
 					byte[] temp2Byte = (byte[]) temp2.allsat().get(0);
 					for (int i = 0; i < temp2Byte.length; i++) {

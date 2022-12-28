@@ -1,4 +1,4 @@
-//@ ltl invariant positive: (!(<>([]AP(fairness == 0) || []AP(fairness == 1))) U AP(fairness == 2)) ==> (<>AP(x == 2));
+//@ ltl invariant positive: (!(<>([]AP(fairness == 0) || []AP(fairness == 1))) U AP(fairness == 2)) ==> (<>AP(x > 2));
 
 /* Testcase from Threader's distribution. For details see:
    http://www.model.in.tum.de/~popeea/research/threader
