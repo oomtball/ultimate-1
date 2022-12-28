@@ -1,4 +1,4 @@
-package tw.ntu.svvrl.ultimate.scantu.plugins.doubledfsreduction;
+package tw.ntu.svvrl.ultimate.scantu.plugins.doubledfsfairness;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataSizeBenchmark;
@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgSizeBenchmark;
 import tw.ntu.svvrl.ultimate.lib.modelcheckerassistant.ModelCheckerAssistant;
 
-public class DoubleDFSReductionObserver implements IUnmanagedObserver {
+public class DoubleDFSFairnessObserver implements IUnmanagedObserver {
 	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -22,7 +22,7 @@ public class DoubleDFSReductionObserver implements IUnmanagedObserver {
 	private BoogieIcfgContainer mRcfg;
 	private NWAContainer mNeverClaimNWAContainer;
 	
-	public DoubleDFSReductionObserver(final IUltimateServiceProvider services) {
+	public DoubleDFSFairnessObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		
@@ -49,7 +49,7 @@ public class DoubleDFSReductionObserver implements IUnmanagedObserver {
 		mModelCheckerAssistant = new ModelCheckerAssistant(mNeverClaimNWAContainer.getValue(), mRcfg, mLogger, mServices);
 		//mModelCheckerAssistant = new ModelCheckerAssistant(mRcfg, mLogger, mServices);
 		
-		RunDoubleDFSReduction rddfsr = new RunDoubleDFSReduction(mLogger, mModelCheckerAssistant);
+		RunDoubleDFSFairness rddfsr = new RunDoubleDFSFairness(mLogger, mModelCheckerAssistant);
 		rddfsr.run();
 	}
 	

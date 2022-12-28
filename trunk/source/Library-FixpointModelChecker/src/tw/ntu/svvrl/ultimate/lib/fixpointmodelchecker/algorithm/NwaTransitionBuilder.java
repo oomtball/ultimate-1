@@ -82,16 +82,16 @@ public class NwaTransitionBuilder {
 	private List<Expression> getNwaExpression(Set<CodeBlock> al) {
 		List<Expression> allExpression = new ArrayList<>();
 		for (String s : nwaStateOrder) {
+			if (mNwa.isFinal(s)) {
+				nwaFinalStatesPc.add(nwaStateToPc.get(s));
+			}
+			if (mNwa.isInitial(s)) {
+				nwaInitialStatesPc.add(nwaStateToPc.get(s));
+			}
 			for (IncomingInternalTransition i : mNwa.internalPredecessors(s)) {
 				String test = (String) i.getPred();
 				Pair<Integer, Integer> p =  new Pair<Integer, Integer>(nwaStateToPc.get(test), nwaStateToPc.get(s));
 				nwaTransPc.add(p);
-				if (mNwa.isFinal(s)) {
-					nwaFinalStatesPc.add(nwaStateToPc.get(s));
-				}
-				if (mNwa.isInitial(s)) {
-					nwaInitialStatesPc.add(nwaStateToPc.get(s));
-				}
 				StatementSequence ss = (StatementSequence) i.getLetter();
 				
 				for (Statement s2 : ss.getStatements()) {
@@ -120,8 +120,9 @@ public class NwaTransitionBuilder {
 		int count = 0;
 		for (Expression expr : allExpression) {
 			// deal with transitions
+			mLogger.info(expr);
 			BDD transition = mAssumeStatementEvalator.buildTran(expr);
-			
+			mLogger.info(transition);
 			// deal with PCs
 			BDD transitionWithPc = addPc(transition, count);
 			

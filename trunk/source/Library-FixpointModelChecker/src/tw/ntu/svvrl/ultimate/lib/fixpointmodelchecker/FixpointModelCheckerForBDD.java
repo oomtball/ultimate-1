@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -64,6 +65,20 @@ public class FixpointModelCheckerForBDD {
 	BDDPairing bp1;
 	BDDPairing bp2;
 	BDDPairing bp3;
+	BDDPairing bp4;
+	BDDPairing bp5;
+	BDDPairing bp6;
+	
+	BDD vset;
+	BDD rcfgPcSet;
+	BDD nwaPcSet;
+	BDD vprimeSet;
+	BDD rcfgPcPrimeSet;
+	BDD nwaPcPrimeSet;
+	BDD allPreVar;
+	BDD allPostVar;
+	List<Integer> allPreVarSet;
+	List<Integer> allPostVarSet;
 	
 	Set<BDD> productTrans;
 	
@@ -113,6 +128,9 @@ public class FixpointModelCheckerForBDD {
 		
 		List<BDD> rcfgTrans = mRcfgTransitionBuilder.getRcfgTrans();
 		List<BDD> nwaTrans = mNwaTransitionBuilder.getNwaTrans();
+//		for (BDD b : nwaTrans) {
+//			mLogger.info(b);
+//		}
 		rcfgPc = mRcfgTransitionBuilder.getRcfgPc();
 		nwaPc = mNwaTransitionBuilder.getNwaPc();
 		rcfgPcPrime = mRcfgTransitionBuilder.getRcfgPcPrime();
@@ -120,9 +138,26 @@ public class FixpointModelCheckerForBDD {
 		bp1 = bdd.makePair();
 		bp2 = bdd.makePair();
 		bp3 = bdd.makePair();
+		bp4 = bdd.makePair();
+		bp5 = bdd.makePair();
+		bp6 = bdd.makePair();
 		bp1.set(vprime, v);
 		bp2.set(rcfgPcPrime, rcfgPc);
 		bp3.set(nwaPcPrime, nwaPc);
+		bp4.set(v, vprime);
+		bp5.set(rcfgPc, rcfgPcPrime);
+		bp6.set(nwaPc, nwaPcPrime);
+		
+		vset = bdd.makeSet(v);
+		rcfgPcSet = bdd.makeSet(rcfgPc);
+		nwaPcSet = bdd.makeSet(nwaPc);
+		vprimeSet = bdd.makeSet(vprime);
+		rcfgPcPrimeSet = bdd.makeSet(rcfgPcPrime);
+		nwaPcPrimeSet = bdd.makeSet(nwaPcPrime);
+		allPreVar = vset.and(rcfgPcSet).and(nwaPcSet);
+		allPostVar = vprimeSet.and(rcfgPcPrimeSet).and(nwaPcPrimeSet);
+		allPreVarSet = Arrays.stream(allPreVar.scanSet()).boxed().collect(Collectors.toList());
+		allPostVarSet = Arrays.stream(allPostVar.scanSet()).boxed().collect(Collectors.toList());
 		
 //		mLogger.info("system : " + Arrays.toString(rcfgTrans.toArray()));
 //		mLogger.info("system pc : " + Arrays.toString(mRcfgTransitionBuilder.getRcfgTransPc().toArray()));
@@ -134,7 +169,9 @@ public class FixpointModelCheckerForBDD {
 //		mLogger.info("property final trans : " + Arrays.toString(mNwaTransitionBuilder.getNwaFinalTrans().toArray()));
 		
 		List<BDD> initialTrans = mRcfgTransitionBuilder.getInitialTrans();
-//		mLogger.info(Arrays.toString(initialTrans.toArray()));
+//		for (BDD b : initialTrans) {
+//			mLogger.info(b);
+//		}
 		
 		// calculate I 
 		Set<BDD> I = createInitial(initialTrans);
@@ -154,6 +191,7 @@ public class FixpointModelCheckerForBDD {
 		
 //		// calculate cross product
 		productTrans = getProductTrans(normalTrans, nwaTrans);	
+//		mLogger.info(productTrans.size());
 //		for (BDD b : productTrans) {
 //			mLogger.info(b);
 //		}
@@ -325,7 +363,6 @@ public class FixpointModelCheckerForBDD {
 			}
 		}
 		Set<BDD> I = temp;
-
 		Set<Integer> nwaInitialPc = mNwaTransitionBuilder.getNwaInitialStatesPc();
 		Set<BDD> nwaInitialBDD = new HashSet<BDD>();
 		for (Integer i : nwaInitialPc) {
@@ -349,22 +386,21 @@ public class FixpointModelCheckerForBDD {
 	
 	private Set<BDD> calculateMuX(Set<BDD> i){
 		Set<BDD> postx = new HashSet<>();
+		List<Integer> sz = new ArrayList<Integer>();
 		while (true) {
-			Set<BDD> temp = getPost2(postx, productTrans);
+			Set<BDD> temp = getPost4(postx, productTrans);
 			Set<BDD> postxUnionI = new HashSet<BDD>(i);
 			postxUnionI.addAll(temp);
-//			mLogger.info(postxUnionI.size());
+			mLogger.info(postxUnionI.size());
+			sz.add(postxUnionI.size());
 			if (postxUnionI.equals(postx)) {
 				break;
 			}
 			else {
 				postx = postxUnionI;
 			}
-//			for (BDD b : postx) {
-//				mLogger.info(translate(b));
-//			}
-//			mLogger.info("finish");
 		}
+		mLogger.info(Arrays.toString(sz.toArray()));
 		return postx;
 	}
 	
@@ -388,9 +424,13 @@ public class FixpointModelCheckerForBDD {
 			Set<BDD> temp = getPost2(posty, productTrans);
 			Set<BDD> postyInterR = new HashSet<BDD>(R_Alpha);
 			postyInterR.retainAll(temp);
+//			Set<BDD> result = postyInterR;
+//			mLogger.info(result.size());
 			Set<BDD> result = calculateMuX(postyInterR);
-			mLogger.info(result.size());
 			if (result.equals(posty)) {
+//				for (BDD b : posty) {
+//					mLogger.info(translate(b));
+//				}
 				break;
 			}
 			else {
@@ -663,7 +703,7 @@ public class FixpointModelCheckerForBDD {
 				BDD temp = transition.restrict(input);
 				int[] preVarNum = preSet.scanSet();
 				List<List<Integer>> tempByte = new ArrayList<List<Integer>>();
-				for (Object o : temp.allsat()) {
+				for (Object o : temp.allsat()) {	
 					byte[] btemp = (byte[]) o;
 					List<Integer> itemp = new ArrayList<Integer>();
 					for (int i = 0; i < btemp.length; i++) {
@@ -745,6 +785,166 @@ public class FixpointModelCheckerForBDD {
 //				mLogger.info("input : " + input);
 //				mLogger.info("post : " + post);
 				result.add(post);
+			}
+		}
+		
+		return result;
+	}
+	
+	public Set<BDD> getPost3(Set<BDD> inputs, Set<BDD> transitions) {
+		Set<BDD> result = new HashSet<BDD>();
+		
+		for (BDD input : inputs) {
+			List<Integer> inputVarUsed = new ArrayList<Integer>();
+			byte[] inputAssignment = null;
+			for (Object o : input.allsat()) {
+				inputAssignment = (byte[]) o;
+				for (int i = 0; i < inputAssignment.length; i++) {
+					if (inputAssignment[i] == -1) {
+						continue;
+					}
+					else {
+						inputVarUsed.add(i);
+					}
+				}
+			}
+			
+			for (BDD transition : transitions) {
+				BDD post = bdd.zero();
+				if (input.nodeCount() == 0) {
+					continue;
+				}
+				List<byte[]> transitionAssignment = new ArrayList<byte[]>();
+				for (Object o : transition.allsat()) {
+					byte[] t = (byte[]) o;
+					transitionAssignment.add(t);
+				}
+				
+				for (byte[] b : transitionAssignment) {
+					List<Integer> transitionVarUsed = new ArrayList<Integer>();
+					for (int i = 0; i < b.length; i++) {
+						if (b[i] == -1) {
+							continue;
+						}
+						else {
+							transitionVarUsed.add(i);
+						}
+					}
+					List<Integer> transitionOnlyPreVar = new ArrayList<Integer>(allPreVarSet);
+					List<Integer> transitionOnlyPostVar = new ArrayList<Integer>(allPostVarSet);
+					transitionOnlyPreVar.retainAll(transitionVarUsed);
+					transitionOnlyPostVar.retainAll(transitionVarUsed);
+					
+					List<Integer> check1 = new ArrayList<Integer>(transitionOnlyPreVar);
+					check1.removeAll(inputVarUsed);
+					if (!check1.isEmpty()) { // the input state can not do this transition
+						// post is zero
+						continue;
+					}
+					else { // the input state can do this transition possibly
+						boolean canDo = true;
+						for (Integer i : transitionOnlyPreVar) { // check whether the value of all pre vars of the input and the transition are the same
+							if (b[i] != inputAssignment[i]) {
+								canDo = false;
+								break;
+							}
+						}
+						if (!canDo) { // cannot do
+							continue;
+						}
+						// can do
+						if (transitionOnlyPreVar.equals(inputVarUsed)) { // with no lost variables
+							// build one transition BDD and do restrict function with the input BDD
+							// post is not zero
+							post = transition.restrict(input);
+							result.add(post);
+							break;
+						}
+						else { // with some lost variables
+							// post is not zero
+							BDD tempPost = bdd.one();
+							for (Integer i : transitionOnlyPostVar) {
+								if (b[i] == 1) {
+									tempPost = tempPost.and(bdd.ithVar(i));
+								}
+								else if (b[i] == 0) {
+									tempPost = tempPost.and(bdd.nithVar(i));
+								}
+							}
+							tempPost = tempPost.replace(bp1).replace(bp2).replace(bp3);
+							List<Integer> varAlreadyDone = new ArrayList<Integer>();
+							for (Object o : tempPost.allsat()) {
+								byte[] tempPostAssignment = (byte[]) o;
+								for (int i = 0; i < tempPostAssignment.length; i++) {
+									if (tempPostAssignment[i] != -1) {
+										varAlreadyDone.add(i);
+									}
+								}
+							}
+							for (int i : inputVarUsed) {
+								if (!varAlreadyDone.contains(i)) {
+									if (inputAssignment[i] == 1) {
+										tempPost = tempPost.and(bdd.ithVar(i));
+									}
+									else if (inputAssignment[i] == 0) {
+										tempPost = tempPost.and(bdd.nithVar(i));
+									}
+								}
+							}
+							result.add(tempPost);
+						}
+					}
+				}
+			}
+		}
+		return result;
+	}
+	
+	public Set<BDD> getPost4(Set<BDD> inputs, Set<BDD> transitions) {
+		Set<BDD> result = new HashSet<BDD>();
+		
+		for (BDD input : inputs) {
+			byte[] inputByte = (byte[]) input.allsat().get(0);
+			for (BDD transition : transitions) {
+				BDD post = null;
+				// check whether the input will do this transition
+				BDD temp = transition.restrict(input);
+				if (temp.allsat().size() == 0) {
+					continue;
+				}
+				boolean canDo = true;
+				byte[] tranAfterRestrict = (byte[]) temp.allsat().get(0);
+				for (int i = 0; i < tranAfterRestrict.length; i++) {
+					if (tranAfterRestrict[i] != -1) {
+						if (allPreVarSet.contains(i)) {
+							canDo = false;
+							break;
+						}
+					}
+				}
+				if (canDo) {
+					BDD temp2 = temp.replace(bp1).replace(bp1).replace(bp1);
+					List<Integer> temp2Used = new ArrayList<Integer>();
+					byte[] temp2Byte = (byte[]) temp2.allsat().get(0);
+					for (int i = 0; i < temp2Byte.length; i++) {
+						if (temp2Byte[i] != -1) {
+							temp2Used.add(i);
+						}
+					}
+					BDD inputOnlyUnchanged = bdd.one(); // all unchanged in input
+					for (int i = 0; i < inputByte.length; i++) {
+						if (!temp2Used.contains(i)) {
+							if (inputByte[i] == 1) {
+								inputOnlyUnchanged = inputOnlyUnchanged.and(bdd.ithVar(i));
+							}
+							else if (inputByte[i] == 0) {
+								inputOnlyUnchanged = inputOnlyUnchanged.and(bdd.nithVar(i));
+							}
+						}
+					}
+					post = inputOnlyUnchanged.and(temp2);
+					result.add(post);
+				}
 			}
 		}
 		

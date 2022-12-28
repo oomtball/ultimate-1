@@ -30,7 +30,7 @@ public class CACSLCodeBeautifier {
 		return outputString;
 	}
 	
-	/* codeBeautify()
+	/** codeBeautify()
 	 * Input:   original code   - array of String
 	 * Output: beautified code  - array of String
 	 */
@@ -42,7 +42,7 @@ public class CACSLCodeBeautifier {
 			String nowCodeLine = inputCode.get(codeLine);
 			String uncheckedCodeLine = nowCodeLine;
 			
-			//System.out.println("undelete: \"" + uncheckedCodeLine + "\", length = " + uncheckedCodeLine.length());
+			/* remove the space, tab in front of the code line. */
 			while (uncheckedCodeLine.length() > 0 &&
 					(uncheckedCodeLine.substring(0, 1).equals("\s") || uncheckedCodeLine.substring(0, 1).equals("\t"))) {
 				if (uncheckedCodeLine.substring(0, 1).equals("\s")) {
@@ -52,7 +52,6 @@ public class CACSLCodeBeautifier {
 					uncheckedCodeLine = uncheckedCodeLine.replaceFirst("\\t+", "");
 				}
 			}
-			//System.out.println("  delete: \"" + uncheckedCodeLine + "\", length = " + uncheckedCodeLine.length());
 			if (uncheckedCodeLine.length() == 0) {
 				continue;
 			}
@@ -61,13 +60,20 @@ public class CACSLCodeBeautifier {
 				IN_FOR = true;
 			}
 			for (int charIndex = 0; charIndex < uncheckedCodeLine.length(); charIndex++) {
-				if (charIndex < uncheckedCodeLine.length()-1 && uncheckedCodeLine.substring(charIndex, charIndex+2).equals("/*") &&
+				if (charIndex < uncheckedCodeLine.length()-1 && uncheckedCodeLine.substring(charIndex, charIndex+2).equals("//") &&
 						IN_COMMENT == false && IN_STRING == false) {
-					IN_COMMENT = true;
 					if (charIndex != 0) {
 						beautifiedCode.add(addTab(uncheckedCodeLine.substring(0, charIndex), BLOCK_LEVEL));
-						continue;
 					}
+					break;
+				}
+				else if (charIndex < uncheckedCodeLine.length()-1 && uncheckedCodeLine.substring(charIndex, charIndex+2).equals("/*") &&
+						IN_COMMENT == false && IN_STRING == false) {
+					if (charIndex != 0) {
+						beautifiedCode.add(addTab(uncheckedCodeLine.substring(0, charIndex), BLOCK_LEVEL));
+					}
+					IN_COMMENT = true;
+					continue;
 				}
 				else if (charIndex < uncheckedCodeLine.length()-1 && uncheckedCodeLine.substring(charIndex, charIndex+2).equals("*/") &&
 						IN_COMMENT == true && IN_STRING == false) {
@@ -116,7 +122,7 @@ public class CACSLCodeBeautifier {
 						beautifiedCode.add(addTab(uncheckedCodeLine.substring(0, 1), BLOCK_LEVEL));
 						if (uncheckedCodeLine.length() > 1) {
 							ArrayList<String> newCodeLines = new ArrayList<String>();
-							newCodeLines.add(uncheckedCodeLine.substring(charIndex));
+							newCodeLines.add(uncheckedCodeLine.substring(charIndex+1));
 							beautifiedCode.addAll(codeBeautify(newCodeLines));
 						}
 						break;
@@ -124,7 +130,7 @@ public class CACSLCodeBeautifier {
 					else {
 						beautifiedCode.add(addTab(uncheckedCodeLine.substring(0, charIndex), BLOCK_LEVEL));
 						ArrayList<String> newCodeLines = new ArrayList<String>();
-						newCodeLines.add(uncheckedCodeLine.substring(charIndex));
+						newCodeLines.add(uncheckedCodeLine.substring(charIndex+1));
 						beautifiedCode.addAll(codeBeautify(newCodeLines));
 						break;
 					}

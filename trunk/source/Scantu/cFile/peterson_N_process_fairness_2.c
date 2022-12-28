@@ -1,5 +1,6 @@
-// ltl invariant positive: <>[]AP(x == 4);
-//@ ltl invariant positive: (!(AP(fairness_label_verified == fairness_label_num) ==> []AP(fairness_label_verified == fairness_label_num)) U AP(fairness_label_end == 1)) ==> <>[]AP(x == 1);
+// ltl invariant positive: <>[]AP(x == 2);
+//@ ltl invariant positive: (!(AP(fairness_label_verified == fairness_label_num) ==> []AP(fairness_label_verified == fairness_label_num)) U AP(fairness_label_end == 1)) ==> <>[]AP(x == 2);
+// ltl invariant positive: [](AP(fairness_label_end == 1) ==> <>[]AP(x == 2));
 
 #include <stdio.h>
 #include <pthread.h>
@@ -7,11 +8,6 @@
 typedef unsigned long int pthread_t;
 
 int x = 0;
-/*@ adfaf
- *@ adfafad
- *@ adfa
- *@ af
- */
 
 int level[N] = {-1};
 int last_to_enter[N-1] = {-1};
@@ -35,12 +31,15 @@ void *thr(void* k){
             {
 				fairness_label_num = i;
 				fairness_label_verified = fairness_label_num;
-            };
+            }
         }
 
     }
     // begin: critical section
-    x++;
+    int y = 0;
+	y = x;
+	y++;
+    x = y;
     //printf("%d\n",x);
     // end: critical section
     level[i] = -1;
@@ -55,17 +54,13 @@ int main() {
 	for (int i = 0; i < N; i++){
 		thr_num_array[i] = i;
 	}
-	pthread_t t0, t1;//, t2, t3;
+	pthread_t t0, t1;
 	
 	pthread_create(&t0, NULL, thr, &thr_num_array[0]);
 	pthread_create(&t1, NULL, thr, &thr_num_array[1]);
-	//pthread_create(&t2, NULL, thr, &thr_num_array[2]);
-	//pthread_create(&t3, NULL, thr, &thr_num_array[3]);
 	
 	pthread_join(t0, NULL);
 	pthread_join(t1, NULL);
-	//pthread_join(t2, NULL);
-	//pthread_join(t3, NULL);
 	
     return 0;
 }

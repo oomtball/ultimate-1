@@ -7,47 +7,42 @@
 #include <pthread.h>
 typedef unsigned long int pthread_t;
 
-int flag1 = 0, flag2 = 0; // boolean flags
+//int flag1 = 0, flag2 = 0; // boolean flags
+int flag[2]= {0, 0};
 int turn; // integer variable to hold the ID of the thread whose turn is it
 int x = 0; // boolean variable to test mutual exclusion
 
 void *thr1(void *_) {
-    flag1 = 1;
+    //flag1 = 1;
+    flag[0] = 1;
     turn = 1;
-    int f21 = flag2;
+    //int f21 = flag2;
+    int f21 = flag[1];
     int t1 = turn;
     while (f21==1 && t1==1) {
-        f21 = flag2;
+        f21 = flag[1];
         t1 = turn;
     };
     // begin: critical section
-    // x = 0;
-	int y1 = 0;
-	y1 = x;
-	y1++;
-    x = y1;
+    x++;
     // end: critical section
-    flag1 = 0;
+    flag[0] = 0;
     return 0;
 }
 
 void *thr2(void *_) {
-    flag2 = 1;
+    flag[1] = 1;
     turn = 0;
-    int f12 = flag1;
+    int f12 = flag[0];
     int t2 = turn;
     while (f12==1 && t2==0) {
-        f12 = flag1;
+        f12 = flag[0];
         t2 = turn;
     };
     // begin: critical section
-    // x = 1;
-    int y2 = 0;
-	y2 = x;
-	y2++;
-    x = y2;
+    x++;
     // end: critical section
-    flag2 = 0;
+    flag[1] = 0;
     return 0;
 }
   
