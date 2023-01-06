@@ -100,9 +100,9 @@ public class RcfgTransitionBuilder{
 		locationWithPc = new HashMap<IcfgLocation, Integer>();
 		getAsWithPc(threadToAllEdges);
 		getNeedInitialBefore();
-		mLogger.info(needInitialBefore);
+//		mLogger.info(needInitialBefore);
 		needMaxPc = test();
-		mLogger.info(Arrays.toString(needMaxPc.toArray()));
+//		mLogger.info(Arrays.toString(needMaxPc.toArray()));
 		
 		bdd = _bdd;
 		v = _v; // represents different bdd variables
@@ -117,7 +117,7 @@ public class RcfgTransitionBuilder{
 		mAssumeStatementEvalator = new AssumeStatementEvalator(logger, services, 
 				bdd, _v, _vprime, varOrder);
 		
-		mLogger.info(Arrays.toString(varOrder.toArray()));
+//		mLogger.info(Arrays.toString(varOrder.toArray()));
 		buildRcfgTrans();
 		buildSelfLoop();
 //		mLogger.info(finishPcForEachThread);
@@ -273,7 +273,7 @@ public class RcfgTransitionBuilder{
 				}
 			}
 			needMaxPc2.put(thread, (int) Math.pow(2, Integer.toBinaryString(pcCount).length()));
-			mLogger.info(pcCount);
+//			mLogger.info(pcCount);
 //			needInitialBefore.put(thread, finishInitialPc);
 			finishPcForEachThread.put(thread, finishPc);
 		}

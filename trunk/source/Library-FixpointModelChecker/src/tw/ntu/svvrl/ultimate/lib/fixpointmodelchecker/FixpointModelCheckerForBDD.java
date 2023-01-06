@@ -208,16 +208,16 @@ public class FixpointModelCheckerForBDD {
 	
 		// calculate R_Alpha
 		Set<BDD> R_Alpha = calculateR_Alpha(initialFixpoint, acceptingStates);
-		mLogger.info("R_Alpha size : " + R_Alpha.size());
+//		mLogger.info("R_Alpha size : " + R_Alpha.size());
 		mLogger.info("Finish calculating R_Alpha.");
 		
 		// calculate nu y
 		Set<BDD> finalFixpoint = calculateF_phi(R_Alpha, I);
-		mLogger.info("nu y size : " + finalFixpoint.size());
+//		mLogger.info("nu y size : " + finalFixpoint.size());
 		mLogger.info("Finish calculating F_phi.");
 
 		// check specifications
-		finalCheck2(finalFixpoint);
+		finalCheck(finalFixpoint);
 	}
 	
 	private void getAllStatements(){
@@ -400,7 +400,7 @@ public class FixpointModelCheckerForBDD {
 				postx = postxUnionI;
 			}
 		}
-		mLogger.info(Arrays.toString(sz.toArray()));
+//		mLogger.info(Arrays.toString(sz.toArray()));
 		return postx;
 	}
 	

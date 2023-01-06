@@ -76,7 +76,7 @@ public class NwaTransitionBuilder {
 		
 		List<Expression> allExpression = getNwaExpression(mNwa.getAlphabet());
 		buildNwaTrans(allExpression);
-		mLogger.info(Arrays.toString(nwaFinalStatesPc.toArray()));
+//		mLogger.info(Arrays.toString(nwaFinalStatesPc.toArray()));
 	}
 	
 	private List<Expression> getNwaExpression(Set<CodeBlock> al) {
@@ -120,9 +120,9 @@ public class NwaTransitionBuilder {
 		int count = 0;
 		for (Expression expr : allExpression) {
 			// deal with transitions
-			mLogger.info(expr);
+//			mLogger.info(expr);
 			BDD transition = mAssumeStatementEvalator.buildTran(expr);
-			mLogger.info(transition);
+//			mLogger.info(transition);
 			// deal with PCs
 			BDD transitionWithPc = addPc(transition, count);
 			
