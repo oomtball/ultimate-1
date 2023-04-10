@@ -1,16 +1,16 @@
-//@ ltl invariant positive: (<>AP(x == 2));
+//@ ltl invariant positive: [](AP(x == 0) ==> (<>AP(x == 1)));
 
 /* Testcase from Threader's distribution. For details see:
    http://www.model.in.tum.de/~popeea/research/threader
 */
 
-// (!(<>([]AP(fairness == 0) || []AP(fairness == 1))) U AP(fairness == 2)) ==> (<>AP(x == 2));
-// 67190.74 ms by fixpoint
-// 609.63 ms by double DFS
+// (!(<>([]AP(fairness == 0) || []AP(fairness == 1))) U AP(fairness == 2)) ==> [](AP(x == 0) ==> (<>AP(x == 1)));
+// 35079.58 ms by fixpoint
+// 1575.56 ms by double DFS
 
-// <>AP(x == 2);
-// 4828.11 ms by fixpoint
-// 171.24 ms by double DFS
+// [](AP(x == 0) ==> (<>AP(x == 1)));
+// 7218.47 ms by fixpoint
+// 130.08 ms by double DFS
 
 #include <pthread.h>
 typedef unsigned long int pthread_t;

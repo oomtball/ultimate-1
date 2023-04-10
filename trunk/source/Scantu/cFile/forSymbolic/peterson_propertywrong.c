@@ -1,16 +1,20 @@
-//@ ltl invariant positive: (<>AP(x > 2));
+//@ ltl invariant positive: ([](AP(fairness == 1) ==> <>(AP(fairness == 2) || AP(fairness == 3))) && [](AP(fairness == 2) ==> <>(AP(fairness == 3))) && [](AP(fairness == 4) ==> <>(AP(fairness == 5) || AP(fairness == 6))) && [](AP(fairness == 5) ==> <>(AP(fairness == 6)))) ==> ([](AP(x == 2) ==> (<>AP(x == 0))));
+//[](AP(fairness == 1) ==> <>(AP(fairness == 2) || AP(fairness == 3)))
+//[](AP(fairness == 2) ==> <>(AP(fairness == 3)))
+//[](AP(fairness == 4) ==> <>(AP(fairness == 5) || AP(fairness == 6)))
+//[](AP(fairness == 5) ==> <>(AP(fairness == 6)))
 
 /* Testcase from Threader's distribution. For details see:
    http://www.model.in.tum.de/~popeea/research/threader
 */
 
-// (!(<>([]AP(fairness == 0) || []AP(fairness == 1))) U AP(fairness == 2)) ==> (<>AP(x > 2));
-// 110998.50 ms by fixpoint
-// 27.62 ms by double DFS
+// (!(<>([]AP(fairness == 0) || []AP(fairness == 1))) U AP(fairness == 2)) ==> [](AP(x == 2) ==> (<>AP(x == 0)));
+// 23353.62 ms by fixpoint
+// 90.81 ms by double DFS
 
-// <>AP(x > 2);
-// 4766.02 ms by fixpoint
-// 64.09 ms by double DFS
+// [](AP(x == 2) ==> (<>AP(x == 0)));
+// 3141.73 ms by fixpoint
+// 76.14 ms by double DFS
 
 #include <pthread.h>
 typedef unsigned long int pthread_t;
@@ -25,12 +29,13 @@ void *thr1(void *_) {
     turn = 1;
     int f21 = flag2;
     int t1 = turn;
+    fairness = 1;
     while (f21==1 && t1==1) {
-        fairness = 0;
+        fairness = 2;
         f21 = flag2;
         t1 = turn;
     };
-   
+    fairness = 3;
     // begin: critical section
     // x = 0;
 	int y1 = 0;
@@ -39,7 +44,6 @@ void *thr1(void *_) {
     x = y1;
     // end: critical section
     flag1 = 0;
-    fairness = 2;
     return 0;
 }
 
@@ -48,11 +52,13 @@ void *thr2(void *_) {
     turn = 0;
     int f12 = flag1;
     int t2 = turn;
+    fairness = 4;
     while (f12==1 && t2==0) {
-        fairness = 1;
+        fairness = 5;
         f12 = flag1;
         t2 = turn;
     };
+    fairness = 6;
     // begin: critical section
     // x = 1;
     int y2 = 0;
@@ -61,7 +67,6 @@ void *thr2(void *_) {
     x = y2;
     // end: critical section
     flag2 = 0;
-    fairness = 2;
     return 0;
 }
   
